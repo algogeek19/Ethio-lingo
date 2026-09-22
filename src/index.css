@@ -1,0 +1,174 @@
+@import "tailwindcss";
+
+:root {
+  --bg-canvas: #faf9f5;
+  --bg-surface-lowest: #ffffff;
+  --bg-surface-low: #f4f4f0;
+  --bg-surface-card: #efeeea;
+  --bg-surface-high: #e9e8e4;
+  --bg-surface-soft: #f5f0e8;
+  --bg-surface-dark: #181715;
+  
+  --text-on-surface: #1b1c1a;
+  --text-on-surface-variant: #54433e;
+  --text-muted: #6c6a64;
+  --border-hairline: #e6dfd8;
+  
+  --color-primary-coral: #8f482f;
+  --color-primary-hover: #a9583e;
+  --color-primary-warm: #cc785c;
+  --color-primary-active: #75331c;
+  
+  --glass-bg: rgba(250, 249, 245, 0.85);
+  --glass-border: rgba(230, 223, 216, 0.8);
+}
+
+.dark {
+  --bg-canvas: #121110;
+  --bg-surface-lowest: #1c1a17;
+  --bg-surface-low: #22201c;
+  --bg-surface-card: #272420;
+  --bg-surface-high: #2e2a25;
+  --bg-surface-soft: #332e27;
+  --bg-surface-dark: #0a0a09;
+  
+  --text-on-surface: #f5f4f0;
+  --text-on-surface-variant: #d4cdc5;
+  --text-muted: #a39c93;
+  --border-hairline: #38332c;
+  
+  --color-primary-coral: #d97453;
+  --color-primary-hover: #e58667;
+  --color-primary-warm: #e58667;
+  --color-primary-active: #b85739;
+  
+  --glass-bg: rgba(18, 17, 16, 0.88);
+  --glass-border: rgba(56, 51, 44, 0.8);
+}
+
+@theme {
+  --font-serif: 'Libre Caslon Text', 'Noto Sans Ethiopic', Georgia, serif;
+  --font-sans: 'Inter', 'Noto Sans Ethiopic', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  --color-canvas: var(--bg-canvas);
+  --color-surface-lowest: var(--bg-surface-lowest);
+  --color-surface-low: var(--bg-surface-low);
+  --color-surface-card: var(--bg-surface-card);
+  --color-surface-high: var(--bg-surface-high);
+  --color-surface-soft: var(--bg-surface-soft);
+  --color-surface-dark: var(--bg-surface-dark);
+
+  --color-on-surface: var(--text-on-surface);
+  --color-on-surface-variant: var(--text-on-surface-variant);
+  --color-text-muted: var(--text-muted);
+  --color-hairline: var(--border-hairline);
+
+  --color-primary-coral: var(--color-primary-coral);
+  --color-primary-hover: var(--color-primary-hover);
+  --color-primary-warm: var(--color-primary-warm);
+  --color-primary-active: var(--color-primary-active);
+  --color-primary-disabled: #e6dfd8;
+  --color-primary-container: #ad5f45;
+
+  --color-secondary-navy: #181715;
+  --color-secondary-subtle: #605e5b;
+  --color-secondary-container: #e6e2de;
+
+  --color-ink: #141413;
+  --color-text-body: var(--text-on-surface-variant);
+
+  --color-success-green: #5db872;
+  --color-warning-amber: #e8a55a;
+  --color-destructive-red: #c64545;
+  --color-streak-orange: #ea580c;
+}
+
+@layer base {
+  *, ::before, ::after {
+    border-color: var(--border-hairline);
+  }
+
+  body {
+    background-color: var(--bg-canvas);
+    color: var(--text-on-surface);
+    font-family: var(--font-sans);
+    letter-spacing: -0.01em;
+    transition: background-color 0.25s ease, color 0.25s ease;
+  }
+
+  h1, h2, h3, .font-serif-masthead {
+    font-family: var(--font-serif);
+  }
+
+  .font-mono-ledger {
+    font-family: var(--font-mono);
+  }
+}
+
+/* Glassmorphism helpers */
+.glass-panel {
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-color: var(--glass-border);
+}
+
+.glass-panel-dark {
+  background: rgba(24, 23, 21, 0.92);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* Custom editorial hairlines */
+.border-hairline {
+  border-color: var(--border-hairline);
+}
+
+/* Focus ring accessibility standard utility */
+.focus-ring {
+  outline: none;
+}
+.focus-ring:focus-visible {
+  outline: 2px solid var(--color-primary-coral);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 2px rgba(143, 72, 47, 0.2);
+}
+
+/* Skeleton pulse animation */
+@keyframes skeleton-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.animate-skeleton {
+  animation: skeleton-pulse 1.8s ease-in-out infinite;
+  background-color: var(--bg-surface-card);
+}
+
+/* Pulse animation for countdown */
+@keyframes pulse-subtle {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.75; }
+}
+
+.animate-pulse-subtle {
+  animation: pulse-subtle 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Smooth micro-interaction transitions */
+.btn-interactive {
+  transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.btn-interactive:hover {
+  transform: translateY(-1px);
+}
+.btn-interactive:active {
+  transform: translateY(0) scale(0.98);
+}
+
+/* Minimum 44x44px touch target utility (without overriding display: none) */
+.touch-target {
+  min-width: 44px;
+  min-height: 44px;
+}

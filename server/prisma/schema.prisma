@@ -1,0 +1,263 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                     String            @id @default(uuid())
+  email                  String            @unique
+  name                   String
+  password               String?
+  emailVerified          Boolean           @default(false)
+  image                  String?
+  role                   String            @default("learner") // "learner" | "admin"
+  level                  String            @default("Beginner I")
+  currentDay             Int               @default(1) // Current module day from 1 to 30
+  isActive               Boolean           @default(true)
+  status                 String            @default("ACTIVE") // "ACTIVE" | "INACTIVE" | "SUSPENDED"
+  isOnboarded            Boolean           @default(true)
+  timezone               String            @default("Africa/Addis_Ababa")
+  // Onboarding & Demographic Selection
+  phone                  String?
+  phoneVerified          Boolean           @default(false)
+  age                    Int?
+  interests              String?           // JSON array string ["Business","Travel",...]
+  listeningMinutesPerDay Int?              // Custom Daily Listening Track (5 - 20 min)
+  listeningCategories    String?           // JSON array string ["Informative","Entertainment",...]
+  isBanned               Boolean           @default(false)
+  createdAt              DateTime          @default(now())
+  updatedAt              DateTime          @updatedAt
+  wallet                 Wallet?
+  ledgerTransactions     LedgerTransaction[]
+  dailyProgress          UserDailyProgress[]
+  withdrawals            WithdrawalRequest[]
+  depositRequests        DepositRequest[]
+  chatMessages           ChatMessage[]
+  chatReportsFiled       ChatReport[]      @relation("ReportsFiled")
+  chatReportsReceived    ChatReport[]      @relation("ReportsReceived")
+  feedbackSubmitted      Feedback[]
+
+  @@map("user")
+}
+
+model Wallet {
+  id                 String   @id @default(uuid())
+  userId             String   @unique
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  stakedAmount       Float    @default(0.0)
+  availableBalance   Float    @default(0.0)
+  totalPenalties     Float    @default(0.0)
+  totalPlatformFees  Float    @default(0.0)
+  platformFeePercent Float    @default(0.0)
+  streakCount        Int      @default(0)
+  lastCompletedDate  String   @default("")
+  lastAuditedDate    String   @default("")
+  isFreeTrial        Boolean  @default(true)
+  freeTrialStartDate DateTime @default(now())
+  freeTrialDaysLeft  Int      @default(3)
+  updatedAt          DateTime @updatedAt
+
+  @@map("wallet")
+}
+
+model LedgerTransaction {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type        String   // "CHAPA_DEPOSIT" | "STAKE_RETENTION" | "PENALTY_DEDUCTION" | "WITHDRAWAL_REQUEST"
+  amount      Float
+  status      String   // "COMPLETED" | "SUCCESS" | "PENALTY" | "PENDING"
+  description String?
+  chapaTxRef  String?
+  createdAt   DateTime @default(now())
+
+  @@map("ledger_transaction")
+}
+
+model LevelBook {
+  id        String   @id @default(uuid())
+  level     String   // "Beginner I" .. "Advanced II"
+  title     String
+  author    String
+  category  String
+  url       String
+  createdAt DateTime @default(now())
+
+  @@map("level_book")
+}
+
+model CurriculumModule {
+  id                        String   @id @default(uuid())
+  level                     String   // "Beginner I" .. "Advanced II"
+  dayNumber                 Int      // 1 to 30
+  title                     String
+  lessonVideoUrl            String
+  refGuideTitle             String
+  refGuideDescription       String
+  refGuideUrl               String?  @default("")
+  listeningInformativeUrl   String
+  listeningEntertainmentUrl String
+  createdAt                 DateTime @default(now())
+
+  @@unique([level, dayNumber])
+  @@map("curriculum_module")
+}
+
+model QuestionBank {
+  id          String   @id @default(uuid())
+  level       String   // "Placement" | "Beginner I" .. "Advanced II"
+  dayNumber   Int      // 0 for Placement, 1 to 30 for modules
+  question    String
+  options     String   // JSON array string `["A", "B", "C", "D"]`
+  answerIndex Int
+  keywords    String   // JSON array string `["grammar"]`
+  explanation String   @default("") // Mistake review explanation
+  createdAt   DateTime @default(now())
+
+  @@map("question_bank")
+}
+
+model UserDailyProgress {
+  id                      String   @id @default(uuid())
+  userId                  String
+  user                    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  level                   String
+  dayNumber               Int
+  progressDate            String
+  task1LessonCompleted    Boolean  @default(false)
+  task2ListeningCompleted Boolean  @default(false)
+  task3ReadingCompleted   Boolean  @default(false)
+  task3AccumulatedSeconds Int      @default(0)
+  examCompleted           Boolean  @default(false)
+  examScore               Int      @default(0)
+  examPassed              Boolean  @default(false)
+  examAttempts            Int      @default(0) // Times the daily exam has been attempted today
+  createdAt               DateTime @default(now())
+
+  @@unique([userId, level, dayNumber, progressDate])
+  @@map("user_daily_progress")
+}
+
+model WithdrawalRequest {
+  id             String    @id @default(uuid())
+  userId         String
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userName       String
+  userEmail      String
+  levelCompleted String
+  amount         Float
+  bankName       String
+  accountNumber  String
+  telebirrNumber String?
+  status         String    @default("pending") // "pending" | "approved" | "declined" | "refunded"
+  requestedAt    DateTime  @default(now())
+  processedAt    DateTime?
+
+  @@map("withdrawal_request")
+}
+
+model PaymentAccount {
+  id            String   @id @default(uuid())
+  bankName      String   // "Commercial Bank of Ethiopia (CBE)" | "Telebirr" | "Bank of Abyssinia" | "Awash Bank" | "Dashen Bank"
+  accountName   String   // e.g. "Birrend Platform"
+  accountNumber String   // e.g. "1000123456789" or "0911223344"
+  instructions  String?  // e.g. "Use CBE Mobile App or *889# to transfer."
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("payment_account")
+}
+
+model DepositRequest {
+  id             String    @id @default(uuid())
+  userId         String
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userName       String
+  userEmail      String
+  amount         Float     @default(1000.0)
+  paymentChannel String    // e.g. "CBE" | "Telebirr" | "BOA"
+  accountNumber  String?   // Transferred account number
+  transactionRef String    // e.g. "FT24080512345" or Telebirr Txn ID
+  senderPhone    String?
+  receiptUrl     String?   // Supabase storage public URL for receipt screenshot
+  status         String    @default("pending") // "pending" | "approved" | "declined"
+  declineReason  String?
+  requestedAt    DateTime  @default(now())
+  processedAt    DateTime?
+
+  @@map("deposit_request")
+}
+
+model SystemSetting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+
+  @@map("system_setting")
+}
+
+model ChatMessage {
+  id                 String    @id @default(uuid())
+  roomLevel          String // "Free Trial" | "Beginner I" | "Beginner II" | "Intermediate I" | ... | "Daily Topic"
+  userId             String
+  user               User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  content            String
+  replyToId          String?   // Message id this message is replying to
+  replyToContent     String?   // Snapshot of the quoted message content
+  replyToAuthorName  String?   // Snapshot of the quoted message author
+  edited             Boolean   @default(false)
+  editedAt           DateTime?
+  reactions          String    @default("[]") // JSON: [{"emoji":"👍","userIds":["uuid",..]}]
+  createdAt          DateTime  @default(now())
+
+  @@index([roomLevel, createdAt])
+  @@map("chat_message")
+}
+
+model ChatReport {
+  id             String   @id @default(uuid())
+  messageId      String
+  messageContent String
+  reportedUserId String
+  reportedUser   User     @relation("ReportsReceived", fields: [reportedUserId], references: [id], onDelete: Cascade)
+  reporterUserId String
+  reporterUser   User     @relation("ReportsFiled", fields: [reporterUserId], references: [id], onDelete: Cascade)
+  reason         String
+  status         String   @default("open") // "open" | "resolved" | "dismissed"
+  createdAt      DateTime @default(now())
+
+  @@index([status, createdAt])
+  @@map("chat_report")
+}
+
+model Announcement {
+  id        String   @id @default(uuid())
+  title     String
+  content   String
+  audienceLevel String @default("ALL") // "ALL" or specific level
+  isActive  Boolean  @default(true)
+  createdBy String
+  createdByName String @default("")
+  createdAt DateTime @default(now())
+
+  @@map("announcement")
+}
+
+model Feedback {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category    String // "BUG" | "FEATURE" | "CONTENT" | "OTHER"
+  message     String
+  rating      Int?
+  status      String   @default("open") // "open" | "read" | "closed"
+  createdAt   DateTime @default(now())
+  createdByName String
+
+  @@map("feedback")
+}

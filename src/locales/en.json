@@ -1,0 +1,105 @@
+﻿{
+  "common": {
+    "appName": "Ethio-Lingo",
+    "tagline": "Financial Accountability & English Learning Platform",
+    "getStarted": "Get Started Now",
+    "goToDashboard": "Go to Dashboard",
+    "createAccount": "Create Account & Take Placement Quiz",
+    "startFreeTrial": "Start 3-Day Free Trial",
+    "freeTrial": "3-Day Free Trial",
+    "level": "Level",
+    "day": "Day",
+    "stake": "Stake",
+    "locked": "Locked",
+    "done": "DONE",
+    "pending": "PENDING",
+    "comingSoon": "COMING SOON",
+    "etb": "ETB",
+    "login": "Sign In",
+    "logout": "Sign Out",
+    "language": "Language",
+    "english": "English",
+    "amharic": "አማርኛ"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "workspaces": "Daily Workspaces",
+    "dailyExam": "Daily Exam",
+    "wallet": "Escrow Vault",
+    "admin": "Admin Portal"
+  },
+  "hero": {
+    "badge": "FINANCIAL ACCOUNTABILITY & HABIT-BUILDING PLATFORM",
+    "title": "Master English Through Real Financial Commitment.",
+    "description": "Ethio-Lingo combines structured English online learning across 6 curriculum levels with a Financial Escrow Staking Engine. Lock your stake, complete 4 daily tasks, pass the 20-question exam, and protect your capital.",
+    "stakeBanner": {
+      "stakeAmount": "ETB 1,000 Stake",
+      "stakeSub": "0% Fee • 1,000 ETB Fully Locked",
+      "levelsCount": "6 Levels",
+      "levelsSub": "Beginner I to Advanced II",
+      "tasksCount": "4 Daily Tasks",
+      "tasksSub": "Lesson, Listening, Reading & Exam"
+    }
+  },
+  "videoShowcase": {
+    "badge": "PLATFORM WALKTHROUGH",
+    "title": "See How Ethio-Lingo Works in few Minutes",
+    "description": "Watch how our daily 4-task curriculum and financial escrow vault keep you accountable, build unbreakable habits, and help you master English.",
+    "duration": "FEW MINUTES WALKTHROUGH",
+    "clickToWatch": "Click to Watch Video",
+    "caption": "Complete Walkthrough: Staking, Daily Practice & Withdrawal",
+    "takeaway1Title": "1. Lock Escrow Stake",
+    "takeaway1Desc": "Deposit 1,000 ETB once into your secure vault to activate 30 days of daily learning.",
+    "takeaway2Title": "2. Complete 4 Tasks Daily",
+    "takeaway2Desc": "Video, listening, reading, and exam. Advance your streak and build lasting study habits.",
+    "takeaway3Title": "3. Protect & Withdraw",
+    "takeaway3Desc": "Pass your daily modules to protect 100% of your stake and withdraw directly to your account."
+  },
+  "tasks": {
+    "sectionBadge": "DAILY LEARNING WORKSPACES",
+    "title": "The 4 Mandatory Daily Tasks",
+    "description": "Every day, learners must complete all 3 workspace tasks and pass 1 daily exam to advance their streak and protect their money.",
+    "task1Title": "Task 1: Lesson Video",
+    "task1Desc": "Watch the daily educational YouTube lecture. Seeking is locked; video must be watched for 100% duration to mark completed. Includes downloadable PDF reference book.",
+    "task1Badge": "SEEK-LOCKED • 100% DURATION",
+    "task2Title": "Task 2: Listening Skill",
+    "task2Desc": "Choose between Informative or Educational Entertainment YouTube videos based on learner preference. Seeking locked, 100% duration required.",
+    "task2Badge": "INFORMATIVE OR ENTERTAINMENT",
+    "task3Title": "Task 3: Reading PDF",
+    "task3Desc": "Read assigned PDF books for your curriculum level in an inline viewer. 20-minute active reading timer with tab auto-pause.",
+    "task3Badge": "20-MIN ACTIVE READING TIMER",
+    "task4Title": "Task 4: Daily Exam",
+    "task4Desc": "Unlocks only after Tasks 1–3 are completed. Take a 20-question multiple-choice exam. Score ≥15/20 (75%) to pass and advance to the next module.",
+    "task4Badge": "20 QUESTIONS • PASS ≥ 15/20"
+  },
+  "levels": {
+    "sectionBadge": "STRUCTURED PROGRESSION TRACK",
+    "title": "6 Levels of Comprehensive Curriculum",
+    "description": "Each level consists of 30 daily modules. Take the 10-question placement quiz to start in Beginner I or Intermediate I."
+  },
+  "staking": {
+    "sectionBadge": "FINANCIAL ESCROW ENGINE",
+    "title": "How Staking & Protection Work",
+    "description": "Money locked in escrow enforces daily habit building. Pass daily tasks and exams to protect 100% of your staked capital.",
+    "depositTitle": "1,000 ETB Initial Deposit",
+    "depositDesc": "Deposit 1,000 ETB via Telebirr or Ethiopian Bank Transfer. With a 0% platform fee, your full 1,000 ETB is locked in your escrow vault.",
+    "penaltyTitle": "Slashing Penalty Mechanics",
+    "penaltyDesc": "Failing an exam attempt slashes 25 ETB. Missing a 24-hour day window slashes 80 ETB, resets streak to 0, and forces module repeat.",
+    "withdrawalTitle": "Withdrawal at Level End",
+    "withdrawalDesc": "Upon completing a 30-day level, submit bank / Telebirr details to request manual withdrawal approval, or continue to the next level if stake > 100 ETB.",
+    "trialBadge": "3-DAY FREE TRIAL AVAILABLE",
+    "trialTitle": "Want to try Ethio-Lingo before staking money?",
+    "trialDesc": "Try 3 free preview modules without financial stake or streak penalties. Upgrade anytime to the paid tier!"
+  },
+  "cta": {
+    "title": "Ready to Build Daily Study Discipline?",
+    "description": "Join Ethio-Lingo, take the 10-question placement test, choose your stake or free trial, and master English step-by-step."
+  },
+  "footer": {
+    "rights": "All rights reserved. Ethio-Lingo Financial Escrow Staking & English Learning Platform.",
+    "curriculum": "Curriculum",
+    "platform": "Platform",
+    "accountability": "Financial Accountability",
+    "madeWith": "Built for Ethiopian English Learners"
+  }
+}
