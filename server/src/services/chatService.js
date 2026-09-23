@@ -397,6 +397,7 @@ export const reportChatMessage = async (reporterUserId, messageId, reason) => {
     data: {
       messageId: message.id,
       messageContent: message.content,
+      roomLevel: message.roomLevel || '',
       reportedUserId: message.userId,
       reporterUserId,
       reason: cleanReason,
@@ -445,4 +446,164 @@ export const updateChatReportStatus = async (reportId, status, { banReportedUser
   }
 
   return report;
+};
+
+// ============================================================
+// Messenger (Direct Chat) — learners chat 1-on-1 within a level
+// ============================================================
+
+// Normalize a user pair so the smaller id is always stored in userAId
+const normalizePair = (idA, idB) =>
+  idA < idB ? { userAId: idA, userBId: idB } : { userAId: idB, userBId: idA };
+
+export const getOrCreateDirectChat = async (userAId, userBId) => {
+  if (userAId === userBId) {
+    throw new AppError('You cannot start a conversation with yourself.', 400);
+  }
+  const pair = normalizePair(userAId, userBId);
+
+  const existing = await prisma.directChat.findUnique({
+    where: { userAId_userBId: pair },
+  });
+  if (existing) return existing;
+
+  return prisma.directChat.create({ data: pair });
+};
+
+export const findDirectChatBetween = async (userId, peerId) => {
+  const pair = normalizePair(userId, peerId);
+  return prisma.directChat.findUnique({
+    where: { userAId_userBId: pair },
+  });
+};
+
+// List every same-level learner the current user can message, with a live preview
+export const getDirectChatPeers = async (userId) => {
+  const dbUser = await prisma.user.findUnique({ where: { id: userId } });
+  if (!dbUser) {
+    throw new AppError('Authenticated user not found', 404);
+  }
+  const level = dbUser.role === 'admin' ? 'Beginner I' : dbUser.level;
+
+  const peers = await prisma.user.findMany({
+    where: {
+      role: 'learner',
+      level,
+      isBanned: false,
+      isActive: true,
+      id: { not: userId },
+    },
+    select: { id: true, name: true, email: true, level: true, image: true, isOnboarded: true },
+    orderBy: { name: 'asc' },
+    take: 200,
+  });
+
+  const todayStr = new Date().toISOString().split('T')[0];
+  const dailyTopic = getDailyTopic();
+
+  const peersWithPreview = await Promise.all(
+    (peers || []).map(async (peer) => {
+      let lastMessage = null;
+      try {
+        const chat = await findDirectChatBetween(userId, peer.id);
+        if (chat) {
+          const last = await prisma.chatMessage.findFirst({
+            where: { directChatId: chat.id },
+            orderBy: { createdAt: 'desc' },
+            select: { id: true, content: true, createdAt: true, userId: true },
+          });
+          if (last) {
+            lastMessage = {
+              id: last.id,
+              content: last.content,
+              createdAt: last.createdAt,
+              fromMe: last.userId === userId,
+            };
+          }
+        }
+      } catch (err) {
+        console.warn('Direct chat preview error:', err.message || err);
+      }
+
+      return {
+        id: peer.id,
+        name: peer.name,
+        email: peer.email,
+        level: peer.level,
+        image: peer.image || null,
+        isOnboarded: !!peer.isOnboarded,
+        lastMessage,
+        topic: dailyTopic.name,
+        topicDate: todayStr,
+      };
+    })
+  );
+
+  return { peers: peersWithPreview, dailyTopic, level, todayStr };
+};
+
+export const getDirectMessages = async (userId, peerId) => {
+  const dbUser = await prisma.user.findUnique({ where: { id: userId } });
+  if (!dbUser) {
+    throw new AppError('Authenticated user not found', 404);
+  }
+  const peer = await prisma.user.findUnique({ where: { id: peerId } });
+  if (!peer || peer.role !== 'learner' || peer.isBanned) {
+    throw new AppError('This learner is not available for direct messaging.', 404);
+  }
+
+  const chat = await findDirectChatBetween(userId, peerId);
+  if (!chat) {
+    return { chatId: null, peer: { id: peer.id, name: peer.name, level: peer.level, image: peer.image }, messages: [] };
+  }
+
+  const messages = await prisma.chatMessage.findMany({
+    where: { directChatId: chat.id },
+    orderBy: { createdAt: 'asc' },
+    take: 200,
+    include: { user: { select: { id: true, name: true, level: true, isBanned: true } } },
+  });
+
+  return {
+    chatId: chat.id,
+    peer: { id: peer.id, name: peer.name, level: peer.level, image: peer.image },
+    messages: (messages || []).map((m) => serializeMessage(m)),
+  };
+};
+
+export const postDirectMessage = async (userId, peerId, content) => {
+  const dbUser = await prisma.user.findUnique({ where: { id: userId } });
+  if (!dbUser) {
+    throw new AppError('Authenticated user not found', 404);
+  }
+  if (dbUser.isBanned) {
+    throw new AppError('Forbidden: Your account is banned from messaging.', 403);
+  }
+
+  const peer = await prisma.user.findUnique({ where: { id: peerId } });
+  if (!peer || peer.role !== 'learner' || peer.isBanned) {
+    throw new AppError('This learner is not available for direct messaging.', 404);
+  }
+
+  const cleaned = (content || '').toString().trim();
+  if (!cleaned) {
+    throw new AppError('Chat message cannot be empty.', 400);
+  }
+  if (cleaned.length > 1000) {
+    throw new AppError('Chat message is too long (maximum 1000 characters).', 400);
+  }
+
+  const chat = await getOrCreateDirectChat(userId, peer.id);
+
+  const message = await prisma.chatMessage.create({
+    data: {
+      roomLevel: 'Direct',
+      directChatId: chat.id,
+      userId,
+      content: cleaned,
+    },
+    include: { user: { select: { id: true, name: true, level: true, isBanned: true } } },
+  });
+
+  return serializeMessage(message);
 };

@@ -78,7 +78,65 @@ export const api = {
       body: JSON.stringify(userData),
     }),
 
+  googleLogin: (idToken) =>
+    request('/auth/google', {
+      method: 'POST',
+      body: JSON.stringify({ idToken }),
+    }),
+
+  verifyEmailByCode: (code) =>
+    request('/auth/verify-email', {
+      method: 'POST',
+      body: JSON.stringify({ code }),
+    }),
+
+  verifyEmailByGoogle: (idToken) =>
+    request('/auth/verify-email/google', {
+      method: 'POST',
+      body: JSON.stringify({ idToken }),
+    }),
+
   getMe: () => request('/auth/me'),
+
+  // Upload a file (PDF book / reference guide / payment receipt) to the server
+  uploadFile: async (file) => {
+    const token = await getAuthToken();
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const headers = {};
+    if (token) headers.Authorization = `Bearer ${token}`;
+
+    let response;
+    try {
+      response = await fetch(`${API_BASE_URL}/files/upload`, {
+        method: 'POST',
+        body: formData,
+        headers,
+      });
+    } catch (netErr) {
+      if (API_BASE_URL.includes(':5000')) {
+        API_BASE_URL = 'http://localhost:5001/api/v1';
+        response = await fetch(`${API_BASE_URL}/files/upload`, {
+          method: 'POST',
+          body: formData,
+          headers,
+        });
+      } else {
+        throw netErr;
+      }
+    }
+
+    const data = await response.json();
+    if (!response.ok) {
+      const errorMsg = (data.error && data.error.message) || data.message || 'File upload failed';
+      const err = new Error(errorMsg);
+      err.status = response.status;
+      err.data = data;
+      throw err;
+    }
+    return data;
+  },
 
   updateProfile: (name, avatar, level, currentDay, isOnboarded, isFreeTrial) => {
     const payload = {};
@@ -152,6 +210,8 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ level, day, answers }),
     }),
+
+  getMyExamAttempts: () => request('/exams/attempts'),
 
   // Deposit & Payment Account API (Learner & General)
   getActivePaymentAccounts: () => request('/deposits/payment-accounts'),
@@ -273,20 +333,6 @@ export const api = {
       body: JSON.stringify(moduleData),
     }),
 
-  getLevelBooks: (level) =>
-    request(`/admin/books?level=${encodeURIComponent(level || 'Beginner I')}`),
-
-  addLevelBook: (bookData) =>
-    request('/admin/books/add', {
-      method: 'POST',
-      body: JSON.stringify(bookData),
-    }),
-
-  deleteLevelBook: (id) =>
-    request(`/admin/books/${id}`, {
-      method: 'DELETE',
-    }),
-
   importQuestions: (jsonArray) =>
     request('/admin/questions/import', {
       method: 'POST',
@@ -329,6 +375,17 @@ export const api = {
     request(`/chat/messages/${messageId}/report`, {
       method: 'POST',
       body: JSON.stringify({ reason }),
+    }),
+
+  // Messenger (Direct Chat) API — learners at the same level
+  getDirectChatPeers: () => request('/chat/peers'),
+
+  getDirectMessages: (peerId) => request(`/chat/direct/${peerId}/messages`),
+
+  postDirectMessage: (peerId, content) =>
+    request(`/chat/direct/${peerId}/messages`, {
+      method: 'POST',
+      body: JSON.stringify({ content }),
     }),
 
   // Announcements API

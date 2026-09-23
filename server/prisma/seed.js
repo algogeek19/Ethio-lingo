@@ -283,6 +283,8 @@ async function seedDatabase() {
   console.log('Cleaning dynamic user runtime data...');
   await prisma.chatReport.deleteMany().catch(() => {});
   await prisma.chatMessage.deleteMany().catch(() => {});
+  await prisma.directChat.deleteMany().catch(() => {});
+  await prisma.examAttempt.deleteMany().catch(() => {});
   await prisma.feedback.deleteMany().catch(() => {});
   await prisma.userDailyProgress.deleteMany().catch(() => {});
   await prisma.ledgerTransaction.deleteMany().catch(() => {});
@@ -290,9 +292,8 @@ async function seedDatabase() {
   await prisma.withdrawalRequest.deleteMany().catch(() => {});
   await prisma.wallet.deleteMany().catch(() => {});
   await prisma.user.deleteMany().catch(() => {});
-  // Re-seedable content tables: keep the question bank & books idempotent
+  // Re-seedable content tables: keep the question bank idempotent
   await prisma.questionBank.deleteMany().catch(() => {});
-  await prisma.levelBook.deleteMany().catch(() => {});
 
   // 0. Seed Users (Admin & Learner)
   console.log('Seeding Default Admin and Learner users...');
@@ -308,6 +309,7 @@ async function seedDatabase() {
       level: 'Advanced II',
       isActive: true,
       status: 'ACTIVE',
+      emailVerified: true,
     },
     create: {
       email: 'admin@birrend.com',
@@ -317,6 +319,7 @@ async function seedDatabase() {
       level: 'Advanced II',
       isActive: true,
       status: 'ACTIVE',
+      emailVerified: true,
     },
   });
 
@@ -329,6 +332,7 @@ async function seedDatabase() {
       level: 'Beginner I',
       isActive: true,
       status: 'ACTIVE',
+      emailVerified: true,
       phone: '0911223344',
       phoneVerified: true,
       age: 24,
@@ -344,6 +348,7 @@ async function seedDatabase() {
       level: 'Beginner I',
       isActive: true,
       status: 'ACTIVE',
+      emailVerified: true,
       phone: '0911223344',
       phoneVerified: true,
       age: 24,
@@ -397,88 +402,7 @@ async function seedDatabase() {
     await prisma.questionBank.create({ data: item }).catch(() => {});
   }
 
-  // 2. Seed Level Books for Free Trial, Beginner I and Intermediate I
-  console.log('Seeding Level Reading Books...');
-  await prisma.levelBook.deleteMany({}).catch(() => {});
-
-  const levelBooks = [
-    {
-      level: 'Free Trial',
-      title: 'Free Trial Starter Guide: Foundations of Academic English & Staking',
-      author: 'Birrend Academic Press',
-      category: 'Trial Starter',
-      url: 'https://ohiwmjqheitytulhfdpo.supabase.co/storage/v1/object/public/curriculum-books/free_trial_starter.pdf',
-    },
-    {
-      level: 'Free Trial',
-      title: 'Free Trial Essential Grammar & Conversational Fluency Handbook',
-      author: 'Dr. Elizabeth Kebede',
-      category: 'Grammar',
-      url: 'https://ohiwmjqheitytulhfdpo.supabase.co/storage/v1/object/public/curriculum-books/free_trial_grammar.pdf',
-    },
-    {
-      level: 'Beginner I',
-      title: 'Foundations of English Grammar & Everyday Dialogue',
-      author: 'Birrend Academic Press',
-      category: 'Grammar',
-      url: 'https://ohiwmjqheitytulhfdpo.supabase.co/storage/v1/object/public/curriculum-books/beginner_1_grammar.pdf',
-    },
-    {
-      level: 'Beginner I',
-      title: 'Basic English Reader: Short Stories & Vocabulary',
-      author: 'Dr. Elizabeth Kebede',
-      category: 'Reader',
-      url: 'https://ohiwmjqheitytulhfdpo.supabase.co/storage/v1/object/public/curriculum-books/beginner_1_reader.pdf',
-    },
-    {
-      level: 'Beginner I',
-      title: 'Essential English Vocabulary & Speaking Practice',
-      author: 'Prof. Tadesse Haile',
-      category: 'Vocabulary',
-      url: 'https://ohiwmjqheitytulhfdpo.supabase.co/storage/v1/object/public/curriculum-books/beginner_1_vocab.pdf',
-    },
-    {
-      level: 'Beginner II',
-      title: 'Beginner II Reading: Extended Stories & Everyday English',
-      author: 'Birrend Academic Press',
-      category: 'Reader',
-      url: 'https://ohiwmjqheitytulhfdpo.supabase.co/storage/v1/object/public/curriculum-books/beginner_2_reader.pdf',
-    },
-    {
-      level: 'Beginner II',
-      title: 'Beginner II Grammar & Conversation Practice',
-      author: 'Dr. Elizabeth Kebede',
-      category: 'Grammar',
-      url: 'https://ohiwmjqheitytulhfdpo.supabase.co/storage/v1/object/public/curriculum-books/beginner_2_grammar.pdf',
-    },
-    {
-      level: 'Intermediate I',
-      title: 'Intermediate English Reading & Critical Comprehension',
-      author: 'Ministry of Innovation & Technology',
-      category: 'Comprehension',
-      url: 'https://ohiwmjqheitytulhfdpo.supabase.co/storage/v1/object/public/curriculum-books/intermediate_1_comprehension.pdf',
-    },
-    {
-      level: 'Intermediate I',
-      title: 'Business English Communication & Commercial Escrow Principles',
-      author: 'Dr. Almaz Kebede',
-      category: 'Business English',
-      url: 'https://ohiwmjqheitytulhfdpo.supabase.co/storage/v1/object/public/curriculum-books/intermediate_1_business.pdf',
-    },
-    {
-      level: 'Intermediate I',
-      title: 'Principles of Microeconomics (English Edition)',
-      author: 'N. Gregory Mankiw',
-      category: 'Academic Reading',
-      url: 'https://ohiwmjqheitytulhfdpo.supabase.co/storage/v1/object/public/curriculum-books/intermediate_1_microeconomics.pdf',
-    },
-  ];
-
-  for (const book of levelBooks) {
-    await prisma.levelBook.create({ data: book }).catch(() => {});
-  }
-
-  // 2.5 Seed 7 Dedicated Free Trial Modules & Question Banks
+  // 2. Seed 7 Dedicated Free Trial Modules & Question Banks
   console.log('Seeding 7 Dedicated Free Trial Modules & Question Pool...');
   const FREE_TRIAL_MODULE_TOPICS = [
     'Introduction to Academic English & Escrow Mechanics',

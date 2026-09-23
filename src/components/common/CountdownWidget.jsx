@@ -4,11 +4,10 @@ import { useStaking, CURRICULUM_LEVELS } from '../../context/StakingContext';
 
 const CountdownWidget = () => {
   const { dailyTasks, currentModuleDay, currentLevel, advanceToNextDay } = useStaking();
-  const safeDailyTasks = dailyTasks || { lesson: false, video: false, pdf: false, exam: false };
+  const safeDailyTasks = dailyTasks || { lesson: false, video: false, exam: false };
   const allTasksDone =
     safeDailyTasks.lesson &&
     safeDailyTasks.video &&
-    safeDailyTasks.pdf &&
     safeDailyTasks.exam;
 
   const currentIdx = CURRICULUM_LEVELS.indexOf(currentLevel);
@@ -90,8 +89,8 @@ const CountdownWidget = () => {
             {allTasksDone
               ? (currentModuleDay === 30
                   ? (nextLevel ? `Transitioning to Day 1 of ${nextLevel} when countdown reaches zero.` : `All 6 Curriculum Levels Completed!`)
-                  : `All 4 daily tasks completed! Day ${currentModuleDay + 1} unlocks when the midnight countdown reaches zero.`)
-              : 'Complete all 4 daily workspace tasks before midnight to protect your stake.'}
+                  : `All 3 daily tasks completed! Day ${currentModuleDay + 1} unlocks when the midnight countdown reaches zero.`)
+              : 'Complete all 3 daily workspace tasks before midnight to protect your stake.'}
           </p>
 
           {allTasksDone && (

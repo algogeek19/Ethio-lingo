@@ -46,6 +46,48 @@ export const signup = async (req, res, next) => {
   }
 };
 
+export const googleLogin = async (req, res, next) => {
+  try {
+    const { idToken } = req.body;
+    const result = await authService.googleAuth(idToken);
+    return successResponse(res, 'Google authentication successful', result);
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const verifyEmail = async (req, res, next) => {
+  try {
+    const { code } = req.body;
+    const userId = req.user ? req.user.id : null;
+    const result = await authService.verifyEmailCode(userId, code);
+    return successResponse(res, result.message || 'Email verified', result);
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const verifyEmailGoogle = async (req, res, next) => {
+  try {
+    const { idToken } = req.body;
+    const userId = req.user ? req.user.id : null;
+    const result = await authService.verifyEmailViaGoogle(userId, idToken);
+    return successResponse(res, result.message || 'Email verified via Google', result);
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const resendVerificationCode = async (req, res, next) => {
+  try {
+    const userId = req.user ? req.user.id : null;
+    const result = await authService.resendVerificationCode(userId);
+    return successResponse(res, result.message || 'Verification code re-issued', result);
+  } catch (err) {
+    next(err);
+  }
+};
+
 export const getMe = async (req, res, next) => {
   try {
     const user = await userRepository.findUserByEmail(req.user.email);

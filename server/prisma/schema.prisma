@@ -26,20 +26,25 @@ model User {
   phoneVerified          Boolean           @default(false)
   age                    Int?
   interests              String?           // JSON array string ["Business","Travel",...]
-  listeningMinutesPerDay Int?              // Custom Daily Listening Track (5 - 20 min)
+  listeningMinutesPerDay Int?              // Custom Daily Listening Track (0-15 or 15-30 min/day options)
   listeningCategories    String?           // JSON array string ["Informative","Entertainment",...]
+  verificationCode       String?           // 6-digit email verification code (dev fallback)
+  verificationCodeExpiresAt DateTime?      // Expiry for the verification code
   isBanned               Boolean           @default(false)
   createdAt              DateTime          @default(now())
   updatedAt              DateTime          @updatedAt
   wallet                 Wallet?
   ledgerTransactions     LedgerTransaction[]
   dailyProgress          UserDailyProgress[]
+  examAttempts           ExamAttempt[]
   withdrawals            WithdrawalRequest[]
   depositRequests        DepositRequest[]
   chatMessages           ChatMessage[]
   chatReportsFiled       ChatReport[]      @relation("ReportsFiled")
   chatReportsReceived    ChatReport[]      @relation("ReportsReceived")
   feedbackSubmitted      Feedback[]
+  directChatsOwned       DirectChat[]      @relation("DirectChatOwner")
+  directChatsReceived    DirectChat[]      @relation("DirectChatPeer")
 
   @@map("user")
 }
@@ -76,18 +81,6 @@ model LedgerTransaction {
   createdAt   DateTime @default(now())
 
   @@map("ledger_transaction")
-}
-
-model LevelBook {
-  id        String   @id @default(uuid())
-  level     String   // "Beginner I" .. "Advanced II"
-  title     String
-  author    String
-  category  String
-  url       String
-  createdAt DateTime @default(now())
-
-  @@map("level_book")
 }
 
 model CurriculumModule {
@@ -130,8 +123,6 @@ model UserDailyProgress {
   progressDate            String
   task1LessonCompleted    Boolean  @default(false)
   task2ListeningCompleted Boolean  @default(false)
-  task3ReadingCompleted   Boolean  @default(false)
-  task3AccumulatedSeconds Int      @default(0)
   examCompleted           Boolean  @default(false)
   examScore               Int      @default(0)
   examPassed              Boolean  @default(false)
@@ -140,6 +131,24 @@ model UserDailyProgress {
 
   @@unique([userId, level, dayNumber, progressDate])
   @@map("user_daily_progress")
+}
+
+model ExamAttempt {
+  id             String   @id @default(uuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  level          String
+  dayNumber      Int
+  progressDate   String
+  score          Int
+  totalQuestions Int
+  passThreshold  Int
+  passed         Boolean
+  answersJson    String   @default("[]") // JSON array of per-question attempt details for mistake review
+  createdAt      DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@map("exam_attempt")
 }
 
 model WithdrawalRequest {
@@ -201,21 +210,38 @@ model SystemSetting {
   @@map("system_setting")
 }
 
+model DirectChat {
+  id        String        @id @default(uuid())
+  userAId   String
+  userA     User          @relation("DirectChatOwner", fields: [userAId], references: [id], onDelete: Cascade)
+  userBId   String
+  userB     User          @relation("DirectChatPeer", fields: [userBId], references: [id], onDelete: Cascade)
+  messages  ChatMessage[]
+  createdAt DateTime      @default(now())
+
+  @@unique([userAId, userBId])
+  @@index([userBId])
+  @@map("direct_chat")
+}
+
 model ChatMessage {
-  id                 String    @id @default(uuid())
-  roomLevel          String // "Free Trial" | "Beginner I" | "Beginner II" | "Intermediate I" | ... | "Daily Topic"
+  id                 String      @id @default(uuid())
+  roomLevel          String // "Free Trial" | "Beginner I" | "Beginner II" | "Intermediate I" | ... | "Daily Topic" | "Direct"
   userId             String
-  user               User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user               User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  directChatId       String?     // Non-null only for direct (messenger) chats
+  directChat         DirectChat? @relation(fields: [directChatId], references: [id], onDelete: Cascade)
   content            String
-  replyToId          String?   // Message id this message is replying to
-  replyToContent     String?   // Snapshot of the quoted message content
-  replyToAuthorName  String?   // Snapshot of the quoted message author
-  edited             Boolean   @default(false)
+  replyToId          String?     // Message id this message is replying to
+  replyToContent     String?     // Snapshot of the quoted message content
+  replyToAuthorName  String?     // Snapshot of the quoted message author
+  edited             Boolean     @default(false)
   editedAt           DateTime?
-  reactions          String    @default("[]") // JSON: [{"emoji":"👍","userIds":["uuid",..]}]
-  createdAt          DateTime  @default(now())
+  reactions          String      @default("[]") // JSON: [{"emoji":"👍","userIds":["uuid",..]}]
+  createdAt          DateTime    @default(now())
 
   @@index([roomLevel, createdAt])
+  @@index([directChatId, createdAt])
   @@map("chat_message")
 }
 
@@ -223,6 +249,7 @@ model ChatReport {
   id             String   @id @default(uuid())
   messageId      String
   messageContent String
+  roomLevel      String   @default("") // Room/level where the reported message was posted ("Direct" for DMs)
   reportedUserId String
   reportedUser   User     @relation("ReportsReceived", fields: [reportedUserId], references: [id], onDelete: Cascade)
   reporterUserId String
@@ -260,4 +287,16 @@ model Feedback {
   createdByName String
 
   @@map("feedback")
+}
+
+// Uploaded files (PDF books, reference guides & payment receipts) stored in Postgres
+model File {
+  id        String   @id @default(cuid())
+  filename  String
+  mimeType  String
+  size      Int
+  data      Bytes
+  createdAt DateTime @default(now())
+
+  @@map("file")
 }

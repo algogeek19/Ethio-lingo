@@ -4,13 +4,13 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import {
   Video,
   Play,
-  FileText,
   BookOpen,
   Award,
   ShieldCheck,
   ArrowRight,
   CheckCircle,
   Flame,
+  MessageCircle,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 
@@ -52,21 +52,21 @@ const GALLERY_CARDS = [
   },
   {
     step: "04",
-    title: "Task 3: 20-Min Timed PDF Reading",
-    subtitle: "MANDATORY WORKSPACE TASK 3",
+    title: "Daily Chat & Messenger",
+    subtitle: "TALK TO LEARNERS AT YOUR LEVEL",
     description:
-      "Read assigned PDF books for your curriculum level in an embedded viewer. Features a 20-minute active reading timer with tab auto-pause.",
-    badge: "20-MIN ACTIVE READING TIMER",
-    badgeColor: "bg-success-green text-white",
-    icon: FileText,
-    stats: "Course PDF Viewer #toolbar=0",
+      "Open the messenger to see learners currently at your level, pick a conversation partner, and chat about today's daily topic. Every message has a report button so issues reach the admin immediately.",
+    badge: "DAILY TOPIC CONVERSATION",
+    badgeColor: "bg-primary-coral text-white",
+    icon: MessageCircle,
+    stats: "Report button → admin moderation",
   },
   {
     step: "05",
-    title: "Task 4: 20-Question Daily Exam",
-    subtitle: "MANDATORY DIAGNOSTIC EXAM",
+    title: "20-Question Daily Exam",
+    subtitle: "MANDATORY DAILY EXAM",
     description:
-      "Unlocks only after Tasks 1–3 are finished. Complete 20 multiple-choice questions. Passing score is 15/20 (75%) to advance streak and protect your money.",
+      "Unlocks after Task 1 and Task 2 are finished. Complete 20 multiple-choice questions. Passing score is 15/20 (75%) to advance streak and protect your money. Review every wrong answer afterwards.",
     badge: "PASS ≥ 15/20 (75%)",
     badgeColor: "bg-streak-orange text-white",
     icon: BookOpen,

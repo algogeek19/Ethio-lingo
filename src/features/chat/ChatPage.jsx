@@ -1,28 +1,68 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  MessageCircle,
   Send,
   Flag,
-  Hash,
-  Users,
   ShieldAlert,
   Megaphone,
   X,
   RefreshCw,
+  Search,
+  MessageCircle,
+  ChevronLeft,
+  Users,
 } from 'lucide-react';
 import { api } from '../../services/api';
 import { useRole } from '../../context/RoleContext';
 
-const REFRESH_MS = 8000;
+const REFRESH_MS = 5000;
 const REASON_OPTIONS = ['Spam / Advertisement', 'Harassment', 'Offensive language', 'Scam or fraud', 'Inappropriate content', 'Other'];
+
+const formatTime = (iso) => {
+  try {
+    return new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  } catch {
+    return '';
+  }
+};
+
+const formatDay = (iso) => {
+  try {
+    const d = new Date(iso);
+    const today = new Date();
+    const yesterday = new Date();
+    yesterday.setDate(today.getDate() - 1);
+    if (d.toDateString() === today.toDateString()) return 'Today';
+    if (d.toDateString() === yesterday.toDateString()) return 'Yesterday';
+    return d.toLocaleDateString([], { month: 'short', day: 'numeric' });
+  } catch {
+    return '';
+  }
+};
+
+const Avatar = ({ name, image, online }) => (
+  <div className="relative shrink-0">
+    {image ? (
+      <img src={image} alt={name} className="w-11 h-11 rounded-full object-cover border border-hairline" />
+    ) : (
+      <div className="w-11 h-11 rounded-full bg-gradient-to-br from-primary-coral to-amber-500 text-white flex items-center justify-center font-bold text-sm shadow-inner">
+        {(name || '?')[0].toUpperCase()}
+      </div>
+    )}
+    {online && (
+      <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-emerald-500 border-2 border-surface-lowest" />
+    )}
+  </div>
+);
 
 const ChatPage = () => {
   const { authUser } = useRole();
-  const [roomsData, setRoomsData] = useState(null);
-  const [activeRoom, setActiveRoom] = useState('Daily Topic');
-  const [messages, setMessages] = useState([]);
+  const [peersData, setPeersData] = useState(null);
+  const [peers, setPeers] = useState([]);
+  const [activePeerId, setActivePeerId] = useState(null);
+  const [chat, setChat] = useState(null); // { chatId, peer, messages }
   const [draft, setDraft] = useState('');
+  const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState('');
@@ -31,88 +71,85 @@ const ChatPage = () => {
   const [reportReason, setReportReason] = useState('');
   const [reporting, setReporting] = useState(false);
   const bottomRef = useRef(null);
-  const lastIdRef = useRef(null);
+  const pollRef = useRef(null);
 
-  const loadRooms = useCallback(async () => {
+  const loadPeers = useCallback(async () => {
     try {
-      const res = await api.getChatRooms();
+      const res = await api.getDirectChatPeers();
       if (res && res.success && res.data) {
-        setRoomsData(res.data);
-        setActiveRoom((prev) => {
-          if (res.data.rooms.some((r) => r.name === prev)) return prev;
-          const joined = res.data.rooms.filter((r) => r.joined).map((r) => r.name);
-          return joined[0] || 'Daily Topic';
-        });
+        setPeersData(res.data);
+        setPeers(res.data.peers || []);
+        const firstId = res.data.peers?.[0]?.id || null;
+        setActivePeerId((prev) => (prev && res.data.peers.some((p) => p.id === prev) ? prev : firstId));
       }
     } catch (err) {
-      setError(err.message || 'Failed to load chat rooms.');
+      setError(err.message || 'Failed to load contacts.');
     } finally {
       setLoading(false);
     }
   }, []);
 
-  const loadMessages = useCallback(async (room, initial = false) => {
+  const loadConversation = useCallback(async (peerId, initial = true) => {
+    if (!peerId) return;
     try {
-      const res = await api.getChatMessages(room, initial ? null : lastIdRef.current);
-      if (res && res.success && Array.isArray(res.data)) {
-        setMessages((prev) => {
-          if (initial) {
-            lastIdRef.current = res.data.length ? res.data[res.data.length - 1].id : null;
-            return res.data;
-          }
-          const known = new Set(prev.map((m) => m.id));
-          const fresh = res.data.filter((m) => !known.has(m.id) && m.id !== lastIdRef.current);
-          if (fresh.length) lastIdRef.current = fresh[fresh.length - 1].id;
-          return [...prev, ...fresh];
-        });
+      const res = await api.getDirectMessages(peerId);
+      if (res && res.success && res.data) {
+        setChat(res.data);
       }
     } catch (err) {
-      setError(err.message || 'Failed to load messages.');
+      setError(err.message || 'Failed to load conversation.');
     }
   }, []);
 
   useEffect(() => {
-    loadRooms();
-  }, [loadRooms]);
+    loadPeers();
+  }, [loadPeers]);
 
-  // Full reload whenever the active room changes; then poll for new messages
+  // Open a conversation when the active peer changes, then poll for new messages
   useEffect(() => {
-    if (!activeRoom) return;
-    lastIdRef.current = null;
-    setError('');
-    loadMessages(activeRoom, true);
-    const interval = setInterval(() => loadMessages(activeRoom), REFRESH_MS);
-    return () => clearInterval(interval);
-  }, [activeRoom, loadMessages]);
+    if (!activePeerId) return;
+    loadConversation(activePeerId, true);
+    if (pollRef.current) clearInterval(pollRef.current);
+    pollRef.current = setInterval(() => {
+      loadConversation(activePeerId, false);
+      loadPeers();
+    }, REFRESH_MS);
+    return () => {
+      if (pollRef.current) clearInterval(pollRef.current);
+    };
+  }, [activePeerId, loadConversation, loadPeers]);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages.length]);
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+  }, [chat?.messages?.length, activePeerId]);
 
   const handleSend = async (e) => {
     if (e && e.preventDefault) e.preventDefault();
     const content = draft.trim();
-    if (!content || sending) return;
+    if (!content || sending || !activePeerId) return;
     setSending(true);
     setError('');
     try {
-      const res = await api.postChatMessage(activeRoom, content);
+      const res = await api.postDirectMessage(activePeerId, content);
       if (res && res.success && res.data) {
         setDraft('');
-        setMessages((prev) => [...prev, res.data]);
-        lastIdRef.current = res.data.id;
+        setChat((prev) => ({
+          ...prev,
+          chatId: prev?.chatId || res.data.directChatId || null,
+          messages: [...(prev?.messages || []), res.data],
+        }));
+        // Refresh the contact preview list
+        loadPeers();
       }
     } catch (err) {
-      const banned = err.message && err.message.toLowerCase().includes('banned');
       setError(err.message || 'Failed to send message.');
-      if (banned) setNotice('Your account is banned from the community chat.');
     } finally {
       setSending(false);
     }
   };
 
   const handleReport = async () => {
-    if (!reportReason || reporting) return;
+    if (!reportReason || reporting || !reportTarget) return;
     setReporting(true);
     try {
       const res = await api.reportChatMessage(reportTarget.id, reportReason);
@@ -126,12 +163,15 @@ const ChatPage = () => {
     }
   };
 
-  const joinedRooms = (roomsData?.rooms || []).filter((r) => r.joined);
-  const dailyTopic = roomsData?.dailyTopic || null;
+  const activePeer = chat?.peer || peers.find((p) => p.id === activePeerId) || null;
+  const dailyTopic = peersData?.dailyTopic || null;
   const isBannedUser = !!authUser?.isBanned;
+  const filteredPeers = peers.filter(
+    (p) => !query || p.name?.toLowerCase().includes(query.toLowerCase())
+  );
 
   return (
-    <div className="max-w-5xl mx-auto py-8 px-4 space-y-6">
+    <div className="max-w-6xl mx-auto py-8 px-4 space-y-5">
       {notice && (
         <div className="p-3.5 bg-green-500/15 border border-green-500/30 rounded-xl text-xs text-green-700 dark:text-green-300 font-mono flex items-center justify-between gap-3">
           <span>{notice}</span>
@@ -152,25 +192,25 @@ const ChatPage = () => {
       {isBannedUser && (
         <div className="p-4 bg-red-500/10 border-2 border-red-500/40 rounded-2xl text-sm text-center font-mono text-red-600 dark:text-red-300 flex items-center justify-center gap-2">
           <ShieldAlert size={18} />
-          <span>Your account is banned from the community chat due to a moderation decision.</span>
+          <span>Your account is banned from messaging due to a moderation decision.</span>
         </div>
       )}
 
-      {/* Header */}
-      <div className="bg-surface-dark text-white rounded-2xl p-6 shadow-xl border border-stone-800 flex flex-wrap items-center justify-between gap-4">
+      {/* Messenger Header */}
+      <div className="bg-surface-dark text-white rounded-2xl p-5 sm:p-6 shadow-xl border border-stone-800 flex flex-wrap items-center justify-between gap-4">
         <div>
           <span className="text-xs font-mono text-warning-amber uppercase tracking-wider font-bold flex items-center gap-1.5">
-            <MessageCircle size={14} /> Community Chat Rooms
+            <MessageCircle size={14} /> Messenger
           </span>
-          <h1 className="font-serif font-bold text-2xl sm:text-3xl text-white mt-1">Learn English Together</h1>
+          <h1 className="font-serif font-bold text-2xl sm:text-3xl text-white mt-1">Chat with Level {peersData?.level || 'Learners'}</h1>
           <p className="text-xs text-stone-400 font-mono mt-0.5">
-            Practice with learners at your level. Report abusive or spam messages to moderators.
+            Direct messages with learners at your level. Report abusive or spam messages to moderators.
           </p>
         </div>
         {dailyTopic && (
-          <div className="flex flex-col items-end gap-2 max-w-xs text-right">
-            <span className="px-3 py-1 bg-warning-amber text-stone-900 text-[11px] font-mono font-bold rounded-lg flex items-center gap-1.5 uppercase tracking-wider">
-              <Megaphone size={13} /> Daily Topic
+          <div className="flex flex-col items-end gap-1.5 max-w-xs text-right rounded-2xl bg-stone-900/70 border border-stone-800 px-4 py-3">
+            <span className="px-2.5 py-0.5 bg-warning-amber text-stone-900 text-[10px] font-mono font-bold rounded-lg flex items-center gap-1.5 uppercase tracking-wider">
+              <Megaphone size={12} /> Today's Topic
             </span>
             <p className="text-sm font-semibold text-warning-amber leading-snug">{dailyTopic.name}</p>
             <span className="text-[10px] text-stone-500 font-mono">{dailyTopic.date}</span>
@@ -178,163 +218,201 @@ const ChatPage = () => {
         )}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        {/* Room Sidebar */}
-        <aside className="md:col-span-1 bg-surface-lowest border border-hairline rounded-2xl p-4 space-y-3 h-fit">
-          <div className="flex items-center justify-between px-1">
-            <span className="text-xs font-mono font-bold text-on-surface-variant uppercase flex items-center gap-1.5">
-              <Hash size={12} /> Rooms
-            </span>
-            <button onClick={loadRooms} className="p-1.5 text-on-surface-variant hover:text-primary-coral rounded-lg cursor-pointer focus-ring" aria-label="Refresh rooms">
-              <RefreshCw size={13} />
-            </button>
+      {/* Messenger Shell */}
+      <div className="grid grid-cols-1 md:grid-cols-3 bg-surface-lowest border border-hairline rounded-2xl overflow-hidden shadow-lg h-[640px]">
+        {/* Contact Sidebar (WhatsApp / Telegram style) */}
+        <aside className={`md:col-span-1 border-r border-hairline flex flex-col bg-surface-card/40 ${activePeerId && chat ? 'hidden md:flex' : 'flex'}`}>
+          <div className="p-3.5 border-b border-hairline space-y-3">
+            <div className="relative">
+              <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant" />
+              <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search contacts..."
+                className="w-full pl-9 pr-8 py-2.5 bg-surface-lowest border border-hairline rounded-xl text-sm text-on-surface focus-ring placeholder:text-on-surface-variant/70"
+              />
+              <button onClick={loadPeers} className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-on-surface-variant hover:text-primary-coral rounded-lg cursor-pointer" aria-label="Refresh contacts">
+                <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
+              </button>
+            </div>
+            <div className="flex items-center justify-between px-1">
+              <span className="text-[11px] font-mono font-bold text-on-surface-variant uppercase flex items-center gap-1.5">
+                <Users size={12} /> {filteredPeers.length} Learner{filteredPeers.length === 1 ? '' : 's'} at your level
+              </span>
+            </div>
           </div>
 
-          {loading && !roomsData ? (
-            <div className="p-4 text-center text-xs text-on-surface-variant animate-skeleton">Loading rooms...</div>
-          ) : (
-            <div className="space-y-1.5">
-              {joinedRooms.length === 0 && (
-                <p className="text-xs text-on-surface-variant font-mono px-1">
-                  No rooms unlocked yet. Your level room appears after placement.
+          <div className="grow overflow-y-auto">
+            {loading && peers.length === 0 ? (
+              <div className="p-6 text-center text-xs text-on-surface-variant animate-skeleton">Loading contacts...</div>
+            ) : filteredPeers.length === 0 ? (
+              <div className="p-6 text-center space-y-2">
+                <MessageCircle size={30} className="text-on-surface-variant/40 mx-auto" />
+                <p className="text-xs font-mono text-on-surface-variant">No other learners at {peersData?.level || 'your level'} yet.</p>
+                <p className="text-[11px] text-on-surface-variant/70">
+                  Check back soon — new learners join daily!
                 </p>
-              )}
-              {joinedRooms.map((room) => (
-                <button
-                  key={room.name}
-                  onClick={() => setActiveRoom(room.name)}
-                  className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer focus-ring ${
-                    activeRoom === room.name
-                      ? 'bg-primary-coral text-white shadow-xs'
-                      : 'bg-surface-card text-on-surface-variant hover:bg-surface-high hover:text-on-surface'
-                  }`}
-                >
-                  <span className="flex items-center gap-2 truncate">
-                    <Hash size={13} className={activeRoom === room.name ? 'text-white' : 'text-primary-coral'} />
-                    {room.name}
-                  </span>
-                  {room.name === 'Daily Topic' && <span className="w-2 h-2 rounded-full bg-warning-amber animate-pulse" />}
-                </button>
-              ))}
-            </div>
-          )}
-
-          <div className="pt-2 border-t border-hairline space-y-1.5 px-1 mt-2">
-            <div className="flex items-center justify-between text-[11px] font-mono text-on-surface-variant">
-              <span className="flex items-center gap-1.5"><Users size={12} /> Your Level</span>
-              <span className="font-bold text-primary-coral">{roomsData?.userLevel || 'Beginner I'}</span>
-            </div>
-            <div className="flex items-center justify-between text-[11px] font-mono text-on-surface-variant">
-              <span>Track</span>
-              <span className="font-bold">
-                {roomsData?.isFreeTrial ? `Free Trial (${roomsData?.freeTrialDaysLeft ?? 3}d)` : 'Staked Escrow'}
-              </span>
-            </div>
-          </div>
-        </aside>
-
-        {/* Message Board */}
-        <section className="md:col-span-3 bg-surface-lowest border border-hairline rounded-2xl flex flex-col overflow-hidden h-[560px]">
-          {/* Room Header */}
-          <div className="px-5 py-3.5 border-b border-hairline flex items-center justify-between bg-surface-card/50">
-            <div>
-              <h2 className="font-serif font-bold text-base text-on-surface flex items-center gap-2">
-                <Hash size={15} className="text-primary-coral" /> {activeRoom}
-              </h2>
-              <p className="text-[11px] font-mono text-on-surface-variant">
-                Discuss today's topic, ask questions, and help each other improve.
-              </p>
-            </div>
-            {/* Free Trial room label */}
-            {activeRoom === 'Free Trial' && (
-              <span className="px-2.5 py-1 bg-warning-amber/20 text-warning-amber text-[10px] font-mono font-bold rounded-lg uppercase">
-                Trial Learners Only
-              </span>
-            )}
-          </div>
-
-          {/* Messages */}
-          <div className="grow overflow-y-auto px-5 py-4 space-y-3 bg-surface-lowest">
-            {messages.length === 0 ? (
-              <div className="h-full flex flex-col items-center justify-center text-center space-y-2">
-                <MessageCircle size={36} className="text-on-surface-variant/40" />
-                <p className="text-xs font-mono text-on-surface-variant">No messages yet in this room.</p>
-                <p className="text-[11px] text-on-surface-variant">Start the conversation for {dailyTopic?.name || activeRoom}!</p>
               </div>
             ) : (
-              messages.map((m) => {
-                const isMine = m.user && authUser && m.user.id === authUser.id;
+              filteredPeers.map((peer) => {
+                const isActive = peer.id === activePeerId;
+                const lastMsg = peer.lastMessage;
+                const preview = lastMsg ? (lastMsg.fromMe ? `You: ${lastMsg.content}` : lastMsg.content) : 'No messages yet';
                 return (
-                  <motion.div
-                    key={m.id}
-                    initial={{ opacity: 0, y: 6 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className={`flex gap-2.5 ${isMine ? 'justify-end' : 'justify-start'}`}
+                  <button
+                    key={peer.id}
+                    onClick={() => setActivePeerId(peer.id)}
+                    className={`w-full flex items-center gap-3 px-3.5 py-3 text-left transition-all cursor-pointer focus-ring border-b border-hairline/60 ${
+                      isActive ? 'bg-primary-coral/10 border-l-[3px] border-l-primary-coral' : 'hover:bg-surface-high/60'
+                    }`}
                   >
-                    {!isMine && (
-                      <div className="w-8 h-8 rounded-full bg-surface-card border border-hairline flex items-center justify-center shrink-0 text-[11px] font-bold text-primary-coral overflow-hidden">
-                        {m.user && m.user.name ? m.user.name[0].toUpperCase() : '?'}
-                      </div>
-                    )}
-                    <div className={`max-w-[75%] space-y-1 ${isMine ? 'items-end' : 'items-start'} flex flex-col`}>
-                      {!isMine && (
-                        <div className="flex items-center gap-2 text-[10px] font-mono text-on-surface-variant">
-                          <span className="font-bold text-on-surface">{m.user?.name}</span>
-                          <span className="px-1.5 py-0.5 bg-surface-card border border-hairline rounded text-[9px] uppercase">
-                            {m.user?.level || 'Learner'}
-                          </span>
-                        </div>
-                      )}
-                      <div
-                        className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed shadow-xs ${
-                          isMine
-                            ? 'bg-primary-coral text-white rounded-br-md'
-                            : 'bg-surface-card border border-hairline text-on-surface rounded-bl-md'
-                        }`}
-                      >
-                        {m.content}
-                      </div>
-                      <div className="flex items-center gap-2 px-1">
-                        <span className="text-[9px] font-mono text-on-surface-variant">
-                          {new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    <Avatar name={peer.name} image={peer.image} online={!!lastMsg} />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className={`text-sm font-semibold truncate ${isActive ? 'text-primary-coral' : 'text-on-surface'}`}>
+                          {peer.name}
                         </span>
-                        {!isMine && (
-                          <button
-                            onClick={() => setReportTarget(m)}
-                            title="Report this message"
-                            className="flex items-center gap-1 text-[9px] font-mono text-on-surface-variant hover:text-destructive-red cursor-pointer focus-ring rounded px-0.5 transition-colors"
-                          >
-                            <Flag size={10} /> Report
-                          </button>
+                        {lastMsg && (
+                          <span className="text-[9px] font-mono text-on-surface-variant shrink-0">
+                            {formatDay(lastMsg.createdAt)}
+                          </span>
                         )}
                       </div>
+                      <div className="flex items-center justify-between gap-2 mt-0.5">
+                        <span className={`text-xs truncate ${isActive ? 'text-primary-coral/90' : 'text-on-surface-variant'}`}>
+                          {preview}
+                        </span>
+                      </div>
                     </div>
-                  </motion.div>
+                  </button>
                 );
               })
             )}
-            <div ref={bottomRef} />
+          </div>
+        </aside>
+
+        {/* Conversation Pane */}
+        <section className={`md:col-span-2 flex flex-col overflow-hidden ${activePeerId && chat ? 'flex' : 'hidden md:flex'}`}>
+          {/* Mobile back button */}
+          <div className="md:hidden flex items-center gap-2 px-3 pt-3">
+            <button
+              onClick={() => setChat(null)}
+              className="flex items-center gap-1 text-xs font-mono text-on-surface-variant hover:text-primary-coral cursor-pointer"
+            >
+              <ChevronLeft size={15} /> Contacts
+            </button>
           </div>
 
-          {/* Composer */}
-          <form onSubmit={handleSend} className="border-t border-hairline p-3.5 bg-surface-card/50 flex items-center gap-2.5">
-            <input
-              value={draft}
-              onChange={(e) => setDraft(e.target.value)}
-              maxLength={1000}
-              disabled={isBannedUser || sending}
-              placeholder={isBannedUser ? 'Chat access revoked' : `Message ${activeRoom}...`}
-              className="grow px-4 py-2.5 bg-surface-lowest border border-hairline rounded-xl text-sm text-on-surface focus-ring disabled:opacity-50"
-            />
-            <button
-              type="submit"
-              disabled={!draft.trim() || sending || isBannedUser}
-              className="px-4 py-2.5 bg-primary-coral hover:bg-primary-hover disabled:opacity-40 text-white rounded-xl text-xs font-bold flex items-center gap-2 transition-all cursor-pointer btn-interactive focus-ring"
-            >
-              {sending ? <RefreshCw size={14} className="animate-spin" /> : <Send size={14} />}
-              <span className="hidden sm:inline">Send</span>
-            </button>
-          </form>
+          {/* Conversation Header */}
+          <div className="px-5 py-3 border-b border-hairline flex items-center justify-between bg-surface-card/50">
+            {activePeer && (
+              <div className="flex items-center gap-3 min-w-0">
+                <Avatar name={activePeer.name} image={activePeer.image} online />
+                <div className="min-w-0">
+                  <h2 className="font-serif font-bold text-base text-on-surface truncate">{activePeer.name}</h2>
+                  <p className="text-[10px] font-mono text-on-surface-variant truncate">{activePeer.level}</p>
+                </div>
+              </div>
+            )}
+            {dailyTopic && (
+              <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-warning-amber/10 border border-warning-amber/30 rounded-xl text-[10px] font-mono text-warning-amber font-bold">
+                <Megaphone size={12} />
+                <span className="max-w-[180px] truncate">{dailyTopic.name}</span>
+              </div>
+            )}
+          </div>
+
+          {/* Empty conversation state */}
+          {!activePeer ? (
+            <div className="grow flex flex-col items-center justify-center text-center space-y-3 bg-surface-lowest">
+              <MessageCircle size={44} className="text-on-surface-variant/30" />
+              <p className="text-sm font-mono text-on-surface-variant">Select a contact to start chatting</p>
+              <p className="text-xs text-on-surface-variant/70 max-w-xs">
+                Discuss today's topic: <strong className="text-primary-coral">{dailyTopic?.name || 'Daily Topic'}</strong>
+              </p>
+            </div>
+          ) : (
+            <>
+              {/* Messages */}
+              <div className="grow overflow-y-auto px-4 py-4 space-y-2.5 bg-surface-lowest">
+                {chat && chat.messages.length === 0 ? (
+                  <div className="h-full flex flex-col items-center justify-center text-center space-y-2">
+                    <MessageCircle size={36} className="text-on-surface-variant/40" />
+                    <p className="text-xs font-mono text-on-surface-variant">No messages yet.</p>
+                    <p className="text-[11px] text-on-surface-variant">
+                      Greet {activePeer.name} and discuss today's topic!
+                    </p>
+                  </div>
+                ) : (
+                  (chat?.messages || []).map((m, idx) => {
+                    const isMine = m.user && authUser && m.user.id === authUser.id;
+                    const prev = idx > 0 ? chat.messages[idx - 1] : null;
+                    const showHeader = !prev || prev.user?.id !== m.user?.id;
+                    return (
+                      <motion.div
+                        key={m.id}
+                        initial={{ opacity: 0, y: 8, scale: 0.98 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        className={`flex gap-2 ${isMine ? 'justify-end' : 'justify-start'}`}
+                      >
+                        <div className={`max-w-[78%] flex flex-col ${isMine ? 'items-end' : 'items-start'} space-y-1`}>
+                          {!isMine && showHeader && (
+                            <span className="text-[10px] font-mono text-on-surface-variant ml-1 font-bold">
+                              {m.user?.name}
+                            </span>
+                          )}
+                          <div
+                            className={`px-4 py-2.5 text-sm leading-relaxed shadow-xs whitespace-pre-wrap break-words ${
+                              isMine
+                                ? 'bg-primary-coral text-white rounded-2xl rounded-br-md'
+                                : 'bg-surface-card border border-hairline text-on-surface rounded-2xl rounded-bl-md'
+                            }`}
+                          >
+                            {m.content}
+                          </div>
+                          <div className="flex items-center gap-2 px-1">
+                            <span className="text-[9px] font-mono text-on-surface-variant">
+                              {formatTime(m.createdAt)}
+                            </span>
+                            {!isMine && (
+                              <button
+                                onClick={() => setReportTarget(m)}
+                                title="Report this message"
+                                className="flex items-center gap-1 text-[9px] font-mono text-on-surface-variant hover:text-destructive-red cursor-pointer focus-ring rounded px-0.5 transition-colors"
+                              >
+                                <Flag size={10} /> Report
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      </motion.div>
+                    );
+                  })
+                )}
+                <div ref={bottomRef} />
+              </div>
+
+              {/* Composer */}
+              <form onSubmit={handleSend} className="border-t border-hairline p-3.5 bg-surface-card/50 flex items-center gap-2.5">
+                <input
+                  value={draft}
+                  onChange={(e) => setDraft(e.target.value)}
+                  maxLength={1000}
+                  disabled={isBannedUser || sending}
+                  placeholder={isBannedUser ? 'Messaging revoked' : `Message ${activePeer.name}...`}
+                  className="grow px-4 py-2.5 bg-surface-lowest border border-hairline rounded-xl text-sm text-on-surface focus-ring disabled:opacity-50"
+                />
+                <button
+                  type="submit"
+                  disabled={!draft.trim() || sending || isBannedUser}
+                  className="px-4 py-2.5 bg-primary-coral hover:bg-primary-hover disabled:opacity-40 text-white rounded-xl text-xs font-bold flex items-center gap-2 transition-all cursor-pointer btn-interactive focus-ring"
+                >
+                  {sending ? <RefreshCw size={14} className="animate-spin" /> : <Send size={14} />}
+                  <span className="hidden sm:inline">Send</span>
+                </button>
+              </form>
+            </>
+          )}
         </section>
       </div>
 

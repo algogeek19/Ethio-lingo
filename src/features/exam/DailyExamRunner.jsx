@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ShieldCheck, ShieldAlert, ArrowRight, Lock, RefreshCw, Clock } from 'lucide-react';
+import { ShieldCheck, ShieldAlert, ArrowRight, Lock, RefreshCw, Clock, BookOpen } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { useStaking, CURRICULUM_LEVELS } from '../../context/StakingContext';
 import { useRole } from '../../context/RoleContext';
@@ -590,6 +590,14 @@ const DailyExamRunner = () => {
                 <span>Retake Exam Required (-{scoreResult.slashedPenalty || 25} ETB Penalty)</span>
               </button>
             )}
+
+            <button
+              onClick={() => navigate('/exam/review')}
+              className="px-6 py-3 bg-surface-card border border-hairline text-on-surface font-semibold rounded-xl text-xs hover:border-primary-coral hover:text-primary-coral flex items-center gap-2 shadow-xs focus-ring btn-interactive cursor-pointer"
+            >
+              <BookOpen size={14} />
+              <span>Review Exam Results</span>
+            </button>
 
             <button
               onClick={() => navigate('/dashboard')}

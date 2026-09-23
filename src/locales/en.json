@@ -37,40 +37,37 @@
       "stakeSub": "0% Fee • 1,000 ETB Fully Locked",
       "levelsCount": "6 Levels",
       "levelsSub": "Beginner I to Advanced II",
-      "tasksCount": "4 Daily Tasks",
-      "tasksSub": "Lesson, Listening, Reading & Exam"
+      "tasksCount": "3 Daily Tasks",
+      "tasksSub": "Lesson, Listening & Daily Exam"
     }
   },
   "videoShowcase": {
     "badge": "PLATFORM WALKTHROUGH",
     "title": "See How Ethio-Lingo Works in few Minutes",
-    "description": "Watch how our daily 4-task curriculum and financial escrow vault keep you accountable, build unbreakable habits, and help you master English.",
+    "description": "Watch how our daily 3-task curriculum and financial escrow vault keep you accountable, build unbreakable habits, and help you master English.",
     "duration": "FEW MINUTES WALKTHROUGH",
     "clickToWatch": "Click to Watch Video",
     "caption": "Complete Walkthrough: Staking, Daily Practice & Withdrawal",
     "takeaway1Title": "1. Lock Escrow Stake",
     "takeaway1Desc": "Deposit 1,000 ETB once into your secure vault to activate 30 days of daily learning.",
-    "takeaway2Title": "2. Complete 4 Tasks Daily",
-    "takeaway2Desc": "Video, listening, reading, and exam. Advance your streak and build lasting study habits.",
+    "takeaway2Title": "2. Complete Your Daily Tasks",
+    "takeaway2Desc": "Lesson video, listening practice, and a daily exam. Advance your streak and build lasting study habits.",
     "takeaway3Title": "3. Protect & Withdraw",
     "takeaway3Desc": "Pass your daily modules to protect 100% of your stake and withdraw directly to your account."
   },
   "tasks": {
     "sectionBadge": "DAILY LEARNING WORKSPACES",
-    "title": "The 4 Mandatory Daily Tasks",
-    "description": "Every day, learners must complete all 3 workspace tasks and pass 1 daily exam to advance their streak and protect their money.",
+    "title": "The 3 Daily Learning Tasks",
+    "description": "Every day, learners complete the lesson video and listening practice, then pass the daily exam to advance their streak and protect their money.",
     "task1Title": "Task 1: Lesson Video",
     "task1Desc": "Watch the daily educational YouTube lecture. Seeking is locked; video must be watched for 100% duration to mark completed. Includes downloadable PDF reference book.",
     "task1Badge": "SEEK-LOCKED • 100% DURATION",
     "task2Title": "Task 2: Listening Skill",
     "task2Desc": "Choose between Informative or Educational Entertainment YouTube videos based on learner preference. Seeking locked, 100% duration required.",
     "task2Badge": "INFORMATIVE OR ENTERTAINMENT",
-    "task3Title": "Task 3: Reading PDF",
-    "task3Desc": "Read assigned PDF books for your curriculum level in an inline viewer. 20-minute active reading timer with tab auto-pause.",
-    "task3Badge": "20-MIN ACTIVE READING TIMER",
-    "task4Title": "Task 4: Daily Exam",
-    "task4Desc": "Unlocks only after Tasks 1–3 are completed. Take a 20-question multiple-choice exam. Score ≥15/20 (75%) to pass and advance to the next module.",
-    "task4Badge": "20 QUESTIONS • PASS ≥ 15/20"
+    "task3Title": "Task 3: Daily Exam",
+    "task3Desc": "Unlocks only after Task 1 and Task 2 are completed. Take a 20-question multiple-choice exam. Score ≥15/20 (75%) to pass and advance to the next module.",
+    "task3Badge": "20 QUESTIONS • PASS ≥ 15/20"
   },
   "levels": {
     "sectionBadge": "STRUCTURED PROGRESSION TRACK",

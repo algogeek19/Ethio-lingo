@@ -122,6 +122,9 @@ export const fetchLearnerFullDetails = async (userId) => {
           dailyProgress: {
             orderBy: [{ dayNumber: 'desc' }, { progressDate: 'desc' }],
           },
+          examAttempts: {
+            orderBy: { createdAt: 'desc' },
+          },
           ledgerTransactions: {
             orderBy: { createdAt: 'desc' },
           },
@@ -136,6 +139,7 @@ export const fetchLearnerFullDetails = async (userId) => {
         return {
           ...u,
           dailyProgress: u.dailyProgress || [],
+          examAttempts: u.examAttempts || [],
           ledgerTransactions: u.ledgerTransactions || [],
           withdrawals: u.withdrawals || [],
         };
@@ -149,6 +153,7 @@ export const fetchLearnerFullDetails = async (userId) => {
   }
 
   if (!user.dailyProgress) user.dailyProgress = [];
+  if (!user.examAttempts) user.examAttempts = [];
   if (!user.ledgerTransactions) user.ledgerTransactions = [];
   if (!user.withdrawals) user.withdrawals = [];
 

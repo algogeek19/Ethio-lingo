@@ -26,3 +26,13 @@ export const submitExam = async (req, res, next) => {
     next(err);
   }
 };
+
+export const getMyExamAttempts = async (req, res, next) => {
+  try {
+    const userId = req.user ? req.user.id : 'usr_learner_001';
+    const attempts = await examService.getMyExamAttempts(userId);
+    return successResponse(res, 'Exam attempts fetched', attempts);
+  } catch (err) {
+    next(err);
+  }
+};

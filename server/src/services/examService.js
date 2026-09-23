@@ -34,16 +34,15 @@ export const getDailyExamQuestions = async (userId, level, dayNumber) => {
   const isFreeTrial = wallet ? !!wallet.isFreeTrial : false;
   const activeLevel = isFreeTrial ? 'Free Trial' : (level || 'Beginner I');
 
-  // 1. Strict Exam Lock Guard: Verify all 3 tasks are complete for today
+  // 1. Strict Exam Lock Guard: Verify both video tasks are complete for today
   if (userId) {
     const progress = await progressRepository.findDailyProgress(userId, activeLevel, parseInt(dayNumber, 10), todayStr);
     const isTask1Done = progress && progress.task1LessonCompleted;
     const isTask2Done = progress && progress.task2ListeningCompleted;
-    const isTask3Done = progress && progress.task3ReadingCompleted;
 
-    if (!isTask1Done || !isTask2Done || !isTask3Done) {
+    if (!isTask1Done || !isTask2Done) {
       throw new AppError(
-        'Forbidden: Daily Exam is locked. You must complete all 3 workspace tasks (Lesson Video, Listening Skill, and 20-min Reading) before taking the exam.',
+        'Forbidden: Daily Exam is locked. You must complete both workspace tasks (Lesson Video and Listening Skill) before taking the exam.',
         403
       );
     }
@@ -89,6 +88,37 @@ const buildMistakeReview = (questions, answers, questionMap) => {
   });
 
   return review;
+};
+
+// Full per-question record of every answered question (correct AND incorrect) — powers the exam review page.
+const buildFullAttemptRecord = (questions, answers, questionMap) => {
+  const record = [];
+  if (!Array.isArray(answers)) return record;
+
+  answers.forEach((ans) => {
+    const target = ans && ans.questionId ? questionMap.get(ans.questionId) : null;
+    if (!target) return;
+    const userChoice =
+      typeof ans.selectedOption === 'number'
+        ? ans.selectedOption
+        : parseInt(ans.selectedOption || -1, 10);
+    const isCorrect = userChoice === target.answerIndex;
+    const options = typeof target.options === 'string' ? JSON.parse(target.options) : target.options;
+
+    record.push({
+      questionId: target.id,
+      question: target.question,
+      options,
+      yourAnswerIndex: userChoice,
+      yourAnswer: userChoice >= 0 ? options[userChoice] : '(Not answered)',
+      correctAnswerIndex: target.answerIndex,
+      correctAnswer: options[target.answerIndex] || '',
+      explanation: target.explanation || '',
+      isCorrect,
+    });
+  });
+
+  return record;
 };
 
 export const submitExamAnswers = async (userId, level, dayNumber, answers) => {
@@ -212,6 +242,27 @@ export const submitExamAnswers = async (userId, level, dayNumber, answers) => {
     },
   });
 
+  // Persist a full ExamAttempt row so learners can review every exam they have ever taken
+  const fullRecord = buildFullAttemptRecord(allQuestions, answers, questionMap);
+  const examAttempt = await prisma.examAttempt
+    .create({
+      data: {
+        userId,
+        level,
+        dayNumber: parsedDay,
+        progressDate: todayStr,
+        score,
+        totalQuestions,
+        passThreshold,
+        passed,
+        answersJson: JSON.stringify(fullRecord),
+      },
+    })
+    .catch((err) => {
+      console.error('Failed to persist ExamAttempt:', err);
+      return null;
+    });
+
   // Mistakes Review payload for the student
   const mistakes = buildMistakeReview(allQuestions, answers, questionMap);
 
@@ -227,6 +278,45 @@ export const submitExamAnswers = async (userId, level, dayNumber, answers) => {
     nextLevelUnlocked,
     slashedPenalty: passed || isFreeTrial ? 0 : 25.0,
     mistakes,
+    attempt: examAttempt
+      ? {
+          id: examAttempt.id,
+          createdAt: examAttempt.createdAt,
+          answers: fullRecord,
+        }
+      : null,
     wallet: updatedWallet,
   };
+};
+
+// Return every exam attempt ever taken by a learner (newest first)
+export const getMyExamAttempts = async (userId) => {
+  const attempts = await prisma.examAttempt
+    .findMany({
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+    })
+    .catch((err) => {
+      console.error('Failed to load ExamAttempts:', err);
+      return [];
+    });
+
+  return (attempts || []).map((a) => ({
+    id: a.id,
+    level: a.level,
+    dayNumber: a.dayNumber,
+    progressDate: a.progressDate,
+    score: a.score,
+    totalQuestions: a.totalQuestions,
+    passThreshold: a.passThreshold,
+    passed: a.passed,
+    createdAt: a.createdAt,
+    answers: (() => {
+      try {
+        return JSON.parse(a.answersJson || '[]');
+      } catch {
+        return [];
+      }
+    })(),
+  }));
 };

@@ -66,7 +66,6 @@ export const StakingProvider = ({ children }) => {
   const [dailyTasks, setDailyTasks] = useState({
     lesson: false,
     video: false,
-    pdf: false,
     exam: false,
   });
 
@@ -173,12 +172,11 @@ export const StakingProvider = ({ children }) => {
           setDailyTasks({
             lesson: !!p.task1LessonCompleted,
             video: !!p.task2ListeningCompleted,
-            pdf: !!p.task3ReadingCompleted,
             exam: !!(p.examCompleted && p.examPassed),
           });
         }
       } else {
-        setDailyTasks({ lesson: false, video: false, pdf: false, exam: false });
+        setDailyTasks({ lesson: false, video: false, exam: false });
       }
     } catch (err) {
       console.error('Error fetching workspace task progress from API:', err);
@@ -191,16 +189,14 @@ export const StakingProvider = ({ children }) => {
     refreshWorkspaceProgress();
   }, [authUser?.id, currentLevel, currentModuleDay, isFreeTrialMode]);
 
-  // Complete a workspace task (lesson | video | pdf | exam)
+  // Complete a workspace task (lesson | video | exam)
   const completeTask = async (taskType, extraData = {}) => {
     const keyMap = {
       task1: 'lesson',
       lesson: 'lesson',
       task2: 'video',
       video: 'video',
-      task3: 'pdf',
-      pdf: 'pdf',
-      task4: 'exam',
+      task3: 'exam',
       exam: 'exam',
     };
     const normalizedKey = keyMap[taskType] || taskType;
@@ -256,14 +252,14 @@ export const StakingProvider = ({ children }) => {
       } else {
         setFreeTrialDaysLeft(0);
       }
-      setDailyTasks({ lesson: false, video: false, pdf: false, exam: false });
+      setDailyTasks({ lesson: false, video: false, exam: false });
       setTimeout(() => {
         loadWalletData();
       }, 500);
     } else if (currentModuleDay < 30) {
       const nextDay = currentModuleDay + 1;
       updateModuleDay(nextDay);
-      setDailyTasks({ lesson: false, video: false, pdf: false, exam: false });
+      setDailyTasks({ lesson: false, video: false, exam: false });
     } else {
       // Completed all 30 days of the level! Advance to next level
       advanceToNextLevel();
@@ -336,7 +332,7 @@ export const StakingProvider = ({ children }) => {
         updateUserProfile({ level: nextLvl, currentDay: 1 });
       }
       setCurrentModuleDay(1);
-      setDailyTasks({ lesson: false, video: false, pdf: false, exam: false });
+      setDailyTasks({ lesson: false, video: false, exam: false });
       return { success: true, nextLevel: nextLvl };
     }
     return { success: false, message: 'You have completed all curriculum levels!' };
@@ -389,7 +385,7 @@ export const StakingProvider = ({ children }) => {
         setTotalPenaltiesSlashed((prev) => prev + penalty);
       }
       setStreak({ count: 0, lastCompletedDate: null });
-      setDailyTasks({ lesson: false, video: false, pdf: false, exam: false });
+      setDailyTasks({ lesson: false, video: false, exam: false });
       await refreshWorkspaceProgress();
     } catch (err) {
       console.error('API applyMissedDayPenalty error:', err);
@@ -402,7 +398,7 @@ export const StakingProvider = ({ children }) => {
       });
       setTotalPenaltiesSlashed((prev) => prev + penalty);
       setStreak({ count: 0, lastCompletedDate: null });
-      setDailyTasks({ lesson: false, video: false, pdf: false, exam: false });
+      setDailyTasks({ lesson: false, video: false, exam: false });
     }
   };
 

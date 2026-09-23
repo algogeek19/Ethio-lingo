@@ -21,9 +21,6 @@ router.post('/learners/:id/adjust-balance', adminController.adjustLearnerBalance
 router.get('/modules/populated', adminController.getPopulatedModules);
 router.post('/questions/import', adminController.importQuestions);
 router.post('/modules/upsert', adminController.upsertModule);
-router.get('/books', adminController.getLevelBooks);
-router.post('/books/add', adminController.addLevelBook);
-router.delete('/books/:id', adminController.deleteLevelBook);
 router.get('/settings/landing-video', adminController.getLandingVideoSetting);
 router.post('/settings/landing-video', adminController.updateLandingVideoSetting);
 

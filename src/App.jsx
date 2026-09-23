@@ -15,9 +15,9 @@ import Footer from "./components/common/Footer";
 import ProtectedRoute from "./components/common/ProtectedRoute";
 
 import { LandingPage } from "./features/landing";
-import { AuthPage } from "./features/auth";
+import { AuthPage, VerifyEmailPage } from "./features/auth";
 import { LearnerDashboardPage as LearnerDashboard } from "./features/dashboard";
-import { DailyExamRunnerPage as DailyExamRunner } from "./features/exam";
+import { DailyExamRunnerPage as DailyExamRunner, ExamReviewPage } from "./features/exam";
 import { LearningWorkspacesPage as LearningWorkspaces } from "./features/workspaces";
 import { WalletPage } from "./features/wallet";
 import { ChatPage } from "./features/chat";
@@ -40,6 +40,16 @@ const AppShell = () => {
           <Route path="/" element={<LandingPage />} />
           <Route path="/auth" element={<AuthPage />} />
 
+          {/* Email Verification (learner must verify before entering the portal) */}
+          <Route
+            path="/verify"
+            element={
+              <ProtectedRoute allowedRoles={["learner"]}>
+                <VerifyEmailPage />
+              </ProtectedRoute>
+            }
+          />
+
           {/* Protected Learner Routes */}
           <Route
             path="/dashboard"
@@ -54,6 +64,14 @@ const AppShell = () => {
             element={
               <ProtectedRoute allowedRoles={["learner"]}>
                 <DailyExamRunner />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/exam/review"
+            element={
+              <ProtectedRoute allowedRoles={["learner"]}>
+                <ExamReviewPage />
               </ProtectedRoute>
             }
           />

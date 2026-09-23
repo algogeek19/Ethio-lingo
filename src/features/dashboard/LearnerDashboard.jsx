@@ -11,7 +11,6 @@ import {
   Play,
   Award,
   Video,
-  FileText,
   AlertTriangle,
   PlusCircle,
   Sparkles,
@@ -19,6 +18,7 @@ import {
   Lock,
   Megaphone,
   X,
+  MessageSquare,
 } from "lucide-react";
 import { useStaking } from "../../context/StakingContext";
 import { formatETB } from "../../utils/formatters";
@@ -59,7 +59,7 @@ const LearnerDashboard = () => {
     advanceToNextDay,
   } = useStaking();
 
-  const safeDailyTasks = dailyTasks || { lesson: false, video: false, pdf: false, exam: false };
+  const safeDailyTasks = dailyTasks || { lesson: false, video: false, exam: false };
   const safeWallet = wallet || { stakedAmount: 0, yieldBalance: 0, totalPenalties: 0, totalPlatformFees: 0 };
   const safeUser = user || { name: '', level: 'Beginner I' };
   const safeStreak = streak || { count: 0 };
@@ -67,11 +67,10 @@ const LearnerDashboard = () => {
   const completedTasksCount = [
     safeDailyTasks.lesson,
     safeDailyTasks.video,
-    safeDailyTasks.pdf,
     safeDailyTasks.exam,
   ].filter(Boolean).length;
 
-  const progressPercent = (completedTasksCount / 4) * 100;
+  const progressPercent = (completedTasksCount / 3) * 100;
 
   const handleStartNextDay = () => {
     advanceToNextDay();
@@ -269,13 +268,13 @@ const LearnerDashboard = () => {
               />
             </svg>
             <span className="absolute text-[11px] font-mono font-bold text-on-surface">
-              {completedTasksCount}/4
+              {completedTasksCount}/3
             </span>
           </div>
           <div>
             <span className="text-[10px] font-mono font-bold text-primary-coral uppercase block">Daily Requirement</span>
             <span className="text-xs font-semibold text-on-surface">
-              {completedTasksCount === 4 ? 'All 4 Tasks Completed ✓' : `${4 - completedTasksCount} Task(s) Remaining`}
+              {completedTasksCount === 3 ? 'All 3 Tasks Completed ✓' : `${3 - completedTasksCount} Task(s) Remaining`}
             </span>
           </div>
         </div>
@@ -287,7 +286,7 @@ const LearnerDashboard = () => {
       </motion.div>
 
       {/* Day Completion Celebration & Next Day Unlock Banner */}
-      {completedTasksCount === 4 && (
+      {completedTasksCount === 3 && (
         <motion.div
           variants={itemVariants}
           className="p-5 bg-gradient-to-r from-emerald-900/90 to-green-950 border-2 border-emerald-500/40 rounded-2xl text-white flex flex-wrap items-center justify-between gap-4 shadow-xl"
@@ -301,7 +300,7 @@ const LearnerDashboard = () => {
                 DAY {currentModuleDay} MASTERED
               </span>
               <h3 className="font-serif font-bold text-lg text-white mt-1">
-                All 4 Tasks Completed! Day {currentModuleDay} Secured
+                All 3 Tasks Completed! Day {currentModuleDay} Secured
               </h3>
               <p className="text-xs text-emerald-200/80 font-mono mt-0.5">
                 Your daily stake is safe and streak is protected. Day {currentModuleDay + 1} unlocks when the midnight countdown reaches zero.
@@ -316,7 +315,7 @@ const LearnerDashboard = () => {
         </motion.div>
       )}
 
-      {/* 4 DAILY TASKS TRACKER CARD */}
+      {/* 3 DAILY TASKS TRACKER CARD */}
       <motion.div
         variants={itemVariants}
         className="bg-surface-lowest border-2 border-primary-coral/30 rounded-2xl p-6 shadow-sm space-y-5"
@@ -324,13 +323,13 @@ const LearnerDashboard = () => {
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-hairline pb-4">
           <div>
             <h2 className="font-serif font-bold text-xl text-on-surface flex items-center gap-2">
-              <span>Day {currentModuleDay}: Today's 4 Mandatory Tasks</span>
+              <span>Day {currentModuleDay}: Today's 3 Mandatory Tasks</span>
               <span className="text-xs font-mono font-normal text-on-surface-variant bg-surface-soft px-2.5 py-0.5 rounded-full border border-primary-coral/20">
-                ({completedTasksCount} / 4 Completed)
+                ({completedTasksCount} / 3 Completed)
               </span>
             </h2>
             <p className="text-xs text-on-surface-variant mt-0.5">
-              Continuous daily streak increments <strong>only when all 4 tasks are completed</strong>.
+              Continuous daily streak increments <strong>only when all 3 tasks are completed</strong>.
             </p>
           </div>
 
@@ -344,7 +343,7 @@ const LearnerDashboard = () => {
           </div>
         </div>
 
-        {/* 4 Task Grid or Lock Overlay */}
+        {/* 3 Task Grid or Lock Overlay */}
         {isBalanceZero && !isFreeTrialMode ? (
           <div className="p-8 bg-amber-500/10 border-2 border-amber-500/30 rounded-2xl text-center space-y-4 font-sans">
             <div className="w-14 h-14 rounded-2xl bg-amber-500/20 text-warning-amber flex items-center justify-center mx-auto shadow-inner">
@@ -355,7 +354,7 @@ const LearnerDashboard = () => {
                 Daily Learning Tasks Locked (0 ETB Stake)
               </h3>
               <p className="text-xs text-amber-800 dark:text-amber-300/80 max-w-lg mx-auto leading-relaxed">
-                Your curriculum tasks are locked because your active escrow stake balance is 0 ETB. Submit a stake deposit of 1,000 ETB to reactivate daily lecture videos, reading, and exams.
+                Your curriculum tasks are locked because your active escrow stake balance is 0 ETB. Submit a stake deposit of 1,000 ETB to reactivate daily lecture videos and exams.
               </p>
             </div>
             <Link
@@ -367,7 +366,7 @@ const LearnerDashboard = () => {
             </Link>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {/* Task 1: Lesson Video */}
             <motion.div
               whileHover={{ y: -3 }}
@@ -434,40 +433,7 @@ const LearnerDashboard = () => {
               </Link>
             </motion.div>
 
-            {/* Task 3: PDF Reading */}
-            <motion.div
-              whileHover={{ y: -3 }}
-              className={`p-4 rounded-xl border transition-all ${
-                safeDailyTasks.pdf
-                  ? "bg-green-500/10 border-green-500/40 text-on-surface"
-                  : "bg-canvas border-hairline hover:border-primary-coral"
-              }`}
-            >
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-[10px] font-mono font-bold text-primary-coral uppercase tracking-wider">
-                  TASK 3
-                </span>
-                {safeDailyTasks.pdf ? (
-                  <CheckCircle size={20} className="text-success-green" />
-                ) : (
-                  <FileText size={20} className="text-on-surface-variant" />
-                )}
-              </div>
-              <h3 className="font-serif font-bold text-sm text-on-surface">
-                20-Min Timed PDF Reading
-              </h3>
-              <p className="text-[11px] text-on-surface-variant mt-1 leading-relaxed">
-                Read assigned Supabase PDF book for 20 mins.
-              </p>
-              <Link
-                to="/workspaces"
-                className="inline-block mt-3 text-xs font-semibold text-primary-coral hover:underline font-mono focus-ring rounded p-0.5"
-              >
-                {safeDailyTasks.pdf ? "Completed ✓" : "Open PDF Reader →"}
-              </Link>
-            </motion.div>
-
-            {/* Task 4: Daily Exam */}
+            {/* Task 3: Daily Exam */}
             <motion.div
               whileHover={{ y: -3 }}
               className={`p-4 rounded-xl border transition-all ${
@@ -478,7 +444,7 @@ const LearnerDashboard = () => {
             >
               <div className="flex items-center justify-between mb-2">
                 <span className="text-[10px] font-mono font-bold text-primary-coral uppercase tracking-wider">
-                  TASK 4
+                  TASK 3
                 </span>
                 {safeDailyTasks.exam ? (
                   <CheckCircle size={20} className="text-success-green" />
@@ -498,9 +464,40 @@ const LearnerDashboard = () => {
               >
                 {safeDailyTasks.exam ? "Completed ✓" : "Start Daily Exam →"}
               </Link>
+              <Link
+                to="/exam/review"
+                className="block mt-1 text-[11px] font-semibold text-on-surface-variant hover:text-primary-coral hover:underline font-mono focus-ring rounded p-0.5"
+              >
+                Review my exam results →
+              </Link>
             </motion.div>
           </div>
         )}
+      </motion.div>
+
+      {/* Feedback Card */}
+      <motion.div
+        variants={itemVariants}
+        className="bg-surface-lowest border border-hairline rounded-2xl p-6 flex flex-wrap items-center justify-between gap-4 shadow-xs"
+      >
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-primary-coral/10 text-primary-coral flex items-center justify-center shrink-0">
+            <MessageSquare size={22} />
+          </div>
+          <div>
+            <h3 className="font-serif font-bold text-base text-on-surface">Share Your Feedback</h3>
+            <p className="text-xs text-on-surface-variant mt-0.5">
+              Help us improve Ethio-Lingo — tell us what you think about the lessons, videos, and exam experience.
+            </p>
+          </div>
+        </div>
+        <Link
+          to="/feedback"
+          className="px-5 py-3 bg-primary-coral hover:bg-primary-hover text-white text-xs font-bold rounded-xl transition-all flex items-center gap-2 shadow-xs focus-ring btn-interactive cursor-pointer"
+        >
+          <MessageSquare size={15} />
+          <span>Submit Feedback</span>
+        </Link>
       </motion.div>
 
       {/* Top Metric Cards */}
@@ -558,17 +555,17 @@ const LearnerDashboard = () => {
             )}
           </div>
 
-          {completedTasksCount < 4 ? (
+          {completedTasksCount < 3 ? (
             <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-xl text-xs text-red-700 dark:text-red-300 flex items-center gap-2 font-mono">
               <ShieldAlert size={16} className="shrink-0 text-destructive-red" />
               <span>
-                {4 - completedTasksCount} task(s) remaining today to protect your stake!
+                {3 - completedTasksCount} task(s) remaining today to protect your stake!
               </span>
             </div>
           ) : (
             <div className="p-3 bg-green-500/10 border border-green-500/30 rounded-xl text-xs text-green-700 dark:text-green-300 flex items-center gap-2 font-mono">
               <CheckCircle size={16} className="shrink-0 text-success-green" />
-              <span>All 4 daily tasks complete! Streak advanced today.</span>
+              <span>All 3 daily tasks complete! Streak advanced today.</span>
             </div>
           )}
         </div>

@@ -1,13 +1,21 @@
 import React from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import { useRole } from '../../context/RoleContext';
 import PaymentPendingLockout from '../../features/auth/PaymentPendingLockout';
 
 const ProtectedRoute = ({ allowedRoles, children }) => {
   const { authUser, isAuthenticated, role, logout, refreshUser } = useRole();
+  const location = useLocation();
+  const isVerifyPage = location.pathname === '/verify';
 
   if (!isAuthenticated || !authUser) {
     return <Navigate to="/auth" replace />;
+  }
+
+  // Email Verification Gate for Learners:
+  // Unverified learners may ONLY see the /verify page — everything else bounces there.
+  if (role === 'learner' && authUser.emailVerified === false) {
+    return isVerifyPage ? children : <Navigate to="/verify" replace />;
   }
 
   if (allowedRoles && !allowedRoles.includes(role)) {

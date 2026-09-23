@@ -70,6 +70,8 @@ export const authenticateToken = async (req, res, next) => {
             level: sessionUser.level || 'Beginner I',
             isActive: true,
             status: 'ACTIVE',
+            // Tokens verified via Google / Supabase are already email-verified.
+            emailVerified: sessionUser.emailVerified !== false,
             isOnboarded: false,
             wallet: isLearner
               ? {
@@ -100,6 +102,7 @@ export const authenticateToken = async (req, res, next) => {
       level: sessionUser.level || 'Beginner I',
       isActive: true,
       status: 'ACTIVE',
+      emailVerified: true,
     } : null);
 
     req.user = user;
@@ -120,12 +123,22 @@ export const requireActiveAccount = async (req, res, next) => {
     return errorResponse(res, 'Authentication required.', 401);
   }
 
-  if (req.user.role === 'learner' && (!req.user.isActive || req.user.status !== 'ACTIVE')) {
-    return errorResponse(
-      res,
-      'Account Inactive or Pending Approval: Please submit or await admin deposit verification to unlock daily learning modules and exams.',
-      403
-    );
+  if (req.user.role === 'learner') {
+    if (!req.user.emailVerified) {
+      return errorResponse(
+        res,
+        'Email Not Verified: Please verify your Google email to unlock daily learning modules and exams.',
+        403
+      );
+    }
+
+    if (!req.user.isActive || req.user.status !== 'ACTIVE') {
+      return errorResponse(
+        res,
+        'Account Inactive or Pending Approval: Please submit or await admin deposit verification to unlock daily learning modules and exams.',
+        403
+      );
+    }
   }
 
   next();

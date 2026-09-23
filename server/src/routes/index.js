@@ -10,6 +10,7 @@ import depositRoutes from './depositRoutes.js';
 import chatRoutes from './chatRoutes.js';
 import announcementRoutes from './announcementRoutes.js';
 import feedbackRoutes from './feedbackRoutes.js';
+import fileRoutes from './fileRoutes.js';
 
 import * as adminController from '../controllers/adminController.js';
 
@@ -29,12 +30,13 @@ router.use('/admin', adminRoutes);
 router.use('/chat', chatRoutes);
 router.use('/announcements', announcementRoutes);
 router.use('/feedback', feedbackRoutes);
+router.use('/files', fileRoutes);
 
 // Health check endpoint
 router.get('/health', (req, res) => {
   res.json({
     status: 'online',
-    platform: 'Birrend Financial Escrow Backend API (Supabase Auth Integrated)',
+    platform: 'Birrend Financial Escrow Backend API',
     version: '1.0.0',
     timestamp: new Date().toISOString(),
   });

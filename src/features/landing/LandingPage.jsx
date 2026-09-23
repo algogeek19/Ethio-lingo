@@ -9,7 +9,6 @@ import {
   ArrowRight,
   Video,
   Play,
-  FileText,
   BookOpen,
   Sparkles,
   Clock,
@@ -215,9 +214,9 @@ const LandingPage = () => {
 
             <div className="space-y-1">
               <div className="text-2xl sm:text-3xl font-mono font-bold text-streak-orange">
-                <AnimatedCounter from={0} to={4} suffix={` ${t('tasks.sectionBadge', 'Daily Tasks')}`} />
+                <AnimatedCounter from={0} to={3} suffix={` ${t('tasks.sectionBadge', 'Daily Tasks')}`} />
               </div>
-              <div className="text-[11px] text-stone-400 font-sans uppercase tracking-wider font-bold">{t('hero.stakeBanner.tasksSub', 'Lesson, Listening, Reading & Exam')}</div>
+              <div className="text-[11px] text-stone-400 font-sans uppercase tracking-wider font-bold">{t('hero.stakeBanner.tasksSub', 'Lesson, Listening & Daily Exam')}</div>
             </div>
           </motion.div>
         </motion.div>
@@ -242,7 +241,7 @@ const LandingPage = () => {
               {t('videoShowcase.title', 'See How Ethio-Lingo Works in few Minutes')}
             </motion.h2>
             <motion.p variants={itemVariants} className="text-on-surface-variant text-sm sm:text-base leading-relaxed">
-              {t('videoShowcase.description', 'Watch how our daily 4-task curriculum and financial escrow vault keep you accountable, build unbreakable habits, and help you master English.')}
+              {t('videoShowcase.description', 'Watch how our daily 3-task curriculum and financial escrow vault keep you accountable, build unbreakable habits, and help you master English.')}
             </motion.p>
           </div>
 
@@ -338,9 +337,9 @@ const LandingPage = () => {
                 <Flame size={20} />
               </div>
               <div className="space-y-1">
-                <h4 className="font-serif font-bold text-base text-on-surface">{t('videoShowcase.takeaway2Title', '2. Complete 4 Tasks Daily')}</h4>
+                <h4 className="font-serif font-bold text-base text-on-surface">{t('videoShowcase.takeaway2Title', '2. Complete Your Daily Tasks')}</h4>
                 <p className="text-xs text-on-surface-variant leading-relaxed">
-                  {t('videoShowcase.takeaway2Desc', 'Video, listening, reading, and exam. Advance your streak and build lasting study habits.')}
+                  {t('videoShowcase.takeaway2Desc', 'Lesson video, listening practice, and a daily exam. Advance your streak and build lasting study habits.')}
                 </p>
               </div>
             </motion.div>
@@ -382,14 +381,14 @@ const LandingPage = () => {
               {t('tasks.sectionBadge', 'DAILY LEARNING WORKSPACES')}
             </motion.span>
             <motion.h2 variants={itemVariants} className="font-serif font-bold text-3xl sm:text-4xl text-on-surface tracking-tight">
-              {t('tasks.title', 'The 4 Mandatory Daily Tasks')}
+              {t('tasks.title', 'The 3 Daily Learning Tasks')}
             </motion.h2>
             <motion.p variants={itemVariants} className="text-on-surface-variant text-sm sm:text-base leading-relaxed">
-              {t('tasks.description', 'Every day, learners must complete all 3 workspace tasks and pass 1 daily exam to advance their streak and protect their money.')}
+              {t('tasks.description', 'Every day, learners complete the lesson video and listening practice, then pass the daily exam to advance their streak and protect their money.')}
             </motion.p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {/* Task 1 */}
             <motion.div
               variants={cardVariants}
@@ -439,39 +438,18 @@ const LandingPage = () => {
               className="p-6 bg-surface-lowest border border-hairline rounded-2xl space-y-4 hover:border-primary-coral transition-all flex flex-col justify-between shadow-xs relative group"
             >
               <div className="space-y-3">
-                <div className="w-10 h-10 rounded-xl bg-success-green text-white flex items-center justify-center font-mono font-bold text-sm shadow-xs group-hover:scale-105 transition-transform">
+                <div className="w-10 h-10 rounded-xl bg-streak-orange text-white flex items-center justify-center font-mono font-bold text-sm shadow-xs group-hover:scale-105 transition-transform">
                   03
                 </div>
                 <h3 className="font-serif font-bold text-lg text-on-surface flex items-center gap-2">
-                  <FileText size={18} className="text-success-green" />
-                  <span>{t('tasks.task3Title', 'Task 3: Reading PDF')}</span>
-                </h3>
-                <p className="text-xs text-on-surface-variant leading-relaxed">
-                  {t('tasks.task3Desc', 'Read assigned PDF books for your curriculum level in an inline viewer. 20-minute active reading timer with tab auto-pause.')}
-                </p>
-              </div>
-              <span className="text-[10px] font-mono text-success-green font-bold uppercase tracking-wider">{t('tasks.task3Badge', '20-MIN ACTIVE READING TIMER')}</span>
-            </motion.div>
-
-            {/* Task 4 */}
-            <motion.div
-              variants={cardVariants}
-              whileHover={{ y: -5 }}
-              className="p-6 bg-surface-lowest border border-hairline rounded-2xl space-y-4 hover:border-primary-coral transition-all flex flex-col justify-between shadow-xs relative group"
-            >
-              <div className="space-y-3">
-                <div className="w-10 h-10 rounded-xl bg-streak-orange text-white flex items-center justify-center font-mono font-bold text-sm shadow-xs group-hover:scale-105 transition-transform">
-                  04
-                </div>
-                <h3 className="font-serif font-bold text-lg text-on-surface flex items-center gap-2">
                   <BookOpen size={18} className="text-streak-orange" />
-                  <span>{t('tasks.task4Title', 'Task 4: Daily Exam')}</span>
+                  <span>{t('tasks.task3Title', 'Task 3: Daily Exam')}</span>
                 </h3>
                 <p className="text-xs text-on-surface-variant leading-relaxed">
-                  {t('tasks.task4Desc', 'Unlocks only after Tasks 1–3 are completed. Take a 20-question multiple-choice exam. Score ≥15/20 (75%) to pass and advance to the next module.')}
+                  {t('tasks.task3Desc', 'Unlocks only after Task 1 and Task 2 are completed. Take a 20-question multiple-choice exam. Score ≥15/20 (75%) to pass and advance to the next module.')}
                 </p>
               </div>
-              <span className="text-[10px] font-mono text-streak-orange font-bold uppercase tracking-wider">{t('tasks.task4Badge', '20 QUESTIONS • PASS ≥ 15/20')}</span>
+              <span className="text-[10px] font-mono text-streak-orange font-bold uppercase tracking-wider">{t('tasks.task3Badge', '20 QUESTIONS • PASS ≥ 15/20')}</span>
             </motion.div>
           </div>
         </motion.div>
@@ -502,7 +480,7 @@ const LandingPage = () => {
             {[
               { level: 'Beginner I', desc: 'Foundations & Grammar', modules: '30 Modules' },
               { level: 'Beginner II', desc: 'Elementary Tenses', modules: '30 Modules' },
-              { level: 'Intermediate I', desc: 'Academic Reading', modules: '30 Modules' },
+              { level: 'Intermediate I', desc: 'Academic Listening', modules: '30 Modules' },
               { level: 'Intermediate II', desc: 'Business & Economics', modules: '30 Modules' },
               { level: 'Advanced I', desc: 'Critical Essay Analysis', modules: '30 Modules' },
               { level: 'Advanced II', desc: 'Literature & Synthesis', modules: '30 Modules' },

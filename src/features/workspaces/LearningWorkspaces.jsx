@@ -1,17 +1,16 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Play, CheckCircle, Video, BookOpen, PlusCircle, Lock, MessageCircle } from 'lucide-react';
+import { Play, CheckCircle, Video, Lock, PlusCircle, MessageCircle } from 'lucide-react';
 import VideoPlayer from './VideoPlayer';
-import PdfViewer from './PdfViewer';
 import DailyChatPanel from '../chat/DailyChatPanel';
 import { useStaking } from '../../context/StakingContext';
 import CountdownWidget from '../../components/common/CountdownWidget';
 
 const LearningWorkspaces = () => {
   const { dailyTasks, isBalanceZero, isFreeTrialMode, currentModuleDay, user } = useStaking();
-  const safeDailyTasks = dailyTasks || { lesson: false, video: false, pdf: false, exam: false };
-  const [activeTaskTab, setActiveTaskTab] = useState('task1'); // 'task1' | 'task2' | 'task3' | 'task4'
+  const safeDailyTasks = dailyTasks || { lesson: false, video: false, exam: false };
+  const [activeTaskTab, setActiveTaskTab] = useState('task1'); // 'task1' | 'task2' | 'task3'
 
   return (
     <motion.div
@@ -34,7 +33,7 @@ const LearningWorkspaces = () => {
               Learning Workspaces Locked (0 ETB Stake)
             </h2>
             <p className="text-xs text-amber-800 dark:text-amber-300/80 max-w-xl mx-auto leading-relaxed">
-              Your lecture videos, listening practice, and PDF reading materials are locked because your active escrow stake balance is 0 ETB. Submit a stake deposit of 1,000 ETB to reactivate daily curriculum access.
+              Your lecture videos and listening practice are locked because your active escrow stake balance is 0 ETB. Submit a stake deposit of 1,000 ETB to reactivate daily curriculum access.
             </p>
           </div>
           <Link
@@ -63,10 +62,10 @@ const LearningWorkspaces = () => {
               <h1 className="font-serif font-bold text-3xl sm:text-4xl text-on-surface mt-1 tracking-tight">
                 {isFreeTrialMode
                   ? `Dedicated Free Trial Curriculum — Trial Day ${currentModuleDay} of 3`
-                  : `4-Task Daily Learning Hub (${user?.level || 'Beginner I'})`}
+                  : `Daily Learning Hub (${user?.level || 'Beginner I'})`}
               </h1>
               <p className="text-xs text-on-surface-variant mt-1">
-                Complete Task 1 (Lecture Video), Task 2 (Listening Practice), and Task 3 (Timed PDF Reading) to unlock the Daily Exam, and join Task 4 (Daily Chat Room) to practice today's topic.
+                Complete Task 1 (Lesson Video) and Task 2 (Listening Practice) to unlock the Daily Exam, and join the Daily Chat Room to practice today's topic with learners at your level.
               </p>
             </div>
 
@@ -75,8 +74,7 @@ const LearningWorkspaces = () => {
               {[
                 { id: 'task1', label: 'Task 1: Lesson Video', icon: Video, done: safeDailyTasks.lesson },
                 { id: 'task2', label: 'Task 2: Listening Skill', icon: Play, done: safeDailyTasks.video },
-                { id: 'task3', label: 'Task 3: Reading PDF', icon: BookOpen, done: safeDailyTasks.pdf },
-                { id: 'task4', label: 'Task 4: Daily Chat', icon: MessageCircle, done: null },
+                { id: 'task3', label: 'Daily Chat Room', icon: MessageCircle, done: null },
               ].map((tab) => {
                 const isActiveTab = activeTaskTab === tab.id;
                 const Icon = tab.icon;
@@ -121,8 +119,7 @@ const LearningWorkspaces = () => {
             >
               {activeTaskTab === 'task1' && <VideoPlayer mode="task1" />}
               {activeTaskTab === 'task2' && <VideoPlayer mode="task2" />}
-              {activeTaskTab === 'task3' && <PdfViewer />}
-              {activeTaskTab === 'task4' && (
+              {activeTaskTab === 'task3' && (
                 <DailyChatPanel roomLevel={isFreeTrialMode ? 'Free Trial' : user?.level} />
               )}
             </motion.div>

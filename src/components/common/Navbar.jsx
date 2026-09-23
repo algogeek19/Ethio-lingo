@@ -16,6 +16,7 @@ import {
   Sun,
   Moon,
   MessageCircle,
+  MessageSquare,
 } from "lucide-react";
 import { useRole } from "../../context/RoleContext";
 import { useStaking } from "../../context/StakingContext";
@@ -68,7 +69,8 @@ const Navbar = () => {
                     { path: "/dashboard", label: t("nav.dashboard", "Dashboard"), icon: LayoutDashboard },
                     { path: "/workspaces", label: t("nav.workspaces", "Workspaces"), icon: Layers },
                     { path: "/exam", label: t("nav.dailyExam", "Daily Exam"), icon: BookOpen },
-                    { path: "/chat", label: t("nav.chat", "Community"), icon: MessageCircle },
+                    { path: "/chat", label: t("nav.chat", "Messenger"), icon: MessageCircle },
+                    { path: "/feedback", label: "Feedback", icon: MessageSquare },
                     { path: "/wallet", label: t("nav.wallet", "Escrow Vault"), icon: Wallet },
                   ].map((item) => {
                     const active = isActive(item.path);
@@ -266,7 +268,8 @@ const Navbar = () => {
                       { path: "/dashboard", label: t("nav.dashboard", "Learner Dashboard"), icon: LayoutDashboard },
                       { path: "/workspaces", label: t("nav.workspaces", "Learning Workspaces"), icon: Layers },
                       { path: "/exam", label: t("nav.dailyExam", "Daily Exam Runner"), icon: BookOpen },
-                      { path: "/chat", label: t("nav.chat", "Community Chat"), icon: MessageCircle },
+                      { path: "/chat", label: t("nav.chat", "Messenger Chat"), icon: MessageCircle },
+                      { path: "/feedback", label: "Submit Feedback", icon: MessageSquare },
                       { path: "/wallet", label: t("nav.wallet", "Escrow Vault & Ledger"), icon: Wallet },
                     ].map((item) => {
                       const Icon = item.icon;

@@ -1,12 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  BookOpen,
-  Plus,
   Upload,
   CheckCircle,
   AlertCircle,
-  Trash2,
   Code,
   Film,
   Save,
@@ -16,7 +13,6 @@ import {
 import { useStaking, CURRICULUM_LEVELS } from '../../context/StakingContext';
 import { api } from '../../services/api';
 import { supabase } from '../../lib/supabaseClient';
-import ConfirmDialog from '../../components/common/ConfirmDialog';
 
 const CurriculumManagement = () => {
   const { importQuestionBankJson } = useStaking();
@@ -25,16 +21,10 @@ const CurriculumManagement = () => {
   const [selectedLevel, setSelectedLevel] = useState('Beginner I');
   const [selectedDay, setSelectedDay] = useState(1); // Day 1 to 30
 
-  // Delete Book Dialog State
-  const [deleteBookModal, setDeleteBookModal] = useState(null); // bookId or null
-  const [isDeletingBook, setIsDeletingBook] = useState(false);
-
-  // CMS Sub-Tab: 'modules' | 'books' | 'json'
+  // CMS Sub-Tab: 'modules' | 'json'
   const [cmsTab, setCmsTab] = useState('modules');
 
-  // Level Books State & Module Content State from API
-  const [levelBooks, setLevelBooks] = useState([]);
-  const [isLoadingBooks, setIsLoadingBooks] = useState(false);
+  // Module Content State from API
   const [populatedDays, setPopulatedDays] = useState([]);
   const [selectedModulePdfFile, setSelectedModulePdfFile] = useState(null);
   const [isUploadingModulePdf, setIsUploadingModulePdf] = useState(false);
@@ -48,11 +38,6 @@ const CurriculumManagement = () => {
     listeningEntertainmentUrl: '',
   });
 
-  const [newBook, setNewBook] = useState({ title: '', author: '', category: 'Grammar', url: '' });
-  const [selectedPdfFile, setSelectedPdfFile] = useState(null);
-  const [isUploadingPdf, setIsUploadingPdf] = useState(false);
-  const [pdfUploadError, setPdfUploadError] = useState('');
-  const [showAddBook, setShowAddBook] = useState(false);
   const [saveSuccessMsg, setSaveSuccessMsg] = useState('');
   const [moduleErrorMsg, setModuleErrorMsg] = useState('');
 
@@ -112,28 +97,6 @@ const CurriculumManagement = () => {
 
     loadCurriculumData();
   }, [selectedLevel, selectedDay]);
-
-  // Dedicated fetch for Task 3 reading choices whenever selectedLevel changes
-  useEffect(() => {
-    const loadBooksForLevel = async () => {
-      setIsLoadingBooks(true);
-      try {
-        const res = await api.getLevelBooks(selectedLevel);
-        if (res.success && Array.isArray(res.data)) {
-          setLevelBooks(res.data);
-        } else {
-          setLevelBooks([]);
-        }
-      } catch (err) {
-        console.error('Error fetching level books:', err);
-        setLevelBooks([]);
-      } finally {
-        setIsLoadingBooks(false);
-      }
-    };
-
-    loadBooksForLevel();
-  }, [selectedLevel]);
 
   // Fetch list of populated module day numbers for the selected level
   useEffect(() => {
@@ -244,85 +207,6 @@ const CurriculumManagement = () => {
     }
   };
 
-  // Add Book for Selected Level via API & Direct Supabase Storage PDF Upload
-  const handleAddBookToLevel = async (e) => {
-    e.preventDefault();
-    if (!newBook.title) return;
-    setPdfUploadError('');
-
-    try {
-      let finalPdfUrl = newBook.url || '';
-
-      // Direct PDF Upload to Supabase Storage if file is selected
-      if (selectedPdfFile) {
-        setIsUploadingPdf(true);
-        const sanitizeName = selectedPdfFile.name.replace(/[^a-zA-Z0-9._-]/g, '_');
-        const levelSubfolder = selectedLevel.toLowerCase().replace(/[^a-z0-9]/g, '_');
-        const filePath = `${levelSubfolder}/${Date.now()}_${sanitizeName}`;
-
-        const { error: uploadErr } = await supabase.storage
-          .from('curriculum-books')
-          .upload(filePath, selectedPdfFile, {
-            cacheControl: '3600',
-            upsert: true,
-            contentType: 'application/pdf',
-          });
-
-        if (uploadErr) {
-          throw new Error(`Supabase Storage Upload Error: ${uploadErr.message}`);
-        }
-
-        const { data: publicUrlData } = supabase.storage
-          .from('curriculum-books')
-          .getPublicUrl(filePath);
-
-        finalPdfUrl = publicUrlData.publicUrl;
-      }
-
-      if (!finalPdfUrl) {
-        throw new Error('Please select a PDF file to upload to Supabase Storage.');
-      }
-
-      const bookPayload = {
-        level: selectedLevel,
-        title: newBook.title,
-        author: newBook.author || 'Ethio-Lingo Academic Press',
-        category: newBook.category || 'General Reader',
-        url: finalPdfUrl,
-      };
-
-      const res = await api.addLevelBook(bookPayload);
-      if (res.success && res.data) {
-        setLevelBooks((prev) => (Array.isArray(prev) ? [...prev, res.data] : [res.data]));
-        setNewBook({ title: '', author: '', category: 'Grammar', url: '' });
-        setSelectedPdfFile(null);
-        setIsUploadingPdf(false);
-        setShowAddBook(false);
-      }
-    } catch (err) {
-      setIsUploadingPdf(false);
-      setPdfUploadError(err.message || 'Failed to upload PDF book.');
-    }
-  };
-
-  const handleConfirmDeleteBook = async () => {
-    if (!deleteBookModal) return;
-    setIsDeletingBook(true);
-    try {
-      await api.deleteLevelBook(deleteBookModal);
-      setLevelBooks((prev) => (Array.isArray(prev) ? prev.filter((b) => b.id !== deleteBookModal) : []));
-      setSaveSuccessMsg('PDF book deleted successfully from level catalog!');
-      setDeleteBookModal(null);
-      setTimeout(() => setSaveSuccessMsg(''), 3500);
-    } catch (err) {
-      setPdfUploadError(err.message || 'Error deleting book');
-    } finally {
-      setIsDeletingBook(false);
-    }
-  };
-
-
-
   // Bulk Question JSON Import
   const handleJsonImport = async () => {
     try {
@@ -356,7 +240,7 @@ const CurriculumManagement = () => {
             Curriculum Content & Question Bank Manager
           </h1>
           <p className="text-xs text-on-surface-variant mt-1">
-            Manage daily lesson YouTube videos, reference PDF manuals, listening task URLs, reading choices, and bulk import diagnostic exam questions across all 6 levels.
+            Manage daily lesson YouTube videos, reference PDF manuals, listening task URLs, and bulk import diagnostic exam questions across all 6 levels.
           </p>
         </div>
 
@@ -414,20 +298,6 @@ const CurriculumManagement = () => {
         >
           <Film size={16} />
           <span>Daily Modules Editor (Day 1 - Day 30)</span>
-        </button>
-
-        <button
-          role="tab"
-          aria-selected={cmsTab === 'books'}
-          onClick={() => setCmsTab('books')}
-          className={`px-5 py-3 text-sm font-semibold border-b-2 transition-all flex items-center gap-2 focus-ring ${
-            cmsTab === 'books'
-              ? 'border-primary-coral text-primary-coral'
-              : 'border-transparent text-on-surface-variant hover:text-on-surface'
-          }`}
-        >
-          <BookOpen size={16} />
-          <span>Task 3 Level Reading Books</span>
         </button>
 
         <button
@@ -686,232 +556,6 @@ const CurriculumManagement = () => {
         </div>
       )}
 
-      {/* SUB-TAB 2: TASK 3 LEVEL READING BOOKS MANAGER */}
-      {cmsTab === 'books' && (
-        <div className="bg-canvas border border-hairline rounded-2xl p-6 space-y-6">
-          <div className="flex flex-wrap items-center justify-between gap-4 border-b border-hairline pb-4">
-            <div>
-              <span className="text-xs font-mono text-primary-coral font-bold uppercase">
-                LEVEL PDF BOOKS CATALOG
-              </span>
-              <h3 className="font-serif font-bold text-xl text-on-surface mt-0.5">
-                Task 3 Reading PDF Choices for {selectedLevel}
-              </h3>
-              <p className="text-xs text-on-surface-variant mt-1">
-                Learners in {selectedLevel} choose from these assigned PDF books for their daily 20-minute timed reading task.
-              </p>
-            </div>
-
-            <button
-              onClick={() => setShowAddBook(!showAddBook)}
-              className="px-4 py-2 bg-primary-coral text-white font-semibold text-xs rounded-xl hover:bg-primary-hover flex items-center gap-1.5 focus-ring btn-interactive cursor-pointer"
-            >
-              <Plus size={16} />
-              <span>Add PDF Book to {selectedLevel}</span>
-            </button>
-          </div>
-
-          {/* Add Book Form Modal/Box */}
-          {showAddBook && (
-            <form onSubmit={handleAddBookToLevel} className="p-5 bg-surface-lowest border-2 border-primary-coral rounded-2xl space-y-4 animate-fade-in shadow-md">
-              <div className="flex items-center justify-between border-b border-hairline pb-2">
-                <h4 className="font-serif font-bold text-base text-on-surface flex items-center gap-2">
-                  <Upload size={18} className="text-primary-coral" />
-                  <span>Upload PDF Book File ({selectedLevel})</span>
-                </h4>
-                <span className="text-[10px] font-mono font-bold px-2 py-0.5 bg-surface-card text-primary-coral rounded uppercase">
-                  Bucket: curriculum-books
-                </span>
-              </div>
-
-              {pdfUploadError && (
-                <div className="p-3 bg-red-500/15 border border-red-500/30 text-destructive-red text-xs rounded-xl flex items-center gap-2 font-mono">
-                  <AlertCircle size={16} className="shrink-0" />
-                  <span>{pdfUploadError}</span>
-                </div>
-              )}
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-mono font-bold text-on-surface-variant mb-1">Book Title *</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. Advanced Legal & Financial Terminology"
-                    value={newBook.title}
-                    onChange={(e) => setNewBook({ ...newBook, title: e.target.value })}
-                    className="w-full px-3.5 py-2.5 bg-canvas border border-hairline rounded-xl text-xs text-on-surface focus-ring"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-mono font-bold text-on-surface-variant mb-1">Author / Institution</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. Dr. Tadesse Biru"
-                    value={newBook.author}
-                    onChange={(e) => setNewBook({ ...newBook, author: e.target.value })}
-                    className="w-full px-3.5 py-2.5 bg-canvas border border-hairline rounded-xl text-xs text-on-surface focus-ring"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-mono font-bold text-on-surface-variant mb-1">Category Badge</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. Grammar / Law / Reader"
-                    value={newBook.category}
-                    onChange={(e) => setNewBook({ ...newBook, category: e.target.value })}
-                    className="w-full px-3.5 py-2.5 bg-canvas border border-hairline rounded-xl text-xs text-on-surface focus-ring"
-                  />
-                </div>
-
-                {/* Direct PDF File Upload Box */}
-                <div className="space-y-1">
-                  <label className="block text-xs font-mono font-bold text-on-surface-variant">
-                    PDF File Upload * (Select .pdf file)
-                  </label>
-                  <div className="relative border-2 border-dashed border-hairline hover:border-primary-coral bg-canvas rounded-xl p-3 transition-colors text-center cursor-pointer">
-                    <input
-                      type="file"
-                      accept="application/pdf"
-                      onChange={(e) => {
-                        if (e.target.files && e.target.files[0]) {
-                          setSelectedPdfFile(e.target.files[0]);
-                          setPdfUploadError('');
-                        }
-                      }}
-                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                    />
-                    {selectedPdfFile ? (
-                      <div className="flex items-center justify-between text-left text-xs font-mono text-primary-coral">
-                        <div className="flex items-center gap-2 truncate">
-                          <FileCheck size={18} className="text-success-green shrink-0" />
-                          <span className="truncate font-semibold">{selectedPdfFile.name}</span>
-                          <span className="text-[10px] text-text-muted">
-                            ({(selectedPdfFile.size / (1024 * 1024)).toFixed(2)} MB)
-                          </span>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setSelectedPdfFile(null);
-                          }}
-                          className="text-destructive-red hover:underline text-xs font-sans font-bold px-2 py-0.5 border border-destructive-red/30 rounded"
-                        >
-                          Clear
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="flex flex-col items-center justify-center gap-1 text-on-surface-variant">
-                        <Upload size={20} className="text-primary-coral" />
-                        <span className="text-xs font-medium">Click or Drag & Drop PDF File Here</span>
-                        <span className="text-[10px] text-text-muted font-mono">Accepts .pdf format files</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex justify-end gap-2 pt-2 border-t border-hairline">
-                <button
-                  type="button"
-                  disabled={isUploadingPdf}
-                  onClick={() => {
-                    setShowAddBook(false);
-                    setSelectedPdfFile(null);
-                    setPdfUploadError('');
-                  }}
-                  className="px-4 py-2 border border-hairline text-xs font-semibold rounded-xl text-on-surface-variant hover:bg-surface-card focus-ring"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={isUploadingPdf || (!selectedPdfFile && !newBook.url)}
-                  className="px-5 py-2 bg-primary-coral text-white text-xs font-semibold rounded-xl hover:bg-primary-hover disabled:opacity-50 flex items-center gap-2 shadow-xs focus-ring btn-interactive cursor-pointer"
-                >
-                  {isUploadingPdf ? (
-                    <>
-                      <Loader2 size={16} className="animate-spin" />
-                      <span>Uploading File...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Upload size={16} />
-                      <span>Upload & Save Book File</span>
-                    </>
-                  )}
-                </button>
-              </div>
-            </form>
-          )}
-
-          {/* Book Catalog Table */}
-          <div className="overflow-x-auto rounded-2xl border border-hairline bg-canvas">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-surface-card border-b border-hairline text-[11px] font-semibold text-on-surface-variant uppercase tracking-wider">
-                  <th className="py-3.5 px-4">Book Title & Category</th>
-                  <th className="py-3.5 px-4">Author</th>
-                  <th className="py-3.5 px-4">File Download Link</th>
-                  <th className="py-3.5 px-4 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-hairline text-xs font-mono">
-                {isLoadingBooks ? (
-                  <tr>
-                    <td colSpan={4} className="py-10 text-center text-on-surface-variant font-sans">
-                      <div className="flex items-center justify-center gap-2">
-                        <Loader2 size={18} className="animate-spin text-primary-coral" />
-                        <span>Loading {selectedLevel} books...</span>
-                      </div>
-                    </td>
-                  </tr>
-                ) : (Array.isArray(levelBooks) ? levelBooks.filter((b) => !b.level || b.level === selectedLevel) : []).length > 0 ? (
-                  (Array.isArray(levelBooks) ? levelBooks.filter((b) => !b.level || b.level === selectedLevel) : []).map((book) => (
-                    <tr key={book.id} className="hover:bg-surface-soft transition-colors">
-                      <td className="py-3.5 px-4 font-sans font-bold text-on-surface">
-                        <div>{book.title}</div>
-                        <span className="px-2 py-0.5 bg-surface-card border border-hairline text-primary-coral text-[9px] font-mono font-bold rounded uppercase mt-1 inline-block">
-                          {book.category}
-                        </span>
-                      </td>
-                      <td className="py-3.5 px-4 text-on-surface-variant font-sans">{book.author}</td>
-                      <td className="py-3.5 px-4 text-primary-coral font-mono truncate max-w-xs">
-                        <a href={book.url} target="_blank" rel="noopener noreferrer" className="hover:underline flex items-center gap-1">
-                          <span className="truncate">{book.url}</span>
-                        </a>
-                      </td>
-                      <td className="py-3.5 px-4 text-right font-sans">
-                        <button
-                          onClick={() => setDeleteBookModal(book.id)}
-                          className="p-1.5 text-destructive-red hover:bg-red-500/10 rounded-lg transition-colors focus-ring cursor-pointer"
-                          title="Remove Book"
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={4} className="py-10 text-center text-on-surface-variant font-sans">
-                      <div className="flex flex-col items-center justify-center gap-2">
-                        <BookOpen size={28} className="text-text-muted opacity-50" />
-                        <p className="font-semibold text-sm text-on-surface">No PDF books assigned for {selectedLevel} yet</p>
-                        <p className="text-xs text-text-muted">Click "Add PDF Book to {selectedLevel}" above to upload reading materials for this level.</p>
-                      </div>
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-
       {/* SUB-TAB 3: BULK QUESTION JSON IMPORT */}
       {cmsTab === 'json' && (
         <div className="bg-canvas border border-hairline rounded-2xl p-6 space-y-6">
@@ -973,19 +617,6 @@ const CurriculumManagement = () => {
           </div>
         </div>
       )}
-
-      {/* Delete Book Confirmation Dialog */}
-      <ConfirmDialog
-        isOpen={!!deleteBookModal}
-        title="Delete Level PDF Book?"
-        message="Are you sure you want to remove this PDF reading manual from the level catalog? Learners will no longer be able to select it for Task 3."
-        confirmLabel="Delete PDF Book"
-        cancelLabel="Cancel"
-        type="danger"
-        isSubmitting={isDeletingBook}
-        onConfirm={handleConfirmDeleteBook}
-        onCancel={() => setDeleteBookModal(null)}
-      />
     </div>
   );
 };

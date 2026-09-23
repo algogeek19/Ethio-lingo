@@ -22,6 +22,7 @@ import {
   Unlock,
   Check,
   AlertCircle,
+  ChevronDown,
 } from 'lucide-react';
 import { formatETB, formatDate } from '../../../utils/formatters';
 import { CURRICULUM_LEVELS } from '../../../context/StakingContext';
@@ -30,11 +31,12 @@ import { api } from '../../../services/api';
 const ALL_LEVELS = ['Free Trial', ...CURRICULUM_LEVELS];
 
 export const StudentDetailsDrawer = ({ studentId, onClose, onStudentUpdated }) => {
-  const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'progress' | 'ledger'
+  const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'progress' | 'ledger' | 'exams'
   const [studentData, setStudentData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [saveSuccessMsg, setSaveSuccessMsg] = useState('');
+  const [expandedAttemptId, setExpandedAttemptId] = useState(null);
 
   // Editable Form State
   const [formData, setFormData] = useState({
@@ -303,6 +305,20 @@ export const StudentDetailsDrawer = ({ studentId, onClose, onStudentUpdated }) =
           >
             <FileText size={14} />
             <span>Financial Ledger ({studentData?.ledgerTransactions?.length || 0})</span>
+          </button>
+
+          <button
+            role="tab"
+            aria-selected={activeTab === 'exams'}
+            onClick={() => setActiveTab('exams')}
+            className={`py-3 px-4 text-xs font-semibold border-b-2 transition-all flex items-center gap-2 focus-ring cursor-pointer ${
+              activeTab === 'exams'
+                ? 'border-primary-coral text-primary-coral'
+                : 'border-transparent text-on-surface-variant hover:text-on-surface'
+            }`}
+          >
+            <AlertTriangle size={14} />
+            <span>Exam Results ({studentData?.examAttempts?.length || 0})</span>
           </button>
         </div>
 
@@ -629,7 +645,7 @@ export const StudentDetailsDrawer = ({ studentId, onClose, onStudentUpdated }) =
                     <div>
                       <h3 className="font-serif font-bold text-base text-on-surface">Daily Task & Exam Records</h3>
                       <p className="text-xs text-on-surface-variant">
-                        Chronological record of completed daily lessons, listening, reading tasks, and exam evaluations.
+                        Chronological record of completed daily lessons, listening, and exam evaluations.
                       </p>
                     </div>
                   </div>
@@ -642,8 +658,7 @@ export const StudentDetailsDrawer = ({ studentId, onClose, onStudentUpdated }) =
                             <th className="py-3 px-4">Day & Date</th>
                             <th className="py-3 px-3">Level Track</th>
                             <th className="py-3 px-3">Task 1 (Lesson)</th>
-                            <th className="py-3 px-3">Task 2 (Audio)</th>
-                            <th className="py-3 px-3">Task 3 (PDF)</th>
+                            <th className="py-3 px-3">Task 2 (Listening)</th>
                             <th className="py-3 px-4 text-right">Daily Exam</th>
                           </tr>
                         </thead>
@@ -671,17 +686,6 @@ export const StudentDetailsDrawer = ({ studentId, onClose, onStudentUpdated }) =
                                   </span>
                                 ) : (
                                   <span className="text-text-muted text-[11px]">Pending</span>
-                                )}
-                              </td>
-                              <td className="py-3 px-3">
-                                {dp.task3ReadingCompleted ? (
-                                  <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-bold text-[11px]">
-                                    <Check size={13} /> Read ({Math.round((dp.task3AccumulatedSeconds || 0) / 60)}m)
-                                  </span>
-                                ) : (
-                                  <span className="text-text-muted text-[11px]">
-                                    {dp.task3AccumulatedSeconds ? `${Math.round(dp.task3AccumulatedSeconds / 60)}m read` : 'Pending'}
-                                  </span>
                                 )}
                               </td>
                               <td className="py-3 px-4 text-right">
@@ -828,6 +832,137 @@ export const StudentDetailsDrawer = ({ studentId, onClose, onStudentUpdated }) =
                           </tbody>
                         </table>
                       </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* TAB 4: COMPLETE EXAM RESULTS */}
+              {activeTab === 'exams' && (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="font-serif font-bold text-base text-on-surface">Complete Exam History</h3>
+                      <p className="text-xs text-on-surface-variant">
+                        Every exam this student has taken — expand any attempt to review each question, the student's answer,
+                        and the correct answer.
+                      </p>
+                    </div>
+                    <span className="text-xs font-mono text-text-muted">
+                      {studentData?.examAttempts?.length || 0} exam(s) recorded
+                    </span>
+                  </div>
+
+                  {studentData?.examAttempts && studentData.examAttempts.length > 0 ? (
+                    <div className="space-y-3">
+                      {studentData.examAttempts.map((attempt) => {
+                        let review = [];
+                        try {
+                          review = typeof attempt.answersJson === 'string' ? JSON.parse(attempt.answersJson || '[]') : attempt.answersJson || [];
+                        } catch (e) {
+                          review = [];
+                        }
+                        const isExpanded = expandedAttemptId === attempt.id;
+                        return (
+                          <div
+                            key={attempt.id}
+                            className="rounded-2xl border border-hairline bg-canvas overflow-hidden"
+                          >
+                            {/* Attempt Header */}
+                            <button
+                              type="button"
+                              onClick={() => setExpandedAttemptId(isExpanded ? null : attempt.id)}
+                              className="w-full flex flex-wrap items-center gap-x-3 gap-y-2 px-5 py-4 hover:bg-surface-soft transition-colors cursor-pointer text-left"
+                            >
+                              <div className="flex items-center gap-2">
+                                <span className="font-mono font-bold text-on-surface text-xs">
+                                  Day {attempt.dayNumber}
+                                </span>
+                                <span className="px-2 py-0.5 rounded-full bg-surface-card border border-hairline text-[10px] font-mono text-on-surface-variant">
+                                  {attempt.level}
+                                </span>
+                              </div>
+                              <span
+                                className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                                  attempt.passed
+                                    ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30'
+                                    : 'bg-rose-500/15 text-rose-700 dark:text-rose-300 border border-rose-500/30'
+                                }`}
+                              >
+                                {attempt.passed ? 'PASSED' : 'FAILED'}
+                              </span>
+                              <span className="text-xs font-mono text-on-surface font-bold">
+                                {attempt.score}/{attempt.totalQuestions}
+                              </span>
+                              <span className="text-[10px] font-mono text-text-muted">
+                                Pass mark: {attempt.passThreshold}
+                              </span>
+                              <span className="ml-auto flex items-center gap-2 text-[10px] font-mono text-text-muted">
+                                {formatDate(attempt.createdAt)}
+                                <ChevronDown
+                                  size={14}
+                                  className={`transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+                                />
+                              </span>
+                            </button>
+
+                            {/* Per-Question Review */}
+                            {isExpanded && (
+                              <div className="border-t border-hairline divide-y divide-hairline">
+                                {review.length === 0 ? (
+                                  <div className="px-5 py-6 text-xs text-text-muted font-mono">
+                                    No per-question detail recorded for this attempt.
+                                  </div>
+                                ) : (
+                                  review.map((q, idx) => (
+                                    <div key={q.questionId || idx} className="px-5 py-4 space-y-2.5">
+                                      <div className="flex items-start justify-between gap-3">
+                                        <p className="text-xs font-semibold text-on-surface font-sans leading-relaxed">
+                                          <span className="font-mono text-primary-coral mr-1.5">Q{idx + 1}.</span>
+                                          {q.question}
+                                        </p>
+                                        <span
+                                          className={`shrink-0 px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                                            q.isCorrect
+                                              ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300'
+                                              : 'bg-rose-500/15 text-rose-700 dark:text-rose-300'
+                                          }`}
+                                        >
+                                          {q.isCorrect ? 'Matched' : 'Incorrect'}
+                                        </span>
+                                      </div>
+                                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] font-mono">
+                                        <div className="px-3 py-2 rounded-xl border border-hairline bg-surface-lowest">
+                                          <span className="text-[9px] uppercase text-text-muted block mb-0.5">Student's Answer</span>
+                                          <span className={q.isCorrect ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}>
+                                            {q.yourAnswer || '(Not answered)'}
+                                          </span>
+                                        </div>
+                                        <div className="px-3 py-2 rounded-xl border border-hairline bg-surface-lowest">
+                                          <span className="text-[9px] uppercase text-text-muted block mb-0.5">Correct Answer</span>
+                                          <span className="text-emerald-600 dark:text-emerald-400">{q.correctAnswer || 'N/A'}</span>
+                                        </div>
+                                      </div>
+                                      {q.explanation && (
+                                        <p className="text-[11px] text-on-surface-variant font-sans leading-relaxed bg-surface-lowest border border-hairline rounded-xl px-3 py-2">
+                                          <span className="font-mono text-[9px] uppercase text-text-muted">Why: </span>
+                                          {q.explanation}
+                                        </p>
+                                      )}
+                                    </div>
+                                  ))
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="py-12 bg-canvas rounded-2xl border border-hairline flex flex-col items-center justify-center gap-2 text-on-surface-variant font-sans">
+                      <AlertTriangle size={28} className="text-text-muted opacity-40" />
+                      <p className="font-semibold text-xs">No exam results recorded</p>
+                      <p className="text-[11px] text-text-muted">Exam attempts will appear here once this student takes their daily exam.</p>
                     </div>
                   )}
                 </div>

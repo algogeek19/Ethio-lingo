@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import {
   Clock,
   Lock,
@@ -8,6 +9,8 @@ import {
   Send,
   LogOut,
   Wallet,
+  MailCheck,
+  ShieldCheck,
 } from 'lucide-react';
 import { api } from '../../services/api';
 import { formatETB } from '../../utils/formatters';
@@ -69,6 +72,66 @@ const PaymentPendingLockout = ({ user, onStatusRefresh, onLogout }) => {
   const isLowStake = (userWallet?.stakedAmount ?? 0) < 500 && (userWallet?.stakedAmount ?? 0) > 0 && !isPendingApproval;
   const hasNoStake = (userWallet?.stakedAmount ?? 0) <= 0 && !isPendingApproval && !isDeclined;
 
+  // Defensive: unverified emails must go through the /verify flow, not the deposit flow.
+  if (user && user.emailVerified === false) {
+    return (
+      <div className="min-h-screen bg-[#faf9f5] flex items-center justify-center p-4 sm:p-6 lg:p-8">
+        <div className="max-w-xl w-full bg-white border-2 border-[#e6dfd8] rounded-2xl p-6 sm:p-8 shadow-2xl space-y-6 animate-fade-in relative overflow-hidden">
+          <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-[#8f482f] via-[#e8a55a] to-[#181715]" />
+
+          <div className="text-center space-y-3 pt-2">
+            <div className="w-16 h-16 rounded-2xl bg-[#faf9f5] border border-[#e6dfd8] flex items-center justify-center mx-auto text-[#8f482f] shadow-inner">
+              <MailCheck size={32} className="text-[#8f482f]" />
+            </div>
+            <div className="inline-block px-3 py-1 bg-[#181715] text-[#e8a55a] font-mono text-[10px] font-bold rounded uppercase tracking-wider">
+              EMAIL NOT VERIFIED
+            </div>
+            <h2 className="font-serif font-bold text-2xl sm:text-3xl text-[#1b1c1a]">
+              Verify your Google email first
+            </h2>
+            <p className="text-xs sm:text-sm text-[#54433e] max-w-md mx-auto leading-relaxed">
+              You must verify the Google email on your account before daily learning,
+              exams, or the escrow wallet can be unlocked.
+            </p>
+          </div>
+
+          <div className="p-4 bg-[#f5f0e8] border border-[#e6dfd8] rounded-xl text-xs space-y-1.5">
+            <div className="flex items-center gap-2 font-bold text-[#8f482f]">
+              <ShieldCheck size={16} />
+              <span>Google-verified accounts only</span>
+            </div>
+            <p className="text-[#54433e] text-[11px] leading-relaxed break-all">
+              Account: <strong className="font-mono">{user.email}</strong>
+            </p>
+          </div>
+
+          <div className="space-y-3 pt-2">
+            <Link
+              to="/verify"
+              className="w-full py-3 bg-[#8f482f] hover:bg-[#a9583e] text-white font-semibold text-xs rounded-xl flex items-center justify-center gap-2 shadow-xs transition-all"
+            >
+              <ShieldCheck size={16} />
+              <span>Go to Email Verification</span>
+            </Link>
+
+            <div className="flex justify-between items-center text-xs font-mono pt-2">
+              <span className="text-[#6c6a64]">Logged in as: {user.email}</span>
+              {onLogout && (
+                <button
+                  onClick={onLogout}
+                  className="text-red-600 hover:text-red-800 font-bold flex items-center gap-1"
+                >
+                  <LogOut size={14} />
+                  <span>Sign Out</span>
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#faf9f5] flex items-center justify-center p-4 sm:p-6 lg:p-8">
       <div className="max-w-xl w-full bg-white border-2 border-[#e6dfd8] rounded-2xl p-6 sm:p-8 shadow-2xl space-y-6 animate-fade-in relative overflow-hidden">
@@ -123,7 +186,7 @@ const PaymentPendingLockout = ({ user, onStatusRefresh, onLogout }) => {
               </>
             ) : isTrialExpired ? (
               <>
-                Your 3-day free trial has concluded! Deposit your 1,000 ETB escrow stake to continue daily learning modules, timed reading, and diagnostic exams.
+                Your 3-day free trial has concluded! Deposit your 1,000 ETB escrow stake to continue daily learning modules, listening and video practice, and diagnostic exams.
               </>
             ) : isLowStake ? (
               <>

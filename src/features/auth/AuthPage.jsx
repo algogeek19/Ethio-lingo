@@ -1,10 +1,12 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowRight, CheckCircle, Award, UserPlus, LogIn, AlertCircle, Eye, EyeOff, Phone, Users, Headphones } from 'lucide-react';
+import { ArrowRight, CheckCircle, Award, UserPlus, LogIn, AlertCircle, Eye, EyeOff, Phone, Users, Headphones, ShieldCheck } from 'lucide-react';
 import { useRole } from '../../context/RoleContext';
 import { useStaking } from '../../context/StakingContext';
 import { api } from '../../services/api';
 import { formatETB } from '../../utils/formatters';
+
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
 
 // Offline fallback placement questions (used only if the backend is unreachable)
 const LOCAL_FALLBACK_QUESTIONS = [
@@ -25,21 +27,26 @@ const LOCAL_FALLBACK_QUESTIONS = [
   { id: 'fb15', question: 'The manager asked me where I _____ my training certificate.', options: ['did get', 'got', 'have got', 'had got'], answerIndex: 3 },
 ];
 
-const MIN_LISTENING = 5;
-const MAX_LISTENING = 20;
+const LISTENING_MINUTES_OPTIONS = [
+  { value: 15, label: '0–15 min / day', description: 'Light daily listening — fits a busy schedule.' },
+  { value: 30, label: '15–30 min / day', description: 'Deeper daily listening — fastest progress.' },
+];
 
 const INTEREST_OPTIONS = ['Business', 'Travel', 'Health', 'Technology', 'Education', 'Music', 'Sports', 'Science'];
 const LISTENING_CATEGORY_OPTIONS = ['Informative', 'Entertainment', 'Academic', 'News', 'Conversations', 'Music'];
 
 const AuthPage = () => {
   const navigate = useNavigate();
-  const { authUser, role, login, signup } = useRole();
+  const { authUser, role, login, signup, googleLogin } = useRole();
   const { setInitialLevel, toggleFreeTrialMode } = useStaking();
 
+  // Redirect depending on auth state (Google sign-in may produce an unverified admin-less learner)
   React.useEffect(() => {
     if (authUser) {
       if (role === 'admin' || authUser.role === 'admin') {
         navigate('/admin', { replace: true });
+      } else if (authUser.emailVerified === false) {
+        navigate('/verify', { replace: true });
       } else {
         navigate('/dashboard', { replace: true });
       }
@@ -72,6 +79,97 @@ const AuthPage = () => {
 
   // Stake tier choice
   const [stakeOption, setStakeOption] = useState('stake_1000');
+
+  // Google Identity Services button state
+  const [gsiReady, setGsiReady] = useState(false);
+  const [gsiError, setGsiError] = useState('');
+  const gsiButtonRef = useRef(null);
+  const gsiInitializedRef = useRef(false);
+
+  // Handle a successful Google ID-token credential
+  const handleGoogleCredential = async (response) => {
+    if (!response || !response.credential) {
+      setAuthError('Google sign-in returned no credential. Please try again.');
+      return;
+    }
+    setAuthError('');
+    setIsSubmitting(true);
+    try {
+      const result = await googleLogin(response.credential);
+      if (result && result.success) {
+        if (result.role === 'admin') {
+          navigate('/admin');
+        } else if (result.user && result.user.emailVerified === false) {
+          navigate('/verify');
+        } else {
+          navigate('/dashboard');
+        }
+      } else {
+        setAuthError(result?.message || 'Google sign-in failed. Please try again.');
+      }
+    } catch (err) {
+      setAuthError(err?.message || 'Google sign-in failed. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Load Google Identity Services client lazily and render the branded button
+  useEffect(() => {
+    if (!GOOGLE_CLIENT_ID) return;
+
+    let cancelled = false;
+    let scriptEl = document.getElementById('gsi-client-script');
+    if (!scriptEl) {
+      scriptEl = document.createElement('script');
+      scriptEl.id = 'gsi-client-script';
+      scriptEl.src = 'https://accounts.google.com/gsi/client';
+      scriptEl.async = true;
+      scriptEl.defer = true;
+      document.head.appendChild(scriptEl);
+    }
+
+    scriptEl.addEventListener('load', () => {
+      if (cancelled) return;
+      setGsiReady(!!window.google?.accounts?.id);
+    });
+    scriptEl.addEventListener('error', () => {
+      if (cancelled) return;
+      setGsiError('Google sign-in could not be loaded. Please try again or use email sign-in.');
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Render the Google button once the library is available
+  useEffect(() => {
+    if (!GOOGLE_CLIENT_ID || !gsiReady) return;
+    if (gsiInitializedRef.current) return;
+    if (!gsiButtonRef.current) return;
+
+    gsiInitializedRef.current = true;
+    try {
+      window.google.accounts.id.initialize({
+        client_id: GOOGLE_CLIENT_ID,
+        callback: handleGoogleCredential,
+        auto_select: false,
+      });
+      window.google.accounts.id.renderButton(gsiButtonRef.current, {
+        type: 'standard',
+        theme: 'outline',
+        size: 'large',
+        text: 'continue_with',
+        shape: 'rectangular',
+        width: gsiButtonRef.current.clientWidth || 320,
+        logo_alignment: 'left',
+      });
+    } catch (err) {
+      console.error('Google Identity initialize failed:', err);
+      setGsiError('Google sign-in could not be initialized.');
+    }
+  }, [gsiReady]);
 
   const toggleChip = (list, setList, value) => {
     setList(list.includes(value) ? list.filter((v) => v !== value) : [...list, value]);
@@ -109,6 +207,8 @@ const AuthPage = () => {
     if (result && result.success) {
       if (result.role === 'admin') {
         navigate('/admin');
+      } else if (result.user && result.user.emailVerified === false) {
+        navigate('/verify', { replace: true });
       } else {
         navigate('/dashboard');
       }
@@ -156,8 +256,9 @@ const AuthPage = () => {
       setAuthError('Please select at least one learning interest.');
       return false;
     }
-    if (listeningMinutes < MIN_LISTENING || listeningMinutes > MAX_LISTENING) {
-      setAuthError(`Daily listening goal must be between ${MIN_LISTENING} and ${MAX_LISTENING} minutes.`);
+    const validMinutes = [15, 30];
+    if (!validMinutes.includes(listeningMinutes)) {
+      setAuthError('Please choose your daily listening track (0–15 min or 15–30 min per day).');
       return false;
     }
     if (listeningCategories.length === 0) {
@@ -233,6 +334,16 @@ const AuthPage = () => {
     }
 
     toggleFreeTrialMode(isTrial);
+
+    // Every new account is created in PENDING_VERIFICATION — require email verification first.
+    if (res.user && res.user.emailVerified === false) {
+      navigate('/verify', {
+        replace: true,
+        state: { debugCode: res.verification?.debugCode || null },
+      });
+      return;
+    }
+
     navigate('/dashboard');
   };
 
@@ -322,6 +433,33 @@ const AuthPage = () => {
             <AlertCircle size={16} className="shrink-0 text-red-600 dark:text-red-400" />
             <span>{authError}</span>
           </div>
+        )}
+
+        {/* Google Identity Sign-In (only visible when a client ID is configured) */}
+        {step === 'form' && GOOGLE_CLIENT_ID && (
+          <div className="space-y-3">
+            {gsiError && (
+              <p className="text-xs text-red-600 dark:text-red-400 font-mono bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 rounded-lg px-3 py-2">
+                {gsiError}
+              </p>
+            )}
+            <div ref={gsiButtonRef} className="w-full min-h-[46px] flex items-center justify-center" />
+            <div className="flex items-center gap-3">
+              <div className="h-px flex-1 bg-hairline" />
+              <span className="text-[10px] text-on-surface-variant uppercase font-mono font-semibold tracking-wider">
+                or continue with email
+              </span>
+              <div className="h-px flex-1 bg-hairline" />
+            </div>
+          </div>
+        )}
+
+        {/* Google-verified email notice */}
+        {step === 'form' && (
+          <p className="text-[11px] text-on-surface-variant font-mono flex items-center gap-1.5 leading-relaxed">
+            <ShieldCheck size={13} className="shrink-0 text-primary-coral" />
+            Only Google-verified email addresses (Gmail) are accepted — no temporary or disposable emails.
+          </p>
         )}
 
         {/* SIGN IN FORM */}
@@ -494,21 +632,43 @@ const AuthPage = () => {
 
             <div>
               <label className="flex items-center gap-1.5 text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-2">
-                <Headphones size={13} /> Daily Listening Track: {listeningMinutes} min/day
+                <Headphones size={13} /> Daily Listening Track
               </label>
-              <input
-                type="range"
-                min={MIN_LISTENING}
-                max={MAX_LISTENING}
-                step={5}
-                value={listeningMinutes}
-                onChange={(e) => setListeningMinutes(parseInt(e.target.value, 10))}
-                className="w-full accent-[#e76f51]"
-              />
-              <div className="flex justify-between text-[10px] font-mono text-on-surface-variant mt-0.5">
-                <span>{MIN_LISTENING} min</span>
-                <span>{MAX_LISTENING} min</span>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {LISTENING_MINUTES_OPTIONS.map((opt) => {
+                  const isSelected = listeningMinutes === opt.value;
+                  return (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => setListeningMinutes(opt.value)}
+                      aria-pressed={isSelected}
+                      className={`p-4 rounded-xl border-2 text-left transition-all cursor-pointer focus-ring btn-interactive ${
+                        isSelected
+                          ? 'border-primary-coral bg-primary-coral/10 shadow-sm'
+                          : 'border-hairline bg-surface-lowest hover:border-primary-coral/60'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span className={`font-serif font-bold text-sm ${isSelected ? 'text-primary-coral' : 'text-on-surface'}`}>
+                          {opt.label}
+                        </span>
+                        <span className={`px-2.5 py-1 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider ${
+                          isSelected ? 'bg-primary-coral text-white' : 'bg-surface-card text-on-surface-variant border border-hairline'
+                        }`}>
+                          {isSelected ? '✓ Chosen' : 'Choose'}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-on-surface-variant mt-1 leading-relaxed">
+                        {opt.description}
+                      </p>
+                    </button>
+                  );
+                })}
               </div>
+              <p className="text-[11px] text-on-surface-variant font-mono mt-1.5">
+                Your personalized daily listening track: {listeningMinutes} min/day.
+              </p>
             </div>
 
             <div>

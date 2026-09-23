@@ -151,7 +151,11 @@ const VideoPlayer = ({ mode = 'task1' }) => {
     if (playedSecs > lastPlayedSeconds + 1.2) {
       setSeekWarning(true);
       if (playerRef.current) {
-        playerRef.current.seekTo(lastPlayedSeconds, 'seconds');
+        try {
+          playerRef.current.seekTo(lastPlayedSeconds, 'seconds');
+        } catch (seekErr) {
+          console.warn('Seek lock fallback:', seekErr);
+        }
       }
       setTimeout(() => setSeekWarning(false), 3000);
       return;
@@ -336,7 +340,6 @@ INSTRUCTIONS:
             key={currentVideo.url}
             ref={playerRef}
             url={currentVideo.url}
-            src={currentVideo.url}
             width="100%"
             height="100%"
             playing={isPlaying && isTabActive}
@@ -345,6 +348,7 @@ INSTRUCTIONS:
             onPause={() => setIsPlaying(false)}
             onProgress={handleProgress}
             onEnded={handleEnded}
+            onStart={() => setIsPlaying(true)}
             onError={(err) => {
               console.warn('ReactPlayer playback warning:', err);
             }}
@@ -352,6 +356,7 @@ INSTRUCTIONS:
             config={{
               youtube: {
                 playerVars: {
+                  playsinline: 1,
                   modestbranding: 1,
                   rel: 0,
                   origin: typeof window !== 'undefined' ? window.location.origin : 'http://localhost:5173',
@@ -359,6 +364,50 @@ INSTRUCTIONS:
               },
             }}
           />
+
+          {/* Custom Play Overlay — shown until the video starts */}
+          {!isPlaying && (
+            <button
+              type="button"
+              onClick={() => setIsPlaying(true)}
+              aria-label="Play video"
+              className="absolute inset-0 z-10 flex items-center justify-center bg-black/30 hover:bg-black/20 transition-colors cursor-pointer focus-ring"
+            >
+              <span className="w-20 h-20 rounded-full bg-primary-coral/95 hover:bg-primary-hover text-white flex items-center justify-center shadow-2xl transition-transform hover:scale-105">
+                <svg width="34" height="34" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <path d="M8 5v14l11-7z" />
+                </svg>
+              </span>
+            </button>
+          )}
+        </div>
+
+        {/* Custom Control Bar */}
+        <div className="flex items-center justify-between px-4 py-3 bg-stone-900 border-t border-stone-800">
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setIsPlaying((prev) => !prev)}
+              aria-label={isPlaying ? 'Pause video' : 'Play video'}
+              className="w-10 h-10 rounded-full bg-primary-coral hover:bg-primary-hover text-white flex items-center justify-center shadow-xs transition-transform hover:scale-105 focus-ring cursor-pointer"
+            >
+              {isPlaying ? (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <path d="M6 5h4v14H6zM14 5h4v14h-4z" />
+                </svg>
+              ) : (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <path d="M8 5v14l11-7z" />
+                </svg>
+              )}
+            </button>
+            <span className="text-xs font-mono text-stone-300">
+              {isPlaying ? 'Playing…' : 'Paused'} • Watching full video unlocks your daily tasks
+            </span>
+          </div>
+          <span className="text-[10px] font-mono text-stone-500 uppercase tracking-wider">
+            {mode === 'task1' ? 'Task 1 • Lesson' : 'Task 2 • Listening'}
+          </span>
         </div>
       </div>
 

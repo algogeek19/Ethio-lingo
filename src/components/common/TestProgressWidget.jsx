@@ -13,6 +13,7 @@ const TestProgressWidget = () => {
     freeTrialDaysLeft,
     setFreeTrialDaysLeft,
     depositToVault,
+    advanceToNextLevel,
     isFreeTrialMode,
     user,
   } = useStaking();
@@ -31,9 +32,8 @@ const TestProgressWidget = () => {
   const handleCompleteAllTasks = async () => {
     await completeTask('lesson');
     await completeTask('video');
-    await completeTask('pdf', { seconds: 1200 });
     await completeTask('exam', { passed: true, score: 20, examCompleted: true, examPassed: true });
-    setTestSuccessMsg('All 4 daily tasks (including Exam!) marked complete!');
+    setTestSuccessMsg('All 3 daily tasks (including Exam!) marked complete!');
     setTimeout(() => setTestSuccessMsg(''), 3000);
   };
 
@@ -142,7 +142,7 @@ const TestProgressWidget = () => {
               className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-mono font-bold flex items-center justify-center gap-2 transition-all cursor-pointer shadow-xs"
             >
               <ShieldCheck size={16} />
-              <span>Complete All 4 Tasks Today</span>
+              <span>Complete All 3 Tasks Today</span>
             </button>
           </div>
 

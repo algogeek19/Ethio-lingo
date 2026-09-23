@@ -124,3 +124,36 @@ export const getTyping = async (req, res, next) => {
     next(err);
   }
 };
+
+export const getPeers = async (req, res, next) => {
+  try {
+    const userId = req.user ? req.user.id : null;
+    const data = await chatService.getDirectChatPeers(userId);
+    return successResponse(res, 'Direct chat peers fetched', data);
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const getDirectMessages = async (req, res, next) => {
+  try {
+    const userId = req.user ? req.user.id : null;
+    const { peerId } = req.params;
+    const data = await chatService.getDirectMessages(userId, peerId);
+    return successResponse(res, 'Direct chat messages fetched', data);
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const postDirectMessage = async (req, res, next) => {
+  try {
+    const userId = req.user ? req.user.id : null;
+    const { peerId } = req.params;
+    const { content } = req.body;
+    const message = await chatService.postDirectMessage(userId, peerId, content);
+    return successResponse(res, 'Direct chat message sent', message, 201);
+  } catch (err) {
+    next(err);
+  }
+};

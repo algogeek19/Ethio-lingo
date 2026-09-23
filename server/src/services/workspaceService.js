@@ -23,7 +23,6 @@ export const getDailyWorkspaceData = async (userId, level, dayNumber) => {
     : Math.min(30, Math.max(1, parseInt(dayNumber || 1, 10)));
 
   const moduleData = await curriculumRepository.findModuleByLevelAndDay(activeLevel, parsedDay);
-  const levelBooks = await curriculumRepository.findBooksByLevel(activeLevel);
   let progress = await progressRepository.findDailyProgress(userId, activeLevel, parsedDay, todayStr);
 
   // Automatic day advance on new calendar date:
@@ -56,8 +55,6 @@ export const getDailyWorkspaceData = async (userId, level, dayNumber) => {
       updateData: {
         task1LessonCompleted: false,
         task2ListeningCompleted: false,
-        task3ReadingCompleted: false,
-        task3AccumulatedSeconds: 0,
         examCompleted: false,
         examScore: 0,
         examPassed: false,
@@ -67,13 +64,10 @@ export const getDailyWorkspaceData = async (userId, level, dayNumber) => {
 
   return {
     module: moduleData,
-    levelBooks,
     isLockedForToday,
     progress: progress || {
       task1LessonCompleted: false,
       task2ListeningCompleted: false,
-      task3ReadingCompleted: false,
-      task3AccumulatedSeconds: 0,
       examCompleted: false,
       examScore: 0,
       examPassed: false,
@@ -94,10 +88,6 @@ export const updateTaskCompletion = async (userId, level, dayNumber, taskType, e
   }
   if (taskType === 'task2' || taskType === 'video') {
     updateFields.task2ListeningCompleted = true;
-  }
-  if (taskType === 'task3' || taskType === 'pdf') {
-    updateFields.task3ReadingCompleted = true;
-    if (extraData.seconds) updateFields.task3AccumulatedSeconds = extraData.seconds;
   }
   if (taskType === 'exam') {
     const isExamPassed = extraData.passed === true || extraData.examPassed === true;
