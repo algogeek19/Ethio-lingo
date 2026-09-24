@@ -23,8 +23,10 @@ import {
   Check,
   AlertCircle,
   ChevronDown,
+  FileDown,
 } from 'lucide-react';
 import { formatETB, formatDate } from '../../../utils/formatters';
+import { downloadStudentReportPdf } from '../../../utils/studentReportPdf';
 import { CURRICULUM_LEVELS } from '../../../context/StakingContext';
 import { api } from '../../../services/api';
 
@@ -61,6 +63,27 @@ export const StudentDetailsDrawer = ({ studentId, onClose, onStudentUpdated }) =
   const [isAdjustingBalance, setIsAdjustingBalance] = useState(false);
   const [adjustSuccessMsg, setAdjustSuccessMsg] = useState('');
   const [adjustErrorMsg, setAdjustErrorMsg] = useState('');
+
+  // PDF Report Generation State
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+  const [pdfNotice, setPdfNotice] = useState('');
+
+  const handleDownloadPdf = () => {
+    if (!studentData || isGeneratingPdf) return;
+    setIsGeneratingPdf(true);
+    setPdfNotice('');
+    // Let the button render its spinner before the (synchronous) PDF build starts.
+    setTimeout(() => {
+      try {
+        downloadStudentReportPdf(studentData);
+        setPdfNotice('Student report downloaded as PDF.');
+      } catch (err) {
+        setPdfNotice(`Failed to generate PDF: ${err?.message || 'unknown error'}`);
+      } finally {
+        setIsGeneratingPdf(false);
+      }
+    }, 50);
+  };
 
   const loadStudentDetails = async (silent = false) => {
     if (!silent) setIsLoading(true);
@@ -215,6 +238,15 @@ export const StudentDetailsDrawer = ({ studentId, onClose, onStudentUpdated }) =
 
           <div className="flex items-center gap-2">
             <button
+              onClick={handleDownloadPdf}
+              disabled={!studentData || isGeneratingPdf}
+              title="Download Student Report (PDF)"
+              className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold bg-primary-coral text-white rounded-xl hover:bg-primary-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus-ring cursor-pointer"
+            >
+              {isGeneratingPdf ? <Loader2 size={14} className="animate-spin" /> : <FileDown size={14} />}
+              <span className="hidden sm:inline">{isGeneratingPdf ? 'Generating…' : 'Download Report'}</span>
+            </button>
+            <button
               onClick={() => loadStudentDetails(false)}
               disabled={isLoading}
               title="Refresh Data"
@@ -336,6 +368,12 @@ export const StudentDetailsDrawer = ({ studentId, onClose, onStudentUpdated }) =
             </div>
           ) : (
             <>
+              {pdfNotice && (
+                <div className="p-3 bg-primary-coral/10 border border-primary-coral/30 text-primary-coral dark:text-primary-warm text-xs font-mono font-semibold rounded-xl flex items-center gap-2 animate-fade-in">
+                  <FileDown size={16} className="shrink-0" />
+                  <span>{pdfNotice}</span>
+                </div>
+              )}
               {/* TAB 1: OVERVIEW & QUICK ACTIONS */}
               {activeTab === 'overview' && (
                 <div className="space-y-6">

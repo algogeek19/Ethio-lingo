@@ -1,10 +1,36 @@
 import { storage } from './storage';
 
+const DEPLOYED_API_URL = 'https://ethio-lingo.onrender.com/api/v1';
+
 let API_BASE_URL =
   import.meta.env.VITE_API_URL ||
   (typeof window !== 'undefined' && window.location.origin.includes('localhost')
     ? 'http://localhost:5000/api/v1'
-    : 'https://ethio-lingo.onrender.com/api/v1');
+    : DEPLOYED_API_URL);
+
+// Local dev fallback ports + deployed backend as a last resort so the UI never
+// dies with a bare "Failed to fetch" when the local API server is not running.
+const getCandidateBaseUrls = () => {
+  const candidates = [API_BASE_URL];
+  if (!API_BASE_URL || API_BASE_URL.includes('localhost')) {
+    if (!candidates.includes('http://localhost:5001/api/v1')) candidates.push('http://localhost:5001/api/v1');
+    if (!candidates.includes(DEPLOYED_API_URL)) candidates.push(DEPLOYED_API_URL);
+  }
+  return [...new Set(candidates)];
+};
+
+const REQUEST_TIMEOUT_MS = 20000;
+
+const withTimeout = (promise, ms = REQUEST_TIMEOUT_MS) => {
+  let timer;
+  const timeout = new Promise((_, reject) => {
+    timer = setTimeout(() => reject(new Error('The server took too long to respond. Please try again.')), ms);
+  });
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
+};
+
+const isNetworkLevelError = (err) =>
+  !err || !err.status || err instanceof TypeError || /failed to fetch|networkerror|load failed|fetch failed|took too long/i.test(err.message || '');
 
 const getAuthToken = async () => {
   try {
@@ -15,6 +41,16 @@ const getAuthToken = async () => {
     }
   } catch {}
   return null;
+};
+
+const parseResponseBody = async (response) => {
+  const text = await response.text();
+  if (!text) return {};
+  try {
+    return JSON.parse(text);
+  } catch {
+    return { message: `Unexpected server response (${response.status}).` };
+  }
 };
 
 const request = async (endpoint, options = {}) => {
@@ -30,38 +66,42 @@ const request = async (endpoint, options = {}) => {
     headers,
   };
 
-  try {
-    let response;
+  const candidates = getCandidateBaseUrls();
+  let lastNetworkError = null;
+
+  for (const base of candidates) {
     try {
-      response = await fetch(`${API_BASE_URL}${endpoint}`, config);
-    } catch (netErr) {
-      if (API_BASE_URL.includes(':5000')) {
-        API_BASE_URL = 'http://localhost:5001/api/v1';
-        response = await fetch(`${API_BASE_URL}${endpoint}`, config);
-      } else {
-        throw netErr;
+      const response = await withTimeout(fetch(`${base}${endpoint}`, config));
+      const data = await parseResponseBody(response);
+
+      if (!response.ok) {
+        const errorMsg = (data.error && data.error.message) || data.message || 'API Request Failed';
+        const err = new Error(errorMsg);
+        err.status = response.status;
+        err.data = data;
+        throw err;
       }
-    }
 
-    const data = await response.json();
-
-    if (!response.ok) {
-      const errorMsg = (data.error && data.error.message) || data.message || 'API Request Failed';
-      const err = new Error(errorMsg);
-      err.status = response.status;
-      err.data = data;
-      throw err;
+      // Remember the base URL that worked so later calls skip dead candidates.
+      if (base !== API_BASE_URL) {
+        console.warn(`[api] Using fallback backend: ${base}`);
+        API_BASE_URL = base;
+      }
+      return data;
+    } catch (error) {
+      // Server answered (even with an error status) — surface it directly.
+      if (error.status) {
+        console.warn(`API [${options.method || 'GET'} ${endpoint}] (${error.status}):`, error.message);
+        throw error;
+      }
+      // Network-level failure — try the next candidate base URL.
+      lastNetworkError = error;
     }
-
-    return data;
-  } catch (error) {
-    if (error.status && error.status < 500) {
-      console.warn(`API [${options.method || 'GET'} ${endpoint}] (${error.status}):`, error.message);
-    } else {
-      console.error(`API Error on [${options.method || 'GET'} ${endpoint}]:`, error.message);
-    }
-    throw error;
   }
+
+  console.error(`API Error on [${options.method || 'GET'} ${endpoint}]:`, lastNetworkError?.message || 'All backends unreachable');
+  if (lastNetworkError && /took too long/.test(lastNetworkError.message)) throw lastNetworkError;
+  throw new Error('Network error: unable to reach the server. Please check your internet connection and try again.');
 };
 
 export const api = {
@@ -107,35 +147,48 @@ export const api = {
     const headers = {};
     if (token) headers.Authorization = `Bearer ${token}`;
 
-    let response;
-    try {
-      response = await fetch(`${API_BASE_URL}/files/upload`, {
-        method: 'POST',
-        body: formData,
-        headers,
-      });
-    } catch (netErr) {
-      if (API_BASE_URL.includes(':5000')) {
-        API_BASE_URL = 'http://localhost:5001/api/v1';
-        response = await fetch(`${API_BASE_URL}/files/upload`, {
-          method: 'POST',
-          body: formData,
-          headers,
-        });
-      } else {
-        throw netErr;
+    const candidates = getCandidateBaseUrls();
+    let lastNetworkError = null;
+
+    for (const base of candidates) {
+      try {
+        let response;
+        try {
+          response = await withTimeout(
+            fetch(`${base}/files/upload`, {
+              method: 'POST',
+              body: formData,
+              headers,
+            })
+          );
+        } catch (netErr) {
+          lastNetworkError = netErr;
+          continue;
+        }
+
+        const data = await parseResponseBody(response);
+        if (!response.ok) {
+          const errorMsg = (data.error && data.error.message) || data.message || 'File upload failed';
+          const err = new Error(errorMsg);
+          err.status = response.status;
+          err.data = data;
+          throw err;
+        }
+
+        if (base !== API_BASE_URL) {
+          console.warn(`[api] Using fallback backend: ${base}`);
+          API_BASE_URL = base;
+        }
+        return data;
+      } catch (err) {
+        if (err.status) throw err;
+        lastNetworkError = err;
       }
     }
 
-    const data = await response.json();
-    if (!response.ok) {
-      const errorMsg = (data.error && data.error.message) || data.message || 'File upload failed';
-      const err = new Error(errorMsg);
-      err.status = response.status;
-      err.data = data;
-      throw err;
-    }
-    return data;
+    console.error('API Error on [POST /files/upload]:', lastNetworkError?.message || 'All backends unreachable');
+    if (lastNetworkError && /took too long/.test(lastNetworkError.message)) throw lastNetworkError;
+    throw new Error('Network error: unable to reach the server. Please check your internet connection and try again.');
   },
 
   updateProfile: (name, avatar, level, currentDay, isOnboarded, isFreeTrial) => {
