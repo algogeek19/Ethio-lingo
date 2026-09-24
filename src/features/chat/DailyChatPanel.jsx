@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MessageCircle, Send, Flag, Megaphone, ShieldAlert, RefreshCw, X } from 'lucide-react';
+import { MessageCircle, Send, Flag, Megaphone, ShieldAlert, RefreshCw, X, Smile, Copy, ArrowDown } from 'lucide-react';
 import { api } from '../../services/api';
 import { useRole } from '../../context/RoleContext';
+import { DayDivider, EmojiQuickBar, ReadTicks } from './components/chatShared';
+import { formatClock, dayKey } from './components/chatUtils';
 
 const REFRESH_MS = 8000;
 const REASON_OPTIONS = ['Spam / Advertisement', 'Harassment', 'Offensive language', 'Scam or fraud', 'Inappropriate content', 'Other'];
@@ -21,8 +23,12 @@ const DailyChatPanel = ({ roomLevel = 'Daily Topic' }) => {
   const [reportTarget, setReportTarget] = useState(null);
   const [reportReason, setReportReason] = useState('');
   const [reporting, setReporting] = useState(false);
+  const [showEmoji, setShowEmoji] = useState(false);
+  const [atBottom, setAtBottom] = useState(true);
   const bottomRef = useRef(null);
   const lastIdRef = useRef(null);
+  const messagesRef = useRef(null);
+  const textareaRef = useRef(null);
 
   const loadTopic = useCallback(async () => {
     try {
@@ -53,7 +59,7 @@ const DailyChatPanel = ({ roomLevel = 'Daily Topic' }) => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [room]);
 
   useEffect(() => {
     loadTopic();
@@ -68,9 +74,25 @@ const DailyChatPanel = ({ roomLevel = 'Daily Topic' }) => {
     return () => clearInterval(interval);
   }, [loadMessages]);
 
+  // Auto-scroll to the latest message when new messages arrive (if already near the bottom)
+  const handleMessagesScroll = () => {
+    const el = messagesRef.current;
+    if (!el) return;
+    setAtBottom(el.scrollHeight - el.scrollTop - el.clientHeight < 80);
+  };
+
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages.length]);
+    const el = messagesRef.current;
+    if (el && atBottom) {
+      el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
+    }
+  }, [messages.length, atBottom]);
+
+  const scrollToLatest = () => {
+    const el = messagesRef.current;
+    if (el) el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
+    setAtBottom(true);
+  };
 
   const handleSend = async (e) => {
     if (e && e.preventDefault) e.preventDefault();
@@ -82,6 +104,8 @@ const DailyChatPanel = ({ roomLevel = 'Daily Topic' }) => {
       const res = await api.postChatMessage(room, content);
       if (res && res.success && res.data) {
         setDraft('');
+        setShowEmoji(false);
+        if (textareaRef.current) textareaRef.current.style.height = 'auto';
         setMessages((prev) => [...prev, res.data]);
         lastIdRef.current = res.data.id;
       }
@@ -91,6 +115,28 @@ const DailyChatPanel = ({ roomLevel = 'Daily Topic' }) => {
       if (banned) setNotice('Your account is banned from the community chat.');
     } finally {
       setSending(false);
+    }
+  };
+
+  const handleDraftChange = (e) => {
+    setDraft(e.target.value);
+    e.target.style.height = 'auto';
+    e.target.style.height = Math.min(e.target.scrollHeight, 132) + 'px';
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
+      e.preventDefault();
+      handleSend(e);
+    }
+  };
+
+  const addEmoji = (emoji) => {
+    setDraft((d) => d + emoji);
+    if (textareaRef.current) {
+      textareaRef.current.focus();
+      textareaRef.current.style.height = 'auto';
+      textareaRef.current.style.height = Math.min(textareaRef.current.scrollHeight, 132) + 'px';
     }
   };
 
@@ -138,8 +184,9 @@ const DailyChatPanel = ({ roomLevel = 'Daily Topic' }) => {
       )}
 
       {/* Daily Topic banner */}
-      <div className="bg-surface-dark text-white rounded-2xl p-4 sm:p-5 border border-stone-800 flex flex-col sm:flex-row sm:items-center gap-3">
-        <div className="flex items-center gap-3 grow">
+      <div className="relative overflow-hidden bg-surface-dark text-white rounded-2xl p-4 sm:p-5 border border-stone-800 flex flex-col sm:flex-row sm:items-center gap-3">
+        <div className="absolute -top-14 -right-14 w-48 h-48 rounded-full bg-warning-amber/10 blur-3xl pointer-events-none" />
+        <div className="relative flex items-center gap-3 grow">
           <div className="w-10 h-10 rounded-xl bg-warning-amber/20 text-warning-amber flex items-center justify-center shrink-0">
             <Megaphone size={18} />
           </div>
@@ -161,7 +208,7 @@ const DailyChatPanel = ({ roomLevel = 'Daily Topic' }) => {
       </div>
 
       {/* Message Board */}
-      <div className="bg-surface-lowest border border-hairline rounded-2xl flex flex-col overflow-hidden h-[520px]">
+      <div className="bg-surface-lowest border border-hairline rounded-2xl flex flex-col overflow-hidden h-[560px]">
         <div className="px-5 py-3 border-b border-hairline bg-surface-card/50 flex items-center justify-between">
           <div>
             <h2 className="font-serif font-bold text-sm text-on-surface flex items-center gap-2">
@@ -171,95 +218,127 @@ const DailyChatPanel = ({ roomLevel = 'Daily Topic' }) => {
               Practice today's topic with learners at your level.
             </p>
           </div>
-          <button onClick={() => loadMessages(true)} className="p-1.5 text-on-surface-variant hover:text-primary-coral rounded-lg cursor-pointer focus-ring" aria-label="Refresh chat">
-            <RefreshCw size={13} />
-          </button>
+          <div className="flex items-center gap-2">
+            <span className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 bg-surface-card border border-hairline rounded-lg text-[10px] font-mono font-bold text-on-surface-variant uppercase">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              Live
+            </span>
+            <button onClick={() => loadMessages(true)} className="p-1.5 text-on-surface-variant hover:text-primary-coral rounded-lg cursor-pointer focus-ring" aria-label="Refresh chat">
+              <RefreshCw size={13} />
+            </button>
+          </div>
         </div>
 
-        <div className="grow overflow-y-auto px-5 py-4 space-y-3 bg-surface-lowest">
-          {loading && messages.length === 0 ? (
-            <div className="h-full flex flex-col items-center justify-center text-center space-y-2 animate-skeleton">
-              <MessageCircle size={36} className="text-on-surface-variant/40" />
-              <p className="text-xs font-mono text-on-surface-variant">Loading conversation...</p>
-            </div>
-          ) : messages.length === 0 ? (
-            <div className="h-full flex flex-col items-center justify-center text-center space-y-2">
-              <MessageCircle size={36} className="text-on-surface-variant/40" />
-              <p className="text-xs font-mono text-on-surface-variant">No messages yet in the Daily Topic room.</p>
-              <p className="text-[11px] text-on-surface-variant">Start the conversation for {topic?.name || room}!</p>
-            </div>
-          ) : (
-            messages.map((m) => {
-              const isMine = m.user && authUser && m.user.id === authUser.id;
-              return (
-                <motion.div
-                  key={m.id}
-                  initial={{ opacity: 0, y: 6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className={`flex gap-2.5 ${isMine ? 'justify-end' : 'justify-start'}`}
-                >
-                  {!isMine && (
-                    <div className="w-8 h-8 rounded-full bg-surface-card border border-hairline flex items-center justify-center shrink-0 text-[11px] font-bold text-primary-coral overflow-hidden">
-                      {m.user && m.user.name ? m.user.name[0].toUpperCase() : '?'}
-                    </div>
-                  )}
-                  <div className={`max-w-[75%] space-y-1 ${isMine ? 'items-end' : 'items-start'} flex flex-col`}>
-                    {!isMine && (
-                      <div className="flex items-center gap-2 text-[10px] font-mono text-on-surface-variant">
-                        <span className="font-bold text-on-surface">{m.user?.name}</span>
-                        <span className="px-1.5 py-0.5 bg-surface-card border border-hairline rounded text-[9px] uppercase">
-                          {m.user?.level || 'Learner'}
-                        </span>
-                      </div>
-                    )}
-                    <div
-                      className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed shadow-xs ${
-                        isMine
-                          ? 'bg-primary-coral text-white rounded-br-md'
-                          : 'bg-surface-card border border-hairline text-on-surface rounded-bl-md'
-                      }`}
-                    >
-                      {m.content}
-                    </div>
-                    <div className="flex items-center gap-2 px-1">
-                      <span className="text-[9px] font-mono text-on-surface-variant">
-                        {new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                      </span>
-                      {!isMine && (
-                        <button
-                          onClick={() => setReportTarget(m)}
-                          title="Report this message"
-                          className="flex items-center gap-1 text-[9px] font-mono text-on-surface-variant hover:text-destructive-red cursor-pointer focus-ring rounded px-0.5 transition-colors"
-                        >
-                          <Flag size={10} /> Report
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </motion.div>
-              );
-            })
-          )}
-          <div ref={bottomRef} />
+        <div ref={messagesRef} onScroll={handleMessagesScroll} className="relative grow overflow-y-auto px-5 py-4 bg-surface-lowest">
+          <div className="space-y-2.5">
+            {loading && messages.length === 0 ? (
+              <div className="h-full min-h-[320px] flex flex-col items-center justify-center text-center space-y-2 animate-skeleton">
+                <MessageCircle size={36} className="text-on-surface-variant/40" />
+                <p className="text-xs font-mono text-on-surface-variant">Loading conversation...</p>
+              </div>
+            ) : messages.length === 0 ? (
+              <div className="h-full min-h-[320px] flex flex-col items-center justify-center text-center space-y-2">
+                <div className="w-14 h-14 rounded-2xl bg-surface-card border border-hairline text-on-surface-variant/60 flex items-center justify-center">
+                  <MessageCircle size={26} />
+                </div>
+                <p className="text-xs font-mono text-on-surface-variant font-semibold">No messages yet in the Daily Topic room.</p>
+                <p className="text-[11px] text-on-surface-variant">
+                  Start the conversation for <strong className="text-primary-coral">{topic?.name || room}</strong>!
+                </p>
+              </div>
+            ) : (
+              messages.map((m, idx) => {
+                const isMine = m.user && authUser && m.user.id === authUser.id;
+                const prev = idx > 0 ? messages[idx - 1] : null;
+                const showHeader = !prev || prev.user?.id !== m.user?.id;
+                const isNewDay = !prev || dayKey(prev.createdAt) !== dayKey(m.createdAt);
+                return (
+                  <React.Fragment key={m.id}>
+                    {isNewDay && <DayDivider iso={m.createdAt} />}
+                    <BubbleRow
+                      message={m}
+                      isMine={isMine}
+                      showHeader={showHeader}
+                      onReport={setReportTarget}
+                    />
+                  </React.Fragment>
+                );
+              })
+            )}
+            <div ref={bottomRef} />
+          </div>
+
+          {/* Scroll-to-latest FAB */}
+          <AnimatePresence>
+            {!atBottom && (
+              <motion.button
+                initial={{ opacity: 0, scale: 0.8, y: 8 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.8, y: 8 }}
+                onClick={scrollToLatest}
+                className="absolute bottom-4 right-4 z-10 w-10 h-10 rounded-full bg-primary-coral hover:bg-primary-hover text-white shadow-lg border border-white/20 flex items-center justify-center cursor-pointer focus-ring"
+                aria-label="Scroll to latest messages"
+              >
+                <ArrowDown size={17} />
+              </motion.button>
+            )}
+          </AnimatePresence>
         </div>
 
-        <form onSubmit={handleSend} className="border-t border-hairline p-3.5 bg-surface-card/50 flex items-center gap-2.5">
-          <input
-            value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-            maxLength={1000}
-            disabled={isBannedUser || sending}
-            placeholder={isBannedUser ? 'Chat access revoked' : `Message the Daily Topic room...`}
-            className="grow px-4 py-2.5 bg-surface-lowest border border-hairline rounded-xl text-sm text-on-surface focus-ring disabled:opacity-50"
-          />
-          <button
-            type="submit"
-            disabled={!draft.trim() || sending || isBannedUser}
-            className="px-4 py-2.5 bg-primary-coral hover:bg-primary-hover disabled:opacity-40 text-white rounded-xl text-xs font-bold flex items-center gap-2 transition-all cursor-pointer btn-interactive focus-ring"
-          >
-            {sending ? <RefreshCw size={14} className="animate-spin" /> : <Send size={14} />}
-            <span className="hidden sm:inline">Send</span>
-          </button>
+        {/* Composer */}
+        <form onSubmit={handleSend} className="border-t border-hairline px-4 py-3 bg-surface-card/60 space-y-2">
+          <AnimatePresence>
+            {showEmoji && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="overflow-hidden"
+              >
+                <EmojiQuickBar onPick={addEmoji} />
+              </motion.div>
+            )}
+          </AnimatePresence>
+          <div className="flex items-end gap-2">
+            <button
+              type="button"
+              onClick={() => setShowEmoji((v) => !v)}
+              aria-label="Toggle emoji picker"
+              title="Emoji"
+              className={`shrink-0 w-10 h-10 rounded-xl border flex items-center justify-center transition-all cursor-pointer focus-ring ${
+                showEmoji
+                  ? 'bg-primary-coral/10 border-primary-coral/40 text-primary-coral'
+                  : 'bg-surface-lowest border-hairline text-on-surface-variant hover:text-primary-coral hover:border-primary-coral/40'
+              }`}
+            >
+              <Smile size={18} />
+            </button>
+            <div className="relative grow">
+              <textarea
+                ref={textareaRef}
+                value={draft}
+                onChange={handleDraftChange}
+                onKeyDown={handleKeyDown}
+                rows={1}
+                maxLength={1000}
+                disabled={isBannedUser || sending}
+                placeholder={isBannedUser ? 'Chat access revoked' : `Message the ${room} room...`}
+                className="w-full resize-none px-4 py-2.5 pr-14 bg-surface-lowest border border-hairline rounded-xl text-sm text-on-surface focus-ring disabled:opacity-50 leading-relaxed max-h-32 overflow-y-auto"
+              />
+              <span className="absolute bottom-2 right-3 text-[9px] font-mono text-on-surface-variant/50 pointer-events-none select-none">
+                {draft.length}/1000
+              </span>
+            </div>
+            <motion.button
+              type="submit"
+              whileTap={!draft.trim() || sending ? {} : { scale: 0.92 }}
+              disabled={!draft.trim() || sending || isBannedUser}
+              className="shrink-0 px-4 h-10 bg-primary-coral hover:bg-primary-hover disabled:opacity-40 text-white rounded-xl text-xs font-bold flex items-center gap-2 transition-all cursor-pointer btn-interactive focus-ring"
+            >
+              {sending ? <RefreshCw size={14} className="animate-spin" /> : <Send size={14} />}
+              <span className="hidden sm:inline">Send</span>
+            </motion.button>
+          </div>
         </form>
       </div>
 
@@ -326,6 +405,78 @@ const DailyChatPanel = ({ roomLevel = 'Daily Topic' }) => {
         )}
       </AnimatePresence>
     </div>
+  );
+};
+
+const BubbleRow = ({ message, isMine, showHeader, onReport }) => {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async (e) => {
+    e.stopPropagation();
+    try {
+      await navigator.clipboard.writeText(message.content);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      /* clipboard unavailable */
+    }
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 6 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+      className={`group flex gap-2.5 ${isMine ? 'justify-end' : 'justify-start'}`}
+    >
+      {!isMine && (
+        <div className={`w-8 h-8 rounded-full bg-gradient-to-br from-surface-card to-surface-high border border-hairline flex items-center justify-center shrink-0 text-[11px] font-bold text-primary-coral overflow-hidden shadow-xs transition-opacity ${showHeader ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+          {message.user && message.user.name ? message.user.name[0].toUpperCase() : '?'}
+        </div>
+      )}
+      <div className={`max-w-[75%] space-y-1 ${isMine ? 'items-end' : 'items-start'} flex flex-col`}>
+        {!isMine && showHeader && (
+          <div className="flex items-center gap-2 pl-1">
+            <span className="text-[10px] font-mono font-bold text-on-surface">{message.user?.name}</span>
+            <span className="px-1.5 py-0.5 bg-surface-card border border-hairline rounded text-[9px] font-mono font-bold uppercase text-primary-coral">
+              {message.user?.level || 'Learner'}
+            </span>
+          </div>
+        )}
+        <div
+          className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed shadow-xs break-words whitespace-pre-wrap ${
+            isMine
+              ? 'bg-gradient-to-br from-primary-coral to-primary-hover text-white rounded-br-md'
+              : 'bg-surface-card border border-hairline text-on-surface rounded-bl-md'
+          }`}
+        >
+          {message.content}
+        </div>
+        {/* Timestamp + hover actions */}
+        <div className={`flex items-center gap-2 px-1 transition-opacity ${isMine ? 'justify-end' : 'justify-start'} md:opacity-70 md:group-hover:opacity-100`}>
+          <span className="inline-flex items-center gap-1 text-[9px] font-mono text-on-surface-variant">
+            {formatClock(message.createdAt)}
+            {isMine && <ReadTicks />}
+          </span>
+          <button
+            onClick={handleCopy}
+            title="Copy message"
+            className="flex items-center gap-1 text-[9px] font-mono text-on-surface-variant hover:text-primary-coral cursor-pointer focus-ring rounded px-0.5 transition-colors"
+          >
+            {copied ? <span className="text-success-green font-bold">✓</span> : <Copy size={10} />}
+          </button>
+          {!isMine && (
+            <button
+              onClick={() => onReport(message)}
+              title="Report this message"
+              className="flex items-center gap-1 text-[9px] font-mono text-on-surface-variant hover:text-destructive-red cursor-pointer focus-ring rounded px-0.5 transition-colors"
+            >
+              <Flag size={10} /> Report
+            </button>
+          )}
+        </div>
+      </div>
+    </motion.div>
   );
 };
 

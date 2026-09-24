@@ -11,49 +11,116 @@ import {
   MessageCircle,
   ChevronLeft,
   Users,
+  Smile,
+  Copy,
+  ArrowDown,
 } from 'lucide-react';
 import { api } from '../../services/api';
 import { useRole } from '../../context/RoleContext';
+import { DayDivider, EmojiQuickBar, ReadTicks } from './components/chatShared';
+import { formatClock, dayLabel, dayKey } from './components/chatUtils';
 
 const REFRESH_MS = 5000;
 const REASON_OPTIONS = ['Spam / Advertisement', 'Harassment', 'Offensive language', 'Scam or fraud', 'Inappropriate content', 'Other'];
 
-const formatTime = (iso) => {
-  try {
-    return new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  } catch {
-    return '';
-  }
+const AVATAR_SIZES = {
+  sm: { wrapper: 'w-8 h-8', text: 'text-[11px]' },
+  md: { wrapper: 'w-11 h-11', text: 'text-sm' },
 };
 
-const formatDay = (iso) => {
-  try {
-    const d = new Date(iso);
-    const today = new Date();
-    const yesterday = new Date();
-    yesterday.setDate(today.getDate() - 1);
-    if (d.toDateString() === today.toDateString()) return 'Today';
-    if (d.toDateString() === yesterday.toDateString()) return 'Yesterday';
-    return d.toLocaleDateString([], { month: 'short', day: 'numeric' });
-  } catch {
-    return '';
-  }
+const Avatar = ({ name, image, online, size = 'md' }) => {
+  const s = AVATAR_SIZES[size] || AVATAR_SIZES.md;
+  return (
+    <div className="relative shrink-0">
+      {image ? (
+        <img src={image} alt={name} className={`${s.wrapper} rounded-full object-cover border border-hairline shadow-xs`} />
+      ) : (
+        <div className={`${s.wrapper} rounded-full bg-gradient-to-br from-primary-coral to-amber-500 text-white flex items-center justify-center font-bold ${s.text} shadow-inner`}>
+          {(name || '?')[0].toUpperCase()}
+        </div>
+      )}
+      {online && (
+        <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-emerald-500 border-2 border-surface-lowest" />
+      )}
+    </div>
+  );
 };
 
-const Avatar = ({ name, image, online }) => (
-  <div className="relative shrink-0">
-    {image ? (
-      <img src={image} alt={name} className="w-11 h-11 rounded-full object-cover border border-hairline" />
-    ) : (
-      <div className="w-11 h-11 rounded-full bg-gradient-to-br from-primary-coral to-amber-500 text-white flex items-center justify-center font-bold text-sm shadow-inner">
-        {(name || '?')[0].toUpperCase()}
+const MessageRow = ({ message, isMine, showHeader, peer, onReport }) => {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async (e) => {
+    e.stopPropagation();
+    try {
+      await navigator.clipboard.writeText(message.content);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      /* clipboard unavailable */
+    }
+  };
+
+  return (
+    <motion.div
+      key={message.id}
+      initial={{ opacity: 0, y: 8, scale: 0.98 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+      className={`group flex items-end gap-2 ${isMine ? 'justify-end' : 'justify-start'}`}
+    >
+      {!isMine && (
+        <div className={showHeader ? 'opacity-100' : 'opacity-0 pointer-events-none'}>
+          <Avatar name={peer?.name} image={peer?.image} size="sm" />
+        </div>
+      )}
+
+      <div className={`max-w-[78%] flex flex-col ${isMine ? 'items-end' : 'items-start'} space-y-1`}>
+        {!isMine && showHeader && (
+          <div className="flex items-center gap-1.5 pl-1">
+            <span className="text-[10px] font-mono text-on-surface-variant font-bold">{peer?.name}</span>
+            {peer?.level && (
+              <span className="px-1.5 py-0.5 bg-surface-card border border-hairline rounded text-[9px] font-mono font-bold uppercase text-primary-coral">
+                {peer.level}
+              </span>
+            )}
+          </div>
+        )}
+
+        <div className={`px-4 py-2.5 text-sm leading-relaxed break-words whitespace-pre-wrap shadow-xs ${
+          isMine
+            ? 'bg-gradient-to-br from-primary-coral to-primary-hover text-white rounded-2xl rounded-br-md'
+            : 'bg-surface-card border border-hairline text-on-surface rounded-2xl rounded-bl-md'
+        }`}>
+          {message.content}
+        </div>
+
+        {/* Timestamp + hover actions */}
+        <div className={`flex items-center gap-2 px-1 transition-opacity ${isMine ? 'justify-end' : 'justify-start'} md:opacity-70 md:group-hover:opacity-100`}>
+          <span className={`inline-flex items-center gap-1 text-[9px] font-mono ${isMine ? 'text-on-surface-variant' : 'text-on-surface-variant'}`}>
+            {formatClock(message.createdAt)}
+            {isMine && <ReadTicks />}
+          </span>
+          <button
+            onClick={handleCopy}
+            title="Copy message"
+            className="flex items-center gap-1 text-[9px] font-mono text-on-surface-variant hover:text-primary-coral cursor-pointer focus-ring rounded px-0.5 transition-colors"
+          >
+            {copied ? <span className="text-success-green font-bold">✓</span> : <Copy size={10} />}
+          </button>
+          {!isMine && (
+            <button
+              onClick={() => onReport(message)}
+              title="Report this message"
+              className="flex items-center gap-1 text-[9px] font-mono text-on-surface-variant hover:text-destructive-red cursor-pointer focus-ring rounded px-0.5 transition-colors"
+            >
+              <Flag size={10} /> Report
+            </button>
+          )}
+        </div>
       </div>
-    )}
-    {online && (
-      <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-emerald-500 border-2 border-surface-lowest" />
-    )}
-  </div>
-);
+    </motion.div>
+  );
+};
 
 const ChatPage = () => {
   const { authUser } = useRole();
@@ -70,8 +137,12 @@ const ChatPage = () => {
   const [reportTarget, setReportTarget] = useState(null);
   const [reportReason, setReportReason] = useState('');
   const [reporting, setReporting] = useState(false);
+  const [showEmoji, setShowEmoji] = useState(false);
+  const [atBottom, setAtBottom] = useState(true);
   const bottomRef = useRef(null);
   const pollRef = useRef(null);
+  const messagesRef = useRef(null);
+  const textareaRef = useRef(null);
 
   const loadPeers = useCallback(async () => {
     try {
@@ -89,7 +160,7 @@ const ChatPage = () => {
     }
   }, []);
 
-  const loadConversation = useCallback(async (peerId, initial = true) => {
+  const loadConversation = useCallback(async (peerId) => {
     if (!peerId) return;
     try {
       const res = await api.getDirectMessages(peerId);
@@ -108,10 +179,10 @@ const ChatPage = () => {
   // Open a conversation when the active peer changes, then poll for new messages
   useEffect(() => {
     if (!activePeerId) return;
-    loadConversation(activePeerId, true);
+    loadConversation(activePeerId);
     if (pollRef.current) clearInterval(pollRef.current);
     pollRef.current = setInterval(() => {
-      loadConversation(activePeerId, false);
+      loadConversation(activePeerId);
       loadPeers();
     }, REFRESH_MS);
     return () => {
@@ -119,9 +190,25 @@ const ChatPage = () => {
     };
   }, [activePeerId, loadConversation, loadPeers]);
 
+  // Auto-scroll to the latest message when new messages arrive (if already near the bottom)
+  const handleMessagesScroll = () => {
+    const el = messagesRef.current;
+    if (!el) return;
+    setAtBottom(el.scrollHeight - el.scrollTop - el.clientHeight < 80);
+  };
+
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
-  }, [chat?.messages?.length, activePeerId]);
+    const el = messagesRef.current;
+    if (el && atBottom) {
+      el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
+    }
+  }, [chat?.messages?.length, activePeerId, atBottom]);
+
+  const scrollToLatest = () => {
+    const el = messagesRef.current;
+    if (el) el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
+    setAtBottom(true);
+  };
 
   const handleSend = async (e) => {
     if (e && e.preventDefault) e.preventDefault();
@@ -133,6 +220,8 @@ const ChatPage = () => {
       const res = await api.postDirectMessage(activePeerId, content);
       if (res && res.success && res.data) {
         setDraft('');
+        setShowEmoji(false);
+        if (textareaRef.current) textareaRef.current.style.height = 'auto';
         setChat((prev) => ({
           ...prev,
           chatId: prev?.chatId || res.data.directChatId || null,
@@ -145,6 +234,28 @@ const ChatPage = () => {
       setError(err.message || 'Failed to send message.');
     } finally {
       setSending(false);
+    }
+  };
+
+  const handleDraftChange = (e) => {
+    setDraft(e.target.value);
+    e.target.style.height = 'auto';
+    e.target.style.height = Math.min(e.target.scrollHeight, 132) + 'px';
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
+      e.preventDefault();
+      handleSend(e);
+    }
+  };
+
+  const addEmoji = (emoji) => {
+    setDraft((d) => d + emoji);
+    if (textareaRef.current) {
+      textareaRef.current.focus();
+      textareaRef.current.style.height = 'auto';
+      textareaRef.current.style.height = Math.min(textareaRef.current.scrollHeight, 132) + 'px';
     }
   };
 
@@ -197,8 +308,9 @@ const ChatPage = () => {
       )}
 
       {/* Messenger Header */}
-      <div className="bg-surface-dark text-white rounded-2xl p-5 sm:p-6 shadow-xl border border-stone-800 flex flex-wrap items-center justify-between gap-4">
-        <div>
+      <div className="relative overflow-hidden bg-surface-dark text-white rounded-2xl p-5 sm:p-6 shadow-xl border border-stone-800 flex flex-wrap items-center justify-between gap-4">
+        <div className="absolute -top-16 -right-16 w-56 h-56 rounded-full bg-primary-coral/15 blur-3xl pointer-events-none" />
+        <div className="relative">
           <span className="text-xs font-mono text-warning-amber uppercase tracking-wider font-bold flex items-center gap-1.5">
             <MessageCircle size={14} /> Messenger
           </span>
@@ -208,7 +320,7 @@ const ChatPage = () => {
           </p>
         </div>
         {dailyTopic && (
-          <div className="flex flex-col items-end gap-1.5 max-w-xs text-right rounded-2xl bg-stone-900/70 border border-stone-800 px-4 py-3">
+          <div className="relative flex flex-col items-end gap-1.5 max-w-xs text-right rounded-2xl bg-stone-900/70 border border-stone-800 px-4 py-3">
             <span className="px-2.5 py-0.5 bg-warning-amber text-stone-900 text-[10px] font-mono font-bold rounded-lg flex items-center gap-1.5 uppercase tracking-wider">
               <Megaphone size={12} /> Today's Topic
             </span>
@@ -219,7 +331,7 @@ const ChatPage = () => {
       </div>
 
       {/* Messenger Shell */}
-      <div className="grid grid-cols-1 md:grid-cols-3 bg-surface-lowest border border-hairline rounded-2xl overflow-hidden shadow-lg h-[640px]">
+      <div className="grid grid-cols-1 md:grid-cols-3 bg-surface-lowest border border-hairline rounded-2xl overflow-hidden shadow-lg h-[680px]">
         {/* Contact Sidebar (WhatsApp / Telegram style) */}
         <aside className={`md:col-span-1 border-r border-hairline flex flex-col bg-surface-card/40 ${activePeerId && chat ? 'hidden md:flex' : 'flex'}`}>
           <div className="p-3.5 border-b border-hairline space-y-3">
@@ -274,7 +386,7 @@ const ChatPage = () => {
                         </span>
                         {lastMsg && (
                           <span className="text-[9px] font-mono text-on-surface-variant shrink-0">
-                            {formatDay(lastMsg.createdAt)}
+                            {dayLabel(lastMsg.createdAt)}
                           </span>
                         )}
                       </div>
@@ -304,13 +416,23 @@ const ChatPage = () => {
           </div>
 
           {/* Conversation Header */}
-          <div className="px-5 py-3 border-b border-hairline flex items-center justify-between bg-surface-card/50">
+          <div className="px-5 py-3 border-b border-hairline flex items-center justify-between gap-3 bg-surface-card/50">
             {activePeer && (
               <div className="flex items-center gap-3 min-w-0">
-                <Avatar name={activePeer.name} image={activePeer.image} online />
+                <Avatar name={activePeer.name} image={activePeer.image} online size="md" />
                 <div className="min-w-0">
-                  <h2 className="font-serif font-bold text-base text-on-surface truncate">{activePeer.name}</h2>
-                  <p className="text-[10px] font-mono text-on-surface-variant truncate">{activePeer.level}</p>
+                  <h2 className="font-serif font-bold text-base text-on-surface truncate flex items-center gap-2">
+                    {activePeer.name}
+                    {activePeer.level && (
+                      <span className="px-1.5 py-0.5 bg-primary-coral/10 border border-primary-coral/30 rounded-md text-[9px] font-mono font-bold uppercase text-primary-coral">
+                        {activePeer.level}
+                      </span>
+                    )}
+                  </h2>
+                  <p className="text-[10px] font-mono text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block animate-pulse" />
+                    Active now
+                  </p>
                 </div>
               </div>
             )}
@@ -325,8 +447,10 @@ const ChatPage = () => {
           {/* Empty conversation state */}
           {!activePeer ? (
             <div className="grow flex flex-col items-center justify-center text-center space-y-3 bg-surface-lowest">
-              <MessageCircle size={44} className="text-on-surface-variant/30" />
-              <p className="text-sm font-mono text-on-surface-variant">Select a contact to start chatting</p>
+              <div className="w-16 h-16 rounded-2xl bg-primary-coral/10 text-primary-coral flex items-center justify-center">
+                <MessageCircle size={30} />
+              </div>
+              <p className="text-sm font-mono text-on-surface-variant font-semibold">Select a contact to start chatting</p>
               <p className="text-xs text-on-surface-variant/70 max-w-xs">
                 Discuss today's topic: <strong className="text-primary-coral">{dailyTopic?.name || 'Daily Topic'}</strong>
               </p>
@@ -334,82 +458,116 @@ const ChatPage = () => {
           ) : (
             <>
               {/* Messages */}
-              <div className="grow overflow-y-auto px-4 py-4 space-y-2.5 bg-surface-lowest">
-                {chat && chat.messages.length === 0 ? (
-                  <div className="h-full flex flex-col items-center justify-center text-center space-y-2">
-                    <MessageCircle size={36} className="text-on-surface-variant/40" />
-                    <p className="text-xs font-mono text-on-surface-variant">No messages yet.</p>
-                    <p className="text-[11px] text-on-surface-variant">
-                      Greet {activePeer.name} and discuss today's topic!
-                    </p>
-                  </div>
-                ) : (
-                  (chat?.messages || []).map((m, idx) => {
-                    const isMine = m.user && authUser && m.user.id === authUser.id;
-                    const prev = idx > 0 ? chat.messages[idx - 1] : null;
-                    const showHeader = !prev || prev.user?.id !== m.user?.id;
-                    return (
-                      <motion.div
-                        key={m.id}
-                        initial={{ opacity: 0, y: 8, scale: 0.98 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        className={`flex gap-2 ${isMine ? 'justify-end' : 'justify-start'}`}
-                      >
-                        <div className={`max-w-[78%] flex flex-col ${isMine ? 'items-end' : 'items-start'} space-y-1`}>
-                          {!isMine && showHeader && (
-                            <span className="text-[10px] font-mono text-on-surface-variant ml-1 font-bold">
-                              {m.user?.name}
-                            </span>
-                          )}
-                          <div
-                            className={`px-4 py-2.5 text-sm leading-relaxed shadow-xs whitespace-pre-wrap break-words ${
-                              isMine
-                                ? 'bg-primary-coral text-white rounded-2xl rounded-br-md'
-                                : 'bg-surface-card border border-hairline text-on-surface rounded-2xl rounded-bl-md'
-                            }`}
-                          >
-                            {m.content}
-                          </div>
-                          <div className="flex items-center gap-2 px-1">
-                            <span className="text-[9px] font-mono text-on-surface-variant">
-                              {formatTime(m.createdAt)}
-                            </span>
-                            {!isMine && (
-                              <button
-                                onClick={() => setReportTarget(m)}
-                                title="Report this message"
-                                className="flex items-center gap-1 text-[9px] font-mono text-on-surface-variant hover:text-destructive-red cursor-pointer focus-ring rounded px-0.5 transition-colors"
-                              >
-                                <Flag size={10} /> Report
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                      </motion.div>
-                    );
-                  })
-                )}
-                <div ref={bottomRef} />
+              <div
+                ref={messagesRef}
+                onScroll={handleMessagesScroll}
+                className="relative grow overflow-y-auto px-4 py-4 bg-surface-lowest"
+              >
+                <div className="space-y-2.5">
+                  {chat && chat.messages.length === 0 ? (
+                    <div className="h-full min-h-[280px] flex flex-col items-center justify-center text-center space-y-2">
+                      <div className="w-14 h-14 rounded-2xl bg-surface-card border border-hairline text-on-surface-variant/60 flex items-center justify-center">
+                        <MessageCircle size={26} />
+                      </div>
+                      <p className="text-xs font-mono text-on-surface-variant font-semibold">No messages yet.</p>
+                      <p className="text-[11px] text-on-surface-variant">
+                        Greet <strong className="text-primary-coral">{activePeer.name}</strong> and discuss today's topic!
+                      </p>
+                    </div>
+                  ) : (
+                    (chat?.messages || []).map((m, idx) => {
+                      const isMine = m.user && authUser && m.user.id === authUser.id;
+                      const prev = idx > 0 ? chat.messages[idx - 1] : null;
+                      const showHeader = !prev || prev.user?.id !== m.user?.id;
+                      const isNewDay = !prev || dayKey(prev.createdAt) !== dayKey(m.createdAt);
+                      return (
+                        <React.Fragment key={m.id}>
+                          {isNewDay && <DayDivider iso={m.createdAt} />}
+                          <MessageRow
+                            message={m}
+                            isMine={isMine}
+                            showHeader={showHeader}
+                            peer={m.user || activePeer}
+                            onReport={setReportTarget}
+                          />
+                        </React.Fragment>
+                      );
+                    })
+                  )}
+                  <div ref={bottomRef} />
+                </div>
+
+                {/* Scroll-to-latest FAB */}
+                <AnimatePresence>
+                  {!atBottom && (
+                    <motion.button
+                      initial={{ opacity: 0, scale: 0.8, y: 8 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.8, y: 8 }}
+                      onClick={scrollToLatest}
+                      className="absolute bottom-4 right-4 z-10 w-10 h-10 rounded-full bg-primary-coral hover:bg-primary-hover text-white shadow-lg border border-white/20 flex items-center justify-center cursor-pointer focus-ring"
+                      aria-label="Scroll to latest messages"
+                    >
+                      <ArrowDown size={17} />
+                    </motion.button>
+                  )}
+                </AnimatePresence>
               </div>
 
               {/* Composer */}
-              <form onSubmit={handleSend} className="border-t border-hairline p-3.5 bg-surface-card/50 flex items-center gap-2.5">
-                <input
-                  value={draft}
-                  onChange={(e) => setDraft(e.target.value)}
-                  maxLength={1000}
-                  disabled={isBannedUser || sending}
-                  placeholder={isBannedUser ? 'Messaging revoked' : `Message ${activePeer.name}...`}
-                  className="grow px-4 py-2.5 bg-surface-lowest border border-hairline rounded-xl text-sm text-on-surface focus-ring disabled:opacity-50"
-                />
-                <button
-                  type="submit"
-                  disabled={!draft.trim() || sending || isBannedUser}
-                  className="px-4 py-2.5 bg-primary-coral hover:bg-primary-hover disabled:opacity-40 text-white rounded-xl text-xs font-bold flex items-center gap-2 transition-all cursor-pointer btn-interactive focus-ring"
-                >
-                  {sending ? <RefreshCw size={14} className="animate-spin" /> : <Send size={14} />}
-                  <span className="hidden sm:inline">Send</span>
-                </button>
+              <form onSubmit={handleSend} className="border-t border-hairline px-4 py-3 bg-surface-card/60 space-y-2">
+                <AnimatePresence>
+                  {showEmoji && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="overflow-hidden"
+                    >
+                      <EmojiQuickBar onPick={addEmoji} />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+                <div className="flex items-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowEmoji((v) => !v)}
+                    aria-label="Toggle emoji picker"
+                    title="Emoji"
+                    className={`shrink-0 w-10 h-10 rounded-xl border flex items-center justify-center transition-all cursor-pointer focus-ring ${
+                      showEmoji
+                        ? 'bg-primary-coral/10 border-primary-coral/40 text-primary-coral'
+                        : 'bg-surface-lowest border-hairline text-on-surface-variant hover:text-primary-coral hover:border-primary-coral/40'
+                    }`}
+                  >
+                    <Smile size={18} />
+                  </button>
+                  <div className="relative grow">
+                    <textarea
+                      ref={textareaRef}
+                      value={draft}
+                      onChange={handleDraftChange}
+                      onKeyDown={handleKeyDown}
+                      rows={1}
+                      maxLength={1000}
+                      disabled={isBannedUser || sending}
+                      placeholder={isBannedUser ? 'Messaging revoked' : `Message ${activePeer.name}...`}
+                      className="w-full resize-none px-4 py-2.5 pr-14 bg-surface-lowest border border-hairline rounded-xl text-sm text-on-surface focus-ring disabled:opacity-50 leading-relaxed max-h-32 overflow-y-auto"
+                    />
+                    <span className="absolute bottom-2 right-3 text-[9px] font-mono text-on-surface-variant/50 pointer-events-none select-none">
+                      {draft.length}/1000
+                    </span>
+                  </div>
+                  <motion.button
+                    type="submit"
+                    whileTap={!draft.trim() || sending ? {} : { scale: 0.92 }}
+                    disabled={!draft.trim() || sending || isBannedUser}
+                    className="shrink-0 px-4 h-10 bg-primary-coral hover:bg-primary-hover disabled:opacity-40 text-white rounded-xl text-xs font-bold flex items-center gap-2 transition-all cursor-pointer btn-interactive focus-ring"
+                  >
+                    {sending ? <RefreshCw size={14} className="animate-spin" /> : <Send size={14} />}
+                    <span className="hidden sm:inline">Send</span>
+                  </motion.button>
+                </div>
               </form>
             </>
           )}

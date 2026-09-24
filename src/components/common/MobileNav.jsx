@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, BookOpen, Layers, Wallet, ShieldCheck, User, Code, MessageCircle, MessageSquare } from 'lucide-react';
+import { LayoutDashboard, BookOpen, Layers, Wallet, ShieldCheck, User, Code, MessageCircle } from 'lucide-react';
 import { useRole } from '../../context/RoleContext';
 
 const MobileNav = () => {
@@ -61,18 +61,6 @@ const MobileNav = () => {
             >
               <MessageCircle size={20} />
               <span className="mt-0.5">Chat</span>
-            </Link>
-            <Link
-              to="/feedback"
-              aria-label="Submit Feedback"
-              className={`min-h-[48px] min-w-[48px] flex flex-col items-center justify-center py-1 px-3 text-[11px] font-medium transition-all rounded-xl focus-ring ${
-                isActive('/feedback')
-                  ? 'text-primary-coral font-bold bg-surface-card/60'
-                  : 'text-text-muted hover:text-on-surface'
-              }`}
-            >
-              <MessageSquare size={20} />
-              <span className="mt-0.5">Feedback</span>
             </Link>
             <Link
               to="/wallet"
