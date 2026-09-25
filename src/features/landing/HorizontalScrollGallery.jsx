@@ -8,8 +8,6 @@ import {
   Award,
   ShieldCheck,
   ArrowRight,
-  CheckCircle,
-  Flame,
   MessageCircle,
 } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -130,93 +128,95 @@ const HorizontalScrollGallery = () => {
   return (
     <div
       ref={triggerRef}
-      className="relative overflow-hidden bg-surface-dark text-white py-16 border-y border-stone-800 transition-colors duration-250"
+      className="relative overflow-hidden bg-surface-dark text-white py-16 border-y border-stone-800 transition-colors duration-300"
     >
       {/* Sticky Header Banner */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-8 flex flex-wrap items-center justify-between gap-4">
+      <div className="max-w-7xl mx-auto px-6 lg:px-12 mb-8 flex flex-wrap items-end justify-between gap-4 border-b border-stone-800 pb-6">
         <div>
-          <div className="inline-flex items-center gap-2 px-3 py-1 bg-stone-900 border border-stone-800 rounded-full text-xs font-mono text-warning-amber">
-            <Flame size={14} className="text-streak-orange" />
+          <div className="inline-flex items-center gap-2 font-mono text-[10px] tracking-[0.22em] text-primary-fixed-dim uppercase">
+            <span className="w-1.5 h-1.5 rounded-full bg-primary-fixed-dim animate-pulse" />
             <span>INTERACTIVE PLATFORM JOURNEY</span>
           </div>
-          <h2 className="font-serif font-bold text-3xl sm:text-4xl text-white mt-2">
-            The Complete Ethio-Lingo Learning & Staking Flow
+          <h2 className="font-cormorant text-3xl sm:text-5xl text-white font-normal mt-2">
+            The Complete <span className="calligraphic-italic text-primary-fixed-dim">Learning & Staking</span> Flow
           </h2>
         </div>
+        <span className="font-mono text-[10px] text-stone-500 uppercase tracking-[0.2em]">
+          Scroll ↓
+        </span>
       </div>
 
       {/* Horizontal Scroll Track */}
       <div className="w-full overflow-hidden">
         <div
           ref={trackRef}
-          className="flex gap-6 px-4 sm:px-8 w-max items-center py-4"
+          className="flex gap-6 px-6 lg:px-12 w-max items-center py-4"
         >
           {GALLERY_CARDS.map((card) => {
             const IconComponent = card.icon;
             return (
               <div
                 key={card.step}
-                className="w-[340px] sm:w-[420px] bg-stone-900/90 border border-stone-800 hover:border-primary-coral rounded-2xl p-7 flex flex-col justify-between h-[420px] shadow-2xl transition-all group shrink-0 relative overflow-hidden focus-ring"
+                className="w-[340px] sm:w-[420px] bg-stone-900/60 border border-stone-800/80 hover:border-primary-fixed/40 rounded-xl p-7 flex flex-col justify-between h-[420px] shadow-2xl transition-colors group shrink-0 relative overflow-hidden focus-ring"
               >
                 {/* Background Step Watermark */}
-                <div className="absolute -right-4 -bottom-6 text-8xl font-serif font-bold text-stone-800/40 select-none pointer-events-none">
+                <div className="absolute -right-4 -bottom-6 text-8xl font-cormorant text-stone-800/40 select-none pointer-events-none">
                   {card.step}
                 </div>
 
                 <div className="space-y-4 relative z-10">
                   <div className="flex items-center justify-between">
-                    <span className="w-10 h-10 rounded-xl bg-primary-coral text-white flex items-center justify-center font-mono font-bold text-sm shadow-md">
+                    <span className="w-10 h-10 rounded-full bg-primary/15 border border-primary-fixed/25 text-primary-fixed-dim flex items-center justify-center font-mono font-bold text-sm">
                       {card.step}
                     </span>
-                    <span
-                      className={`px-2.5 py-1 text-[10px] font-mono font-bold rounded uppercase ${card.badgeColor}`}
-                    >
+                    <span className="font-mono text-[9px] text-stone-400 uppercase tracking-[0.18em]">
                       {card.badge}
                     </span>
                   </div>
 
                   <div>
-                    <span className="text-[10px] font-mono text-warning-amber uppercase tracking-wider font-semibold">
+                    <span className="text-[10px] font-mono text-primary-fixed-dim uppercase tracking-wider font-semibold">
                       {card.subtitle}
                     </span>
-                    <h3 className="font-serif font-bold text-xl sm:text-2xl text-white mt-1 group-hover:text-warning-amber transition-colors flex items-center gap-2">
+                    <h3 className="font-cormorant text-2xl text-white mt-1 flex items-center gap-2">
                       <IconComponent
-                        size={20}
-                        className="text-primary-coral shrink-0"
+                        size={19}
+                        className="text-primary-fixed-dim shrink-0"
                       />
                       <span>{card.title}</span>
                     </h3>
                   </div>
 
-                  <p className="text-xs sm:text-sm text-stone-300 leading-relaxed">
+                  <p className="text-xs sm:text-sm text-stone-300 leading-relaxed font-light">
                     {card.description}
                   </p>
                 </div>
 
-                <div className="pt-4 border-t border-stone-800/80 relative z-10 flex items-center justify-between text-xs font-mono text-stone-400">
+                <div className="pt-4 border-t border-stone-800/80 relative z-10 flex items-center justify-between font-mono text-[10px] text-stone-500">
                   <span>{card.stats}</span>
-                  <CheckCircle size={16} className="text-success-green" />
+                  <ShieldCheck size={15} className="text-primary-fixed-dim" />
                 </div>
               </div>
             );
           })}
 
           {/* Final Call To Action Card inside Horizontal Scroll */}
-          <div className="w-[320px] sm:w-[360px] bg-primary-coral text-white rounded-2xl p-8 flex flex-col justify-between h-[420px] shadow-2xl shrink-0 text-center relative overflow-hidden">
-            <div className="my-auto space-y-4">
-              <div className="w-14 h-14 bg-white/10 rounded-2xl flex items-center justify-center mx-auto">
-                <Award size={32} className="text-white" />
+          <div className="w-[320px] sm:w-[360px] bg-primary text-on-primary rounded-2xl p-8 flex flex-col justify-between h-[420px] shadow-2xl shrink-0 text-center relative overflow-hidden">
+            <span className="absolute -top-10 -right-10 w-40 h-40 bg-primary-fixed/20 rounded-full blur-3xl pointer-events-none" />
+            <div className="my-auto space-y-4 relative z-10">
+              <div className="w-14 h-14 bg-primary-fixed/15 rounded-full flex items-center justify-center mx-auto">
+                <Award size={30} />
               </div>
-              <h3 className="font-serif font-bold text-2xl text-white">
+              <h3 className="font-cormorant text-3xl text-on-primary font-medium">
                 Start Your 30-Day Cycle
               </h3>
-              <p className="text-xs text-stone-200 leading-relaxed">
+              <p className="text-xs text-on-primary/90 leading-relaxed font-light">
                 Build daily study discipline, pass exams, and protect your stake
                 balance.
               </p>
               <Link
                 to="/auth"
-                className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-white text-primary-coral font-bold text-xs rounded-xl hover:bg-stone-100 transition-colors shadow-md w-full focus-ring btn-interactive"
+                className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-on-primary text-primary font-sans text-xs tracking-wider uppercase font-semibold rounded-full hover:bg-primary-fixed transition-colors shadow-md w-full focus-ring btn-interactive"
               >
                 <span>Take Placement Quiz</span>
                 <ArrowRight size={16} />

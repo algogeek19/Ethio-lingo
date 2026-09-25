@@ -9,124 +9,48 @@ const MobileNav = () => {
 
   const isActive = (path) => location.pathname === path;
 
+  const learnerItems = [
+    { path: '/dashboard', label: 'Dash', icon: LayoutDashboard },
+    { path: '/workspaces', label: 'Learn', icon: Layers },
+    { path: '/exam', label: 'Exam', icon: BookOpen },
+    { path: '/chat', label: 'Chat', icon: MessageCircle },
+    { path: '/wallet', label: 'Vault', icon: Wallet },
+  ];
+
+  const adminItems = [
+    { path: '/admin', label: 'Gov', icon: ShieldCheck },
+    { path: '/admin/learners', label: 'Learners', icon: User },
+    { path: '/admin/community', label: 'Moderate', icon: MessageCircle },
+    { path: '/admin/feedback', label: 'Feedback', icon: BookOpen },
+    { path: '/admin/curriculum', label: 'Curriculum', icon: Code },
+  ];
+
+  const items = role === 'admin' ? adminItems : learnerItems;
+  if (!items.length) return null;
+
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-canvas/95 backdrop-blur-md border-t border-hairline px-2 py-1 transition-colors duration-250" aria-label="Mobile Navigation">
-      <div className="flex items-center justify-around">
-        {role === 'learner' ? (
-          <>
+    <nav
+      className="md:hidden fixed bottom-4 left-4 right-4 z-40"
+      aria-label="Mobile Navigation"
+    >
+      <div className="bg-surface/92 backdrop-blur-md border border-hairline/70 rounded-full shadow-xl shadow-stone-900/10 px-2 py-1.5 flex items-center justify-between">
+        {items.map((item) => {
+          const Icon = item.icon;
+          const active = isActive(item.path);
+          return (
             <Link
-              to="/dashboard"
-              aria-label="Learner Dashboard"
-              className={`min-h-[48px] min-w-[48px] flex flex-col items-center justify-center py-1 px-3 text-[11px] font-medium transition-all rounded-xl focus-ring ${
-                isActive('/dashboard')
-                  ? 'text-primary-coral font-bold bg-surface-card/60'
-                  : 'text-text-muted hover:text-on-surface'
+              key={item.path}
+              to={item.path}
+              aria-label={item.label}
+              className={`min-h-[44px] min-w-[52px] flex flex-col items-center justify-center gap-0.5 text-[10px] font-mono tracking-wide transition-all rounded-full focus-ring ${
+                active ? 'text-primary font-bold' : 'text-text-muted hover:text-on-surface'
               }`}
             >
-              <LayoutDashboard size={20} />
-              <span className="mt-0.5">Dash</span>
+              <Icon size={18} strokeWidth={active ? 2.4 : 1.8} />
+              <span className="uppercase">{item.label}</span>
             </Link>
-            <Link
-              to="/workspaces"
-              aria-label="Learning Workspaces"
-              className={`min-h-[48px] min-w-[48px] flex flex-col items-center justify-center py-1 px-3 text-[11px] font-medium transition-all rounded-xl focus-ring ${
-                isActive('/workspaces')
-                  ? 'text-primary-coral font-bold bg-surface-card/60'
-                  : 'text-text-muted hover:text-on-surface'
-              }`}
-            >
-              <Layers size={20} />
-              <span className="mt-0.5">Learn</span>
-            </Link>
-            <Link
-              to="/exam"
-              aria-label="Daily Exam Runner"
-              className={`min-h-[48px] min-w-[48px] flex flex-col items-center justify-center py-1 px-3 text-[11px] font-medium transition-all rounded-xl focus-ring ${
-                isActive('/exam')
-                  ? 'text-primary-coral font-bold bg-surface-card/60'
-                  : 'text-text-muted hover:text-on-surface'
-              }`}
-            >
-              <BookOpen size={20} />
-              <span className="mt-0.5">Exam</span>
-            </Link>
-            <Link
-              to="/chat"
-              aria-label="Messenger Chat"
-              className={`min-h-[48px] min-w-[48px] flex flex-col items-center justify-center py-1 px-3 text-[11px] font-medium transition-all rounded-xl focus-ring ${
-                isActive('/chat')
-                  ? 'text-primary-coral font-bold bg-surface-card/60'
-                  : 'text-text-muted hover:text-on-surface'
-              }`}
-            >
-              <MessageCircle size={20} />
-              <span className="mt-0.5">Chat</span>
-            </Link>
-            <Link
-              to="/wallet"
-              aria-label="Escrow Vault & Wallet"
-              className={`min-h-[48px] min-w-[48px] flex flex-col items-center justify-center py-1 px-3 text-[11px] font-medium transition-all rounded-xl focus-ring ${
-                isActive('/wallet')
-                  ? 'text-primary-coral font-bold bg-surface-card/60'
-                  : 'text-text-muted hover:text-on-surface'
-              }`}
-            >
-              <Wallet size={20} />
-              <span className="mt-0.5">Wallet</span>
-            </Link>
-          </>
-        ) : role === 'admin' ? (
-          <>
-            <Link
-              to="/admin"
-              aria-label="Admin Analytics"
-              className={`min-h-[48px] min-w-[48px] flex flex-col items-center justify-center py-1 px-3 text-[11px] font-medium transition-all rounded-xl focus-ring ${
-                isActive('/admin')
-                  ? 'text-primary-coral font-bold bg-surface-card/60'
-                  : 'text-text-muted hover:text-on-surface'
-              }`}
-            >
-              <ShieldCheck size={20} />
-              <span className="mt-0.5">Analytics</span>
-            </Link>
-            <Link
-              to="/admin/learners"
-              aria-label="Learner Directory"
-              className={`min-h-[48px] min-w-[48px] flex flex-col items-center justify-center py-1 px-3 text-[11px] font-medium transition-all rounded-xl focus-ring ${
-                isActive('/admin/learners')
-                  ? 'text-primary-coral font-bold bg-surface-card/60'
-                  : 'text-text-muted hover:text-on-surface'
-              }`}
-            >
-              <User size={20} />
-              <span className="mt-0.5">Learners</span>
-            </Link>
-            <Link
-              to="/admin/community"
-              aria-label="Community Moderation"
-              className={`min-h-[48px] min-w-[48px] flex flex-col items-center justify-center py-1 px-3 text-[11px] font-medium transition-all rounded-xl focus-ring ${
-                isActive('/admin/community')
-                  ? 'text-primary-coral font-bold bg-surface-card/60'
-                  : 'text-text-muted hover:text-on-surface'
-              }`}
-            >
-              <MessageCircle size={20} />
-              <span className="mt-0.5">Moderate</span>
-            </Link>
-            <Link
-              to="/admin/curriculum"
-              aria-label="Curriculum Admin"
-              className={`min-h-[48px] min-w-[48px] flex flex-col items-center justify-center py-1 px-3 text-[11px] font-medium transition-all rounded-xl focus-ring ${
-                isActive('/admin/curriculum')
-                  ? 'text-primary-coral font-bold bg-surface-card/60'
-                  : 'text-text-muted hover:text-on-surface'
-              }`}
-            >
-              <Code size={20} />
-              <span className="mt-0.5">Curriculum</span>
-            </Link>
-          </>
-        ) : null}
+          );
+        })}
       </div>
     </nav>
   );

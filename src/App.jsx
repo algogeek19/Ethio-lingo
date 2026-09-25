@@ -34,7 +34,7 @@ const AppShell = () => {
   return (
     <div className="min-h-screen flex flex-col bg-canvas text-on-surface transition-colors duration-250">
       <Navbar />
-      <main className="grow pb-16 lg:pb-0">
+      <main className="grow pt-24 md:pt-28 pb-16 lg:pb-0">
         <Routes>
           {/* Public Unauthenticated Routes */}
           <Route path="/" element={<LandingPage />} />

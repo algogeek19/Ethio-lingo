@@ -1,87 +1,208 @@
 @import "tailwindcss";
 
+/* ============================================================================
+   ETHIO-LINGO EDITORIAL SYSTEM — DESIGN TOKENS
+   Translated from the "Ethio-Lingo Editorial System" stitch prototype.
+   Existing semantic class names are remapped so every component adopts the
+   new palette automatically; new M3-style tokens are added for deeper use.
+   ============================================================================ */
+
 :root {
-  --bg-canvas: #faf9f5;
-  --bg-surface-lowest: #ffffff;
-  --bg-surface-low: #f4f4f0;
-  --bg-surface-card: #efeeea;
-  --bg-surface-high: #e9e8e4;
-  --bg-surface-soft: #f5f0e8;
-  --bg-surface-dark: #181715;
-  
-  --text-on-surface: #1b1c1a;
-  --text-on-surface-variant: #54433e;
-  --text-muted: #6c6a64;
-  --border-hairline: #e6dfd8;
-  
-  --color-primary-coral: #8f482f;
-  --color-primary-hover: #a9583e;
-  --color-primary-warm: #cc785c;
-  --color-primary-active: #75331c;
-  
+  /* Surfaces (Material "surface" warm editorial ramp) */
+  --bg-canvas: #faf9f5;                      /* surface */
+  --bg-surface: #faf9f5;
+  --bg-surface-lowest: #ffffff;              /* surface-container-lowest */
+  --bg-surface-low: #faf7f3;                 /* surface-container-low */
+  --bg-surface-card: #f4efe9;                /* surface-container */
+  --bg-surface-container: #f4efe9;
+  --bg-surface-high: #f2e5e2;                /* surface-container-high */
+  --bg-surface-container-high: #f2e5e2;
+  --bg-surface-container-highest: #ece0dc;
+  --bg-surface-soft: #f7f0e8;                /* warm cream accent block */
+  --bg-surface-dark: #1c1716;                /* editorial dark section */
+
+  /* Text & lines */
+  --text-on-surface: #201a18;
+  --text-on-surface-variant: #63524d;
+  --text-muted: #85726b;
+  --border-hairline: #e5d9d2;                /* soft warm taupe hairline */
+
+  /* Primary (cinnabar / academic brick) */
+  --color-primary: #8f391e;
+  --color-primary-coral: #8f391e;
+  --color-primary-hover: #a54525;
+  --color-primary-warm: #ffb59f;             /* primary-fixed-dim */
+  --color-primary-active: #6f2a14;
+  --color-primary-disabled: #e3cfc6;
+  --color-primary-container: #934127;
+  --color-on-primary: #ffffff;
+  --color-on-primary-container: #ffc4b2;
+  --color-primary-fixed: #ffdbd0;
+  --color-primary-fixed-dim: #ffb59f;
+
+  /* Secondary & tertiary */
+  --color-secondary: #9f4124;
+  --color-secondary-navy: #201a18;           /* inverse-surface */
+  --color-secondary-subtle: #6f5d56;
+  --color-secondary-container: #f2e5e2;
+
+  --color-tertiary: #754b08;
+  --color-tertiary-container: #755400;
+  --color-tertiary-fixed: #ffdea4;
+  --color-tertiary-fixed-dim: #eec067;
+
+  /* Status & semantics */
+  --color-error: #ba1a1a;
+  --color-error-container: #ffdad6;
+  --color-success-green: #4f8f5d;
+  --color-warning-amber: #b98a1e;
+  --color-destructive-red: #ba1a1a;
+  --color-streak-orange: #d4571a;
+
+  /* Inverse & outline */
+  --color-inverse-surface: #201a18;
+  --color-inverse-on-surface: #fbeeea;
+  --color-inverse-primary: #ffb59f;
+  --color-outline: #88726c;
+  --color-outline-variant: #dbc1ba;
+
+  /* Misc */
+  --color-ink: #201a18;
+  --color-text-body: #63524d;
+
   --glass-bg: rgba(250, 249, 245, 0.85);
-  --glass-border: rgba(230, 223, 216, 0.8);
+  --glass-border: rgba(219, 193, 186, 0.55);
 }
 
+/* ============================================================================
+   DARK MODE — warm editorial night ramp (dark primary = primary-fixed-dim)
+   ============================================================================ */
 .dark {
-  --bg-canvas: #121110;
-  --bg-surface-lowest: #1c1a17;
-  --bg-surface-low: #22201c;
-  --bg-surface-card: #272420;
-  --bg-surface-high: #2e2a25;
-  --bg-surface-soft: #332e27;
-  --bg-surface-dark: #0a0a09;
-  
-  --text-on-surface: #f5f4f0;
-  --text-on-surface-variant: #d4cdc5;
-  --text-muted: #a39c93;
-  --border-hairline: #38332c;
-  
-  --color-primary-coral: #d97453;
-  --color-primary-hover: #e58667;
-  --color-primary-warm: #e58667;
-  --color-primary-active: #b85739;
-  
-  --glass-bg: rgba(18, 17, 16, 0.88);
-  --glass-border: rgba(56, 51, 44, 0.8);
+  --bg-canvas: #141110;
+  --bg-surface: #141110;
+  --bg-surface-lowest: #0d0b0a;
+  --bg-surface-low: #1a1614;
+  --bg-surface-card: #201b18;
+  --bg-surface-container: #201b18;
+  --bg-surface-high: #271f1b;
+  --bg-surface-container-high: #271f1b;
+  --bg-surface-container-highest: #2f2522;
+  --bg-surface-soft: #2b231d;
+  --bg-surface-dark: #0a0808;
+
+  --text-on-surface: #f2e7e2;
+  --text-on-surface-variant: #d3bfb6;
+  --text-muted: #a28d84;
+  --border-hairline: #4a3a33;
+
+  --color-primary: #ffb59f;
+  --color-primary-coral: #ffb59f;
+  --color-primary-hover: #ffcab8;
+  --color-primary-warm: #ffb59f;
+  --color-primary-active: #ffc2ae;
+  --color-primary-disabled: #4a3026;
+  --color-primary-container: #6d2a13;
+  --color-on-primary: #56190a;
+  --color-on-primary-container: #ffdbd0;
+  --color-primary-fixed: #ffdbd0;
+  --color-primary-fixed-dim: #ffb59f;
+
+  --color-secondary: #ffb59f;
+  --color-secondary-navy: #f2e7e2;
+  --color-secondary-subtle: #b39a90;
+  --color-secondary-container: #3a2a26;
+
+  --color-tertiary: #eec067;
+  --color-tertiary-container: #755400;
+  --color-tertiary-fixed: #ffdea4;
+  --color-tertiary-fixed-dim: #eec067;
+
+  --color-error: #ffb4ab;
+  --color-error-container: #93000a;
+  --color-success-green: #82cf90;
+  --color-warning-amber: #e8b95e;
+  --color-destructive-red: #ffb4ab;
+  --color-streak-orange: #ff8b68;
+
+  --color-inverse-surface: #f2e7e2;
+  --color-inverse-on-surface: #261c18;
+  --color-inverse-primary: #934127;
+  --color-outline: #a08a82;
+  --color-outline-variant: #54413a;
+
+  --color-ink: #f2e7e2;
+  --color-text-body: #d3bfb6;
+
+  --glass-bg: rgba(20, 17, 16, 0.88);
+  --glass-border: rgba(74, 58, 51, 0.7);
 }
 
 @theme {
-  --font-serif: 'Libre Caslon Text', 'Noto Sans Ethiopic', Georgia, serif;
-  --font-sans: 'Inter', 'Noto Sans Ethiopic', system-ui, -apple-system, sans-serif;
-  --font-mono: 'JetBrains Mono', monospace;
+  /* Editorial font system */
+  --font-serif: 'Cormorant Garamond', 'Noto Sans Ethiopic', Georgia, serif;
+  --font-sans: 'Plus Jakarta Sans', 'Noto Sans Ethiopic', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Space Mono', monospace;
+  --font-editorial: 'Italiana', 'Cormorant Garamond', serif;
 
+  /* Surfaces */
   --color-canvas: var(--bg-canvas);
+  --color-surface: var(--bg-surface);
   --color-surface-lowest: var(--bg-surface-lowest);
   --color-surface-low: var(--bg-surface-low);
   --color-surface-card: var(--bg-surface-card);
+  --color-surface-container: var(--bg-surface-container);
   --color-surface-high: var(--bg-surface-high);
+  --color-surface-container-high: var(--bg-surface-container-high);
+  --color-surface-container-highest: var(--bg-surface-container-highest);
   --color-surface-soft: var(--bg-surface-soft);
   --color-surface-dark: var(--bg-surface-dark);
 
+  /* Text & lines */
   --color-on-surface: var(--text-on-surface);
   --color-on-surface-variant: var(--text-on-surface-variant);
   --color-text-muted: var(--text-muted);
   --color-hairline: var(--border-hairline);
+  --color-outline: var(--color-outline);
+  --color-outline-variant: var(--color-outline-variant);
 
+  /* Primary ramp */
+  --color-primary: var(--color-primary);
   --color-primary-coral: var(--color-primary-coral);
   --color-primary-hover: var(--color-primary-hover);
   --color-primary-warm: var(--color-primary-warm);
   --color-primary-active: var(--color-primary-active);
-  --color-primary-disabled: #e6dfd8;
-  --color-primary-container: #ad5f45;
+  --color-primary-disabled: var(--color-primary-disabled);
+  --color-primary-container: var(--color-primary-container);
+  --color-on-primary: var(--color-on-primary);
+  --color-on-primary-container: var(--color-on-primary-container);
+  --color-primary-fixed: var(--color-primary-fixed);
+  --color-primary-fixed-dim: var(--color-primary-fixed-dim);
 
-  --color-secondary-navy: #181715;
-  --color-secondary-subtle: #605e5b;
-  --color-secondary-container: #e6e2de;
+  /* Secondary & tertiary */
+  --color-secondary: var(--color-secondary);
+  --color-secondary-navy: var(--color-secondary-navy);
+  --color-secondary-subtle: var(--color-secondary-subtle);
+  --color-secondary-container: var(--color-secondary-container);
+  --color-tertiary: var(--color-tertiary);
+  --color-tertiary-container: var(--color-tertiary-container);
+  --color-tertiary-fixed: var(--color-tertiary-fixed);
+  --color-tertiary-fixed-dim: var(--color-tertiary-fixed-dim);
 
-  --color-ink: #141413;
-  --color-text-body: var(--text-on-surface-variant);
+  /* Status */
+  --color-success-green: var(--color-success-green);
+  --color-warning-amber: var(--color-warning-amber);
+  --color-destructive-red: var(--color-destructive-red);
+  --color-streak-orange: var(--color-streak-orange);
+  --color-error: var(--color-error);
+  --color-error-container: var(--color-error-container);
 
-  --color-success-green: #5db872;
-  --color-warning-amber: #e8a55a;
-  --color-destructive-red: #c64545;
-  --color-streak-orange: #ea580c;
+  /* Inverse */
+  --color-inverse-surface: var(--color-inverse-surface);
+  --color-inverse-on-surface: var(--color-inverse-on-surface);
+  --color-inverse-primary: var(--color-inverse-primary);
+
+  --color-ink: var(--color-ink);
+  --color-text-body: var(--color-text-body);
 }
 
 @layer base {
@@ -89,16 +210,29 @@
     border-color: var(--border-hairline);
   }
 
+  html {
+    scroll-behavior: smooth;
+  }
+
   body {
     background-color: var(--bg-canvas);
     color: var(--text-on-surface);
     font-family: var(--font-sans);
     letter-spacing: -0.01em;
-    transition: background-color 0.25s ease, color 0.25s ease;
+    transition: background-color 0.35s ease, color 0.35s ease;
   }
 
   h1, h2, h3, .font-serif-masthead {
     font-family: var(--font-serif);
+  }
+
+  ::selection {
+    background-color: #ffdbd0;
+    color: #752b12;
+  }
+  .dark ::selection {
+    background-color: #6d2a13;
+    color: #ffdbd0;
   }
 
   .font-mono-ledger {
@@ -106,7 +240,32 @@
   }
 }
 
-/* Glassmorphism helpers */
+/* ============================================================================
+   EDITORIAL TYPE HELPERS
+   ============================================================================ */
+.font-cormorant {
+  font-family: var(--font-serif);
+}
+.font-italiana {
+  font-family: var(--font-editorial);
+}
+/* Calligraphic italic accent — the design's signature detail */
+.calligraphic-italic {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 500;
+}
+/* Mono micro-label — 9-10px, widest tracking, uppercase (design signature) */
+.mono-micro-label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+/* ============================================================================
+   GLASS & SURFACE HELPERS
+   ============================================================================ */
 .glass-panel {
   background: var(--glass-bg);
   backdrop-filter: blur(12px);
@@ -125,6 +284,9 @@
   border-color: var(--border-hairline);
 }
 
+/* ============================================================================
+   INTERACTION HELPERS
+   ============================================================================ */
 /* Focus ring accessibility standard utility */
 .focus-ring {
   outline: none;
@@ -132,7 +294,24 @@
 .focus-ring:focus-visible {
   outline: 2px solid var(--color-primary-coral);
   outline-offset: 2px;
-  box-shadow: 0 0 0 2px rgba(143, 72, 47, 0.2);
+  box-shadow: 0 0 0 2px rgba(143, 57, 30, 0.18);
+}
+
+/* Smooth micro-interaction transitions */
+.btn-interactive {
+  transition: transform 0.18s cubic-bezier(0.33, 1, 0.68, 1), background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.btn-interactive:hover {
+  transform: translateY(-1px);
+}
+.btn-interactive:active {
+  transform: translateY(0) scale(0.98);
+}
+
+/* Minimum 44x44px touch target utility (without overriding display: none) */
+.touch-target {
+  min-width: 44px;
+  min-height: 44px;
 }
 
 /* Skeleton pulse animation */
@@ -156,19 +335,11 @@
   animation: pulse-subtle 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
-/* Smooth micro-interaction transitions */
-.btn-interactive {
-  transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+/* Gentle float for decorative elements */
+@keyframes float-soft {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
 }
-.btn-interactive:hover {
-  transform: translateY(-1px);
-}
-.btn-interactive:active {
-  transform: translateY(0) scale(0.98);
-}
-
-/* Minimum 44x44px touch target utility (without overriding display: none) */
-.touch-target {
-  min-width: 44px;
-  min-height: 44px;
+.animate-float-soft {
+  animation: float-soft 6s ease-in-out infinite;
 }
