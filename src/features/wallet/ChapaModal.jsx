@@ -23,7 +23,7 @@ const ChapaModal = ({ isOpen, onClose, onDepositSubmitted }) => {
   const [transactionRef, setTransactionRef] = useState('');
   const [senderPhone, setSenderPhone] = useState('');
   const [receiptFile, setReceiptFile] = useState(null);
-  
+
   const [existingPending, setExistingPending] = useState(null);
   const [copiedId, setCopiedId] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -130,24 +130,24 @@ const ChapaModal = ({ isOpen, onClose, onDepositSubmitted }) => {
       role="dialog"
       aria-modal="true"
       aria-labelledby="chapa-modal-title"
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fade-in"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/60 backdrop-blur-sm animate-fade-in"
     >
-      <div className="bg-canvas border border-hairline rounded-2xl max-w-lg w-full p-6 shadow-2xl relative overflow-hidden max-h-[90vh] overflow-y-auto transition-colors duration-250">
+      <div className="bg-surface-container-lowest border border-hairline rounded-2xl max-w-md w-full p-8 shadow-2xl relative overflow-hidden max-h-[90vh] overflow-y-auto transition-colors duration-250">
         {/* Header */}
-        <div className="flex items-center justify-between pb-4 border-b border-hairline mb-4">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-primary-coral flex items-center justify-center text-white font-bold text-sm">
-              B
-            </div>
-            <div>
-              <h3 id="chapa-modal-title" className="font-serif font-bold text-lg text-on-surface">Bank & Wallet Stake Deposit</h3>
-              <p className="text-xs text-on-surface-variant">Direct Ethiopian Bank Transfer & Verification</p>
-            </div>
+        <div className="flex items-start justify-between pb-4 border-b border-hairline/50 mb-5">
+          <div>
+            <span className="mono-micro-label text-primary mb-1 inline-block">
+              Chapa Verified Deposit
+            </span>
+            <h3 id="chapa-modal-title" className="font-cormorant text-2xl font-normal text-on-surface">
+              Bank &amp; Wallet Stake Deposit
+            </h3>
+            <p className="text-xs text-on-surface-variant mt-1 font-sans">Direct Ethiopian Bank Transfer &amp; Verification</p>
           </div>
           <button
             onClick={onClose}
             aria-label="Close deposit dialog"
-            className="p-1 rounded-xl text-on-surface-variant hover:text-on-surface hover:bg-surface-card transition-colors focus-ring"
+            className="p-1.5 rounded-full text-on-surface-variant hover:text-on-surface hover:bg-surface-card transition-colors focus-ring shrink-0"
           >
             <X size={20} />
           </button>
@@ -159,11 +159,11 @@ const ChapaModal = ({ isOpen, onClose, onDepositSubmitted }) => {
               <CheckCircle size={38} />
             </div>
             <div className="space-y-2 max-w-sm mx-auto">
-              <h4 className="font-serif font-bold text-xl text-on-surface">Deposit Request Submitted!</h4>
-              <p className="text-xs text-on-surface-variant">
-                Thank you! Your transaction reference number <strong className="font-mono text-primary-coral">{transactionRef}</strong> has been sent to our finance admin queue.
+              <h4 className="font-cormorant text-2xl font-normal text-on-surface">Deposit Request Submitted!</h4>
+              <p className="text-xs text-on-surface-variant font-sans">
+                Thank you! Your transaction reference number <strong className="font-mono text-primary">{transactionRef}</strong> has been sent to our finance admin queue.
               </p>
-              <div className="p-3 bg-amber-500/15 border border-amber-500/30 rounded-xl text-xs text-amber-900 dark:text-amber-200 font-mono flex items-center gap-2 text-left">
+              <div className="p-3 bg-warning-amber/15 border border-warning-amber/30 rounded-xl text-xs text-warning-amber font-mono flex items-center gap-2 text-left">
                 <Clock size={18} className="text-warning-amber shrink-0" />
                 <span>
                   <strong>Admin Verification Notice:</strong> Admin will verify your transaction reference <strong>within 24 hours</strong>.
@@ -175,40 +175,40 @@ const ChapaModal = ({ isOpen, onClose, onDepositSubmitted }) => {
                 setIsSubmitted(false);
                 onClose();
               }}
-              className="mt-4 px-6 py-2.5 bg-surface-dark text-white font-semibold text-xs rounded-xl shadow-xs hover:bg-stone-800 focus-ring btn-interactive"
+              className="mt-4 px-6 py-2.5 rounded-full bg-primary text-on-primary text-xs tracking-wider uppercase font-semibold hover:bg-primary-container shadow-sm focus-ring btn-interactive transition-all"
             >
-              Done & Return to Workspace
+              Done &amp; Return to Workspace
             </button>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-5">
             {errorMsg && (
-              <div className="p-3 bg-red-500/15 border border-red-500/30 text-destructive-red text-xs rounded-xl flex items-center gap-2 font-mono">
+              <div className="p-3 bg-error/15 border border-error/30 text-destructive-red text-xs rounded-xl flex items-center gap-2 font-mono">
                 <AlertCircle size={16} className="shrink-0" />
                 <span>{errorMsg}</span>
               </div>
             )}
 
             {existingPending && (
-              <div className="p-3.5 bg-amber-500/15 border border-amber-500/30 rounded-xl text-xs text-amber-900 dark:text-amber-200 space-y-1 font-mono">
-                <div className="flex items-center gap-2 font-bold text-amber-950 dark:text-amber-100">
+              <div className="p-3.5 bg-warning-amber/15 border border-warning-amber/30 rounded-xl text-xs text-warning-amber space-y-1 font-mono">
+                <div className="flex items-center gap-2 font-bold">
                   <Clock size={16} className="text-warning-amber shrink-0" />
                   <span>Pending Deposit Request Under Review</span>
                 </div>
-                <p className="text-[11px] leading-snug font-sans">
-                  You already submitted deposit reference <strong className="font-mono text-primary-coral">{existingPending.transactionRef}</strong>. The admin is verifying your payment within 24 hours. You cannot submit another request until your pending request is processed.
+                <p className="text-[11px] leading-snug font-sans text-on-surface-variant">
+                  You already submitted deposit reference <strong className="font-mono text-primary">{existingPending.transactionRef}</strong>. The admin is verifying your payment within 24 hours. You cannot submit another request until your pending request is processed.
                 </p>
               </div>
             )}
 
             {/* Step 1: Fixed Deposit Amount (1,000 ETB) */}
-            <div className="p-4 bg-surface-dark border border-stone-800 rounded-xl space-y-1 font-mono">
-              <span className="text-[10px] text-warning-amber uppercase font-bold tracking-wider block">
-                1. FIXED REQUIRED STAKE DEPOSIT AMOUNT
+            <div className="p-4 bg-surface-dark border border-stone-800 rounded-2xl space-y-1 font-mono">
+              <span className="mono-micro-label text-warning-amber font-bold block">
+                1. Fixed Required Stake Deposit Amount
               </span>
-              <div className="flex items-center justify-between">
-                <span className="font-bold text-2xl text-white">1,000.00 ETB</span>
-                <span className="px-2.5 py-1 bg-primary-coral/20 border border-primary-coral text-primary-coral text-xs font-bold rounded-lg">
+              <div className="flex items-center justify-between gap-3">
+                <span className="font-cormorant text-3xl font-normal text-stone-100">1,000.00 ETB</span>
+                <span className="px-2.5 py-1 bg-primary/20 border border-primary text-primary text-[10px] font-mono rounded-full uppercase tracking-wider shrink-0">
                   Standard Stake
                 </span>
               </div>
@@ -219,7 +219,7 @@ const ChapaModal = ({ isOpen, onClose, onDepositSubmitted }) => {
 
             {/* Step 2: Payment Account Details */}
             <div className="space-y-2">
-              <label className="block text-xs font-mono font-bold text-on-surface-variant uppercase tracking-wider">
+              <label className="block text-[11px] font-mono font-bold text-on-surface-variant uppercase tracking-wider">
                 2. Official Payment Accounts (Click to Copy Account No.)
               </label>
               <div className="space-y-2">
@@ -232,16 +232,16 @@ const ChapaModal = ({ isOpen, onClose, onDepositSubmitted }) => {
                       onClick={() => setSelectedAccount(acc)}
                       className={`p-3 rounded-xl border cursor-pointer transition-all flex items-center justify-between focus-ring ${
                         isSelected
-                          ? 'bg-surface-soft border-primary-coral shadow-xs'
-                          : 'bg-surface-lowest border-hairline hover:border-primary-coral'
+                          ? 'bg-surface-container-low border-primary shadow-sm'
+                          : 'bg-surface-container-lowest border-hairline hover:border-primary'
                       }`}
                     >
                       <div className="space-y-0.5">
                         <div className="flex items-center gap-2">
-                          <span className="font-serif font-bold text-xs text-on-surface">{acc.bankName}</span>
+                          <span className="font-cormorant text-base font-medium text-on-surface">{acc.bankName}</span>
                           <span className="text-[10px] font-mono text-text-muted">({acc.accountName})</span>
                         </div>
-                        <p className="font-mono text-sm font-bold text-primary-coral tracking-wide">
+                        <p className="font-mono text-sm font-bold text-primary tracking-wide">
                           {acc.accountNumber}
                         </p>
                       </div>
@@ -253,7 +253,7 @@ const ChapaModal = ({ isOpen, onClose, onDepositSubmitted }) => {
                           handleCopyAccount(acc.id, acc.accountNumber);
                         }}
                         aria-label={`Copy ${acc.bankName} account number`}
-                        className="px-2.5 py-1 bg-surface-lowest border border-hairline hover:border-primary-coral text-xs font-mono rounded-lg flex items-center gap-1 text-on-surface-variant focus-ring"
+                        className="px-2.5 py-1 bg-surface-container-low border border-hairline hover:border-primary text-xs font-mono rounded-full flex items-center gap-1 text-on-surface-variant focus-ring"
                       >
                         {isCopied ? (
                           <>
@@ -276,7 +276,7 @@ const ChapaModal = ({ isOpen, onClose, onDepositSubmitted }) => {
             {/* Step 3: Input TxRef & Phone */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
               <div>
-                <label className="block text-xs font-mono font-bold text-on-surface-variant mb-1">
+                <label className="block text-[11px] font-mono font-bold text-on-surface-variant uppercase tracking-wider mb-1">
                   Transaction Ref ID
                 </label>
                 <input
@@ -284,13 +284,13 @@ const ChapaModal = ({ isOpen, onClose, onDepositSubmitted }) => {
                   placeholder="e.g. FT24080512345 or Telebirr ID"
                   value={transactionRef}
                   onChange={(e) => setTransactionRef(e.target.value)}
-                  className="w-full px-3 py-2 bg-surface-lowest border border-hairline rounded-xl text-xs font-mono text-on-surface focus-ring"
+                  className="w-full bg-surface-container-low text-xs px-3.5 py-2.5 rounded-xl border border-hairline outline-none font-mono text-on-surface focus:border-primary transition-colors"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-mono font-bold text-on-surface-variant mb-1">
+                <label className="block text-[11px] font-mono font-bold text-on-surface-variant uppercase tracking-wider mb-1">
                   Phone/Account Number
                 </label>
                 <input
@@ -298,17 +298,17 @@ const ChapaModal = ({ isOpen, onClose, onDepositSubmitted }) => {
                   placeholder="e.g. 09123456789"
                   value={senderPhone}
                   onChange={(e) => setSenderPhone(e.target.value)}
-                  className="w-full px-3 py-2 bg-surface-lowest border border-hairline rounded-xl text-xs font-mono text-on-surface focus-ring"
+                  className="w-full bg-surface-container-low text-xs px-3.5 py-2.5 rounded-xl border border-hairline outline-none font-mono text-on-surface focus:border-primary transition-colors"
                 />
               </div>
             </div>
 
             {/* Step 4: Receipt Screenshot Upload (Optional) */}
             <div className="space-y-1">
-              <label className="block text-xs font-mono font-bold text-on-surface-variant">
+              <label className="block text-[11px] font-mono font-bold text-on-surface-variant uppercase tracking-wider">
                 Attach Bank / Telebirr Receipt Screenshot (Optional)
               </label>
-              <div className="relative border-2 border-dashed border-hairline hover:border-primary-coral bg-surface-lowest rounded-xl p-3 transition-colors text-center cursor-pointer">
+              <div className="relative border-2 border-dashed border-hairline hover:border-primary bg-surface-container-low rounded-xl p-3 transition-colors text-center cursor-pointer">
                 <input
                   type="file"
                   accept="image/*,.pdf"
@@ -320,7 +320,7 @@ const ChapaModal = ({ isOpen, onClose, onDepositSubmitted }) => {
                   className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                 />
                 {receiptFile ? (
-                  <div className="flex items-center justify-between text-left text-xs font-mono text-primary-coral">
+                  <div className="flex items-center justify-between text-left text-xs font-mono text-primary">
                     <div className="flex items-center gap-2 truncate">
                       <FileCheck size={18} className="text-success-green shrink-0" />
                       <span className="truncate font-semibold">{receiptFile.name}</span>
@@ -331,15 +331,15 @@ const ChapaModal = ({ isOpen, onClose, onDepositSubmitted }) => {
                         e.stopPropagation();
                         setReceiptFile(null);
                       }}
-                      className="text-destructive-red hover:underline text-[10px] font-sans font-bold px-2 py-0.5 border border-destructive-red/30 rounded"
+                      className="text-destructive-red hover:underline text-[10px] font-sans font-bold px-2 py-0.5 border border-destructive-red/30 rounded-full"
                     >
                       Clear
                     </button>
                   </div>
                 ) : (
                   <div className="flex flex-col items-center justify-center gap-1 text-on-surface-variant">
-                    <Upload size={18} className="text-primary-coral" />
-                    <span className="text-xs font-medium">Click to Attach Receipt Screenshot</span>
+                    <Upload size={18} className="text-primary" />
+                    <span className="text-xs font-medium font-sans">Click to Attach Receipt Screenshot</span>
                     <span className="text-[10px] text-text-muted font-mono">PNG, JPG, or PDF</span>
                   </div>
                 )}
@@ -347,12 +347,12 @@ const ChapaModal = ({ isOpen, onClose, onDepositSubmitted }) => {
             </div>
 
             {/* 30-Day Escrow Note */}
-            <div className="p-3 bg-surface-dark text-white rounded-xl text-xs space-y-1">
-              <div className="flex items-center gap-1.5 font-bold text-warning-amber">
+            <div className="p-3 bg-surface-dark border border-stone-800 text-stone-300 rounded-xl text-xs space-y-1">
+              <div className="flex items-center gap-1.5 font-bold text-warning-amber font-mono">
                 <ShieldCheck size={14} />
                 <span>Zero Gateway Fee Verification</span>
               </div>
-              <p className="text-stone-400 leading-snug">
+              <p className="text-stone-400 leading-snug font-sans">
                 Your ETB deposit is verified directly by the admin without payment gateway surcharges.
               </p>
             </div>
@@ -361,7 +361,7 @@ const ChapaModal = ({ isOpen, onClose, onDepositSubmitted }) => {
             <button
               type="submit"
               disabled={isSubmitting || !transactionRef.trim() || !!existingPending}
-              className="w-full py-3 bg-primary-coral hover:bg-primary-hover text-white font-semibold rounded-xl shadow-xs transition-all flex items-center justify-center gap-2 disabled:opacity-50 text-xs uppercase font-mono tracking-wider focus-ring btn-interactive cursor-pointer"
+              className="w-full py-3 rounded-full bg-primary text-on-primary text-xs tracking-wider uppercase font-semibold hover:bg-primary-container shadow-sm transition-all flex items-center justify-center gap-2 disabled:opacity-50 font-mono focus-ring btn-interactive cursor-pointer"
             >
               {isSubmitting ? (
                 <>

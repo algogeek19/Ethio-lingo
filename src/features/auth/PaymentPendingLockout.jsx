@@ -16,6 +16,11 @@ import { api } from '../../services/api';
 import { formatETB } from '../../utils/formatters';
 import ChapaModal from '../wallet/ChapaModal';
 
+const cardClass = 'max-w-xl w-full bg-surface-container-lowest border border-hairline/60 rounded-2xl p-6 sm:p-8 shadow-2xl space-y-6 animate-fade-in relative overflow-hidden';
+const statusBadgeClass = 'inline-block px-3 py-1 font-mono text-[10px] font-bold rounded uppercase tracking-wider';
+const primaryButtonClass = 'w-full py-3 rounded-full bg-primary text-on-primary text-xs tracking-wider uppercase font-semibold hover:bg-primary-container shadow-sm transition-all flex items-center justify-center gap-2 focus-ring cursor-pointer';
+const secondaryButtonClass = 'w-full py-3 rounded-full bg-surface-container text-on-surface border border-hairline hover:bg-surface-container-high text-xs tracking-wider uppercase font-semibold flex items-center justify-center gap-2 shadow-sm transition-all focus-ring cursor-pointer';
+
 const PaymentPendingLockout = ({ user, onStatusRefresh, onLogout }) => {
   const [depositStatus, setDepositStatus] = useState(null);
   const [userWallet, setUserWallet] = useState(null);
@@ -75,32 +80,30 @@ const PaymentPendingLockout = ({ user, onStatusRefresh, onLogout }) => {
   // Defensive: unverified emails must go through the /verify flow, not the deposit flow.
   if (user && user.emailVerified === false) {
     return (
-      <div className="min-h-screen bg-[#faf9f5] flex items-center justify-center p-4 sm:p-6 lg:p-8">
-        <div className="max-w-xl w-full bg-white border-2 border-[#e6dfd8] rounded-2xl p-6 sm:p-8 shadow-2xl space-y-6 animate-fade-in relative overflow-hidden">
-          <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-[#8f482f] via-[#e8a55a] to-[#181715]" />
-
+      <div className="min-h-screen bg-canvas flex items-center justify-center p-4 sm:p-6 lg:p-8">
+        <div className={cardClass}>
           <div className="text-center space-y-3 pt-2">
-            <div className="w-16 h-16 rounded-2xl bg-[#faf9f5] border border-[#e6dfd8] flex items-center justify-center mx-auto text-[#8f482f] shadow-inner">
-              <MailCheck size={32} className="text-[#8f482f]" />
+            <div className="w-16 h-16 rounded-2xl bg-surface-low border border-hairline/60 flex items-center justify-center mx-auto text-primary shadow-sm">
+              <MailCheck size={32} className="text-primary" />
             </div>
-            <div className="inline-block px-3 py-1 bg-[#181715] text-[#e8a55a] font-mono text-[10px] font-bold rounded uppercase tracking-wider">
+            <div className={`${statusBadgeClass} bg-warning-amber/10 text-warning-amber`}>
               EMAIL NOT VERIFIED
             </div>
-            <h2 className="font-serif font-bold text-2xl sm:text-3xl text-[#1b1c1a]">
+            <h2 className="font-cormorant text-3xl font-normal text-on-surface">
               Verify your Google email first
             </h2>
-            <p className="text-xs sm:text-sm text-[#54433e] max-w-md mx-auto leading-relaxed">
+            <p className="text-xs sm:text-sm text-on-surface-variant max-w-md mx-auto leading-relaxed">
               You must verify the Google email on your account before daily learning,
               exams, or the escrow wallet can be unlocked.
             </p>
           </div>
 
-          <div className="p-4 bg-[#f5f0e8] border border-[#e6dfd8] rounded-xl text-xs space-y-1.5">
-            <div className="flex items-center gap-2 font-bold text-[#8f482f]">
+          <div className="p-4 bg-surface-soft border border-hairline rounded-xl text-xs space-y-1.5">
+            <div className="flex items-center gap-2 font-bold text-primary">
               <ShieldCheck size={16} />
               <span>Google-verified accounts only</span>
             </div>
-            <p className="text-[#54433e] text-[11px] leading-relaxed break-all">
+            <p className="text-on-surface-variant text-[11px] leading-relaxed break-all">
               Account: <strong className="font-mono">{user.email}</strong>
             </p>
           </div>
@@ -108,18 +111,18 @@ const PaymentPendingLockout = ({ user, onStatusRefresh, onLogout }) => {
           <div className="space-y-3 pt-2">
             <Link
               to="/verify"
-              className="w-full py-3 bg-[#8f482f] hover:bg-[#a9583e] text-white font-semibold text-xs rounded-xl flex items-center justify-center gap-2 shadow-xs transition-all"
+              className={primaryButtonClass}
             >
               <ShieldCheck size={16} />
               <span>Go to Email Verification</span>
             </Link>
 
             <div className="flex justify-between items-center text-xs font-mono pt-2">
-              <span className="text-[#6c6a64]">Logged in as: {user.email}</span>
+              <span className="text-text-muted">Logged in as: {user.email}</span>
               {onLogout && (
                 <button
                   onClick={onLogout}
-                  className="text-red-600 hover:text-red-800 font-bold flex items-center gap-1"
+                  className="text-destructive-red hover:text-error font-bold flex items-center gap-1 cursor-pointer"
                 >
                   <LogOut size={14} />
                   <span>Sign Out</span>
@@ -133,27 +136,32 @@ const PaymentPendingLockout = ({ user, onStatusRefresh, onLogout }) => {
   }
 
   return (
-    <div className="min-h-screen bg-[#faf9f5] flex items-center justify-center p-4 sm:p-6 lg:p-8">
-      <div className="max-w-xl w-full bg-white border-2 border-[#e6dfd8] rounded-2xl p-6 sm:p-8 shadow-2xl space-y-6 animate-fade-in relative overflow-hidden">
-        {/* Top Gradient Banner */}
-        <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-[#8f482f] via-[#e8a55a] to-[#181715]" />
-
+    <div className="min-h-screen bg-canvas flex items-center justify-center p-4 sm:p-6 lg:p-8">
+      <div className={cardClass}>
         {/* Lockout Reason Header */}
         <div className="text-center space-y-3 pt-2">
-          <div className="w-16 h-16 rounded-2xl bg-[#faf9f5] border border-[#e6dfd8] flex items-center justify-center mx-auto text-[#8f482f] shadow-inner">
+          <div className="w-16 h-16 rounded-2xl bg-surface-low border border-hairline/60 flex items-center justify-center mx-auto text-primary shadow-sm">
             {isPendingApproval ? (
-              <Clock size={32} className="text-[#e8a55a] animate-pulse" />
+              <Clock size={32} className="text-warning-amber animate-pulse" />
             ) : isTrialExpired ? (
-              <Sparkles size={32} className="text-[#e8a55a]" />
+              <Sparkles size={32} className="text-primary" />
             ) : isLowStake ? (
-              <AlertTriangle size={32} className="text-[#c64545]" />
+              <AlertTriangle size={32} className="text-destructive-red" />
             ) : (
-              <Lock size={32} className="text-[#8f482f]" />
+              <Lock size={32} className="text-primary" />
             )}
           </div>
 
           {/* Status Badge */}
-          <div className="inline-block px-3 py-1 bg-[#181715] text-[#e8a55a] font-mono text-[10px] font-bold rounded uppercase tracking-wider">
+          <div
+            className={`${statusBadgeClass} ${
+              isPendingApproval
+                ? 'bg-warning-amber/10 text-warning-amber'
+                : isDeclined || isLowStake || hasNoStake
+                ? 'bg-error/10 text-error'
+                : 'bg-primary/10 text-primary'
+            }`}
+          >
             {isPendingApproval
               ? 'AWAITING ADMIN APPROVAL'
               : isTrialExpired
@@ -166,7 +174,7 @@ const PaymentPendingLockout = ({ user, onStatusRefresh, onLogout }) => {
           </div>
 
           {/* Title */}
-          <h2 className="font-serif font-bold text-2xl sm:text-3xl text-[#1b1c1a]">
+          <h2 className="font-cormorant text-3xl font-normal text-on-surface">
             {isPendingApproval
               ? 'Your Deposit is Under Review'
               : isTrialExpired
@@ -179,7 +187,7 @@ const PaymentPendingLockout = ({ user, onStatusRefresh, onLogout }) => {
           </h2>
 
           {/* Detailed Message */}
-          <p className="text-xs sm:text-sm text-[#54433e] max-w-md mx-auto leading-relaxed">
+          <p className="text-xs sm:text-sm text-on-surface-variant max-w-md mx-auto leading-relaxed">
             {isPendingApproval ? (
               <>
                 Deposit submitted! Admin will verify your transaction reference within <strong>24 hours</strong> to activate your account and credit your escrow vault.
@@ -205,19 +213,19 @@ const PaymentPendingLockout = ({ user, onStatusRefresh, onLogout }) => {
         </div>
 
         {/* Current Wallet & Deposit Card */}
-        <div className="p-4 bg-[#faf9f5] border border-[#e6dfd8] rounded-xl space-y-3 font-mono text-xs">
-          <div className="flex items-center justify-between border-b border-[#e6dfd8] pb-2">
-            <span className="text-[#6c6a64] uppercase font-bold text-[10px] flex items-center gap-1.5">
-              <Wallet size={14} className="text-[#8f482f]" />
+        <div className="p-4 bg-surface-low border border-hairline rounded-xl space-y-3 font-mono text-xs">
+          <div className="flex items-center justify-between border-b border-hairline/50 pb-2">
+            <span className="text-text-muted uppercase font-bold text-[10px] flex items-center gap-1.5">
+              <Wallet size={14} className="text-primary" />
               <span>CURRENT ACCOUNT STATUS SUMMARY</span>
             </span>
             <span
               className={`px-2 py-0.5 text-[10px] font-bold rounded uppercase ${
                 isPendingApproval
-                  ? 'bg-amber-100 text-amber-800 border border-amber-300'
+                  ? 'bg-warning-amber/10 text-warning-amber border border-warning-amber/30'
                   : isDeclined || isLowStake || hasNoStake
-                  ? 'bg-red-100 text-red-800 border border-red-300'
-                  : 'bg-stone-100 text-stone-700'
+                  ? 'bg-error/10 text-error border border-error/30'
+                  : 'bg-surface-container text-on-surface-variant border border-hairline'
               }`}
             >
               {isPendingApproval
@@ -230,27 +238,27 @@ const PaymentPendingLockout = ({ user, onStatusRefresh, onLogout }) => {
             </span>
           </div>
 
-          <div className="grid grid-cols-2 gap-3 text-[#1b1c1a]">
+          <div className="grid grid-cols-2 gap-3 text-on-surface">
             <div>
-              <span className="text-[10px] text-[#6c6a64] block">Staked Vault Balance</span>
-              <strong className="text-base font-bold text-[#8f482f]">
+              <span className="text-[10px] text-text-muted block">Staked Vault Balance</span>
+              <strong className="text-base font-bold text-primary">
                 {formatETB(userWallet?.stakedAmount ?? 0)}
               </strong>
             </div>
             <div>
-              <span className="text-[10px] text-[#6c6a64] block">Account Status</span>
+              <span className="text-[10px] text-text-muted block">Account Status</span>
               <strong className="uppercase">{user?.status || 'PENDING_APPROVAL'}</strong>
             </div>
 
             {depositStatus && (
               <>
-                <div className="col-span-2 pt-2 border-t border-[#e6dfd8] grid grid-cols-2 gap-2">
+                <div className="col-span-2 pt-2 border-t border-hairline grid grid-cols-2 gap-2">
                   <div>
-                    <span className="text-[10px] text-[#6c6a64] block">Last Submitted TxRef</span>
-                    <strong className="text-[#8f482f] break-all">{depositStatus.transactionRef}</strong>
+                    <span className="text-[10px] text-text-muted block">Last Submitted TxRef</span>
+                    <strong className="text-primary break-all">{depositStatus.transactionRef}</strong>
                   </div>
                   <div>
-                    <span className="text-[10px] text-[#6c6a64] block">Payment Channel</span>
+                    <span className="text-[10px] text-text-muted block">Payment Channel</span>
                     <strong>{depositStatus.paymentChannel}</strong>
                   </div>
                 </div>
@@ -260,18 +268,18 @@ const PaymentPendingLockout = ({ user, onStatusRefresh, onLogout }) => {
         </div>
 
         {/* 24-Hour Guarantee Notice */}
-        <div className="p-4 bg-[#f5f0e8] border border-[#e6dfd8] rounded-xl text-xs space-y-1.5">
-          <div className="flex items-center gap-2 font-bold text-[#8f482f]">
+        <div className="p-4 bg-surface-soft border border-hairline rounded-xl text-xs space-y-1.5">
+          <div className="flex items-center gap-2 font-bold text-primary">
             <Clock size={16} />
             <span>Admin Payment Verification Guarantee</span>
           </div>
-          <p className="text-[#54433e] text-[11px] leading-relaxed">
+          <p className="text-on-surface-variant text-[11px] leading-relaxed">
             Finance admins verify bank statements and SMS transaction records continuously. Once your payment reference is approved, your account will instantly unlock.
           </p>
         </div>
 
         {refreshNotice && (
-          <div className="p-3 bg-[#eef7ee] border border-[#c3e6c3] rounded-xl text-xs text-[#2b662b] font-medium animate-fade-in flex items-center justify-between">
+          <div className="p-3 bg-success-green/10 border border-success-green/30 rounded-xl text-xs text-success-green font-medium animate-fade-in flex items-center justify-between">
             <span>{refreshNotice}</span>
           </div>
         )}
@@ -282,7 +290,7 @@ const PaymentPendingLockout = ({ user, onStatusRefresh, onLogout }) => {
             <button
               onClick={handleCheckStatus}
               disabled={loading}
-              className="w-full py-3 bg-[#181715] hover:bg-[#282622] text-white font-semibold text-xs rounded-xl flex items-center justify-center gap-2 shadow-xs transition-all"
+              className={secondaryButtonClass}
             >
               <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
               <span>Check / Refresh Verification Status</span>
@@ -290,7 +298,7 @@ const PaymentPendingLockout = ({ user, onStatusRefresh, onLogout }) => {
 
             <button
               onClick={() => setShowDepositModal(true)}
-              className="w-full py-3 bg-[#8f482f] hover:bg-[#a9583e] text-white font-semibold text-xs rounded-xl flex items-center justify-center gap-2 shadow-xs transition-all"
+              className={primaryButtonClass}
             >
               <Send size={16} />
               <span>{isPendingApproval ? 'Update / Resubmit TxRef' : 'Submit Stake Deposit Verification'}</span>
@@ -298,11 +306,11 @@ const PaymentPendingLockout = ({ user, onStatusRefresh, onLogout }) => {
           </div>
 
           <div className="flex justify-between items-center text-xs font-mono pt-2">
-            <span className="text-[#6c6a64]">Logged in as: {user?.email}</span>
+            <span className="text-text-muted">Logged in as: {user?.email}</span>
             {onLogout && (
               <button
                 onClick={onLogout}
-                className="text-red-600 hover:text-red-800 font-bold flex items-center gap-1"
+                className="text-destructive-red hover:text-error font-bold flex items-center gap-1 cursor-pointer"
               >
                 <LogOut size={14} />
                 <span>Sign Out</span>

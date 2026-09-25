@@ -4,9 +4,9 @@ import { MessageSquare, Star, RefreshCw, CheckCircle2, Archive, BookOpen } from 
 import { api } from '../../services/api';
 
 const STATUS_BADGE = {
-  open: 'bg-red-500/15 text-red-600 dark:text-red-400 border-red-500/30',
-  read: 'bg-warning-amber/15 text-warning-amber border-warning-amber/30',
-  closed: 'bg-green-500/15 text-green-600 dark:text-green-400 border-green-500/30',
+  open: 'bg-destructive-red/10 text-destructive-red',
+  read: 'bg-warning-amber/10 text-warning-amber',
+  closed: 'bg-success-green/10 text-success-green',
 };
 
 const AdminFeedbackPage = () => {
@@ -54,23 +54,21 @@ const AdminFeedbackPage = () => {
     <motion.div
       initial={{ opacity: 0, y: 15 }}
       animate={{ opacity: 1, y: 0 }}
-      className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6"
+      className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-12 py-10 space-y-8"
     >
-      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-hairline pb-6">
+      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-hairline/50 pb-6">
         <div>
-          <span className="px-2.5 py-0.5 bg-surface-dark text-warning-amber border border-stone-800 font-mono text-[10px] font-bold rounded-full uppercase">
-            LEARNER FEEDBACK INBOX
-          </span>
-          <h1 className="font-serif font-bold text-3xl sm:text-4xl text-on-surface mt-2 tracking-tight">
+          <span className="mono-micro-label text-primary">LEARNER FEEDBACK INBOX</span>
+          <h1 className="font-cormorant text-4xl md:text-5xl font-normal text-on-surface mt-2">
             Feedback & Insights
           </h1>
-          <p className="text-sm text-on-surface-variant mt-1">
+          <p className="text-sm text-on-surface-variant mt-2">
             Review submissions from learners and triage them for action.
           </p>
         </div>
         <button
           onClick={() => load(activeStatus)}
-          className="p-2.5 bg-surface-lowest border border-hairline hover:border-primary-coral text-on-surface rounded-xl cursor-pointer focus-ring"
+          className="w-11 h-11 rounded-full bg-surface-container text-on-surface border border-hairline hover:bg-surface-container-high flex items-center justify-center transition-all cursor-pointer focus-ring"
           aria-label="Refresh feedback"
         >
           <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
@@ -78,10 +76,10 @@ const AdminFeedbackPage = () => {
       </div>
 
       {notice && (
-        <div className="p-3.5 bg-green-500/15 border border-green-500/30 rounded-xl text-xs text-green-700 dark:text-green-300 font-mono">{notice}</div>
+        <div className="p-3.5 bg-success-green/10 border border-success-green/30 rounded-xl text-xs text-success-green font-mono">{notice}</div>
       )}
       {error && (
-        <div className="p-3.5 bg-red-500/10 border border-red-500/30 rounded-xl text-xs text-red-600 dark:text-red-300 font-mono">{error}</div>
+        <div className="p-3.5 bg-destructive-red/10 border border-destructive-red/30 rounded-xl text-xs text-destructive-red font-mono">{error}</div>
       )}
 
       <div className="flex flex-wrap gap-2">
@@ -89,10 +87,10 @@ const AdminFeedbackPage = () => {
           <button
             key={label}
             onClick={() => { setActiveStatus(value); load(value); }}
-            className={`px-3 py-1.5 rounded-xl text-[11px] font-mono font-semibold border transition-all cursor-pointer focus-ring ${
+            className={`rounded-full px-4 py-1.5 text-[10px] font-mono font-semibold uppercase tracking-wider border transition-all cursor-pointer focus-ring ${
               activeStatus === value
-                ? 'bg-primary-coral text-white border-primary-coral'
-                : 'bg-surface-card text-on-surface-variant border-hairline hover:border-primary-coral'
+                ? 'bg-primary text-on-primary border-primary'
+                : 'bg-surface-container text-on-surface-variant border-hairline hover:border-primary'
             }`}
           >
             {label}
@@ -107,13 +105,13 @@ const AdminFeedbackPage = () => {
           <p className="md:col-span-2 p-10 text-center text-sm text-on-surface-variant font-mono">No feedback submissions yet.</p>
         ) : (
           feedback.map((f) => (
-            <div key={f.id} className="bg-surface-lowest border border-hairline rounded-2xl p-5 space-y-3 flex flex-col">
+            <div key={f.id} className="bg-surface-lowest border border-hairline/60 rounded-2xl p-6 shadow-sm space-y-4 flex flex-col">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-center gap-2.5 flex-wrap">
-                  <span className="px-2.5 py-0.5 bg-primary-coral/10 text-primary-coral font-mono text-[10px] font-bold rounded-lg uppercase border border-primary-coral/30">
+                  <span className="font-mono text-[9px] px-2 py-0.5 bg-primary/10 text-primary rounded uppercase tracking-wider border border-primary/30">
                     {f.category}
                   </span>
-                  <span className={`px-2.5 py-0.5 rounded-lg text-[10px] font-mono font-bold uppercase border ${STATUS_BADGE[f.status] || STATUS_BADGE.open}`}>
+                  <span className={`font-mono text-[9px] px-2 py-0.5 rounded uppercase tracking-wider border ${STATUS_BADGE[f.status] || STATUS_BADGE.open}`}>
                     {f.status}
                   </span>
                 </div>
@@ -128,7 +126,7 @@ const AdminFeedbackPage = () => {
 
               <p className="text-sm text-on-surface leading-relaxed grow">{f.message}</p>
 
-              <div className="flex items-center justify-between gap-2 border-t border-hairline pt-3">
+              <div className="flex items-center justify-between gap-2 border-t border-hairline/50 pt-4">
                 <span className="text-[11px] font-mono text-on-surface-variant">
                   {f.createdByName || 'Anonymous'} • {new Date(f.createdAt).toLocaleString()}
                 </span>
@@ -137,7 +135,7 @@ const AdminFeedbackPage = () => {
                     <button
                       onClick={() => updateStatus(f, 'read')}
                       disabled={busyId === f.id}
-                      className="px-3 py-1.5 bg-warning-amber/15 hover:bg-warning-amber/25 text-warning-amber border border-warning-amber/30 rounded-xl text-[11px] font-semibold flex items-center gap-1.5 cursor-pointer focus-ring disabled:opacity-50"
+                      className="rounded-full bg-warning-amber/10 hover:bg-warning-amber/20 text-warning-amber border border-warning-amber/30 px-3.5 py-1.5 text-[10px] font-semibold uppercase tracking-wider flex items-center gap-1.5 cursor-pointer focus-ring disabled:opacity-50"
                     >
                       <BookOpen size={13} /> Mark Read
                     </button>
@@ -146,7 +144,7 @@ const AdminFeedbackPage = () => {
                     <button
                       onClick={() => updateStatus(f, 'closed')}
                       disabled={busyId === f.id}
-                      className="px-3 py-1.5 bg-green-500/15 hover:bg-green-500/25 text-green-600 dark:text-green-400 border border-green-500/30 rounded-xl text-[11px] font-semibold flex items-center gap-1.5 cursor-pointer focus-ring disabled:opacity-50"
+                      className="rounded-full bg-success-green/10 hover:bg-success-green/20 text-success-green border border-success-green/30 px-3.5 py-1.5 text-[10px] font-semibold uppercase tracking-wider flex items-center gap-1.5 cursor-pointer focus-ring disabled:opacity-50"
                     >
                       <CheckCircle2 size={13} /> Close
                     </button>
@@ -155,7 +153,7 @@ const AdminFeedbackPage = () => {
                     <button
                       onClick={() => updateStatus(f, 'open')}
                       disabled={busyId === f.id}
-                      className="px-3 py-1.5 bg-surface-card hover:bg-surface-high text-on-surface-variant border border-hairline rounded-xl text-[11px] font-semibold flex items-center gap-1.5 cursor-pointer focus-ring disabled:opacity-50"
+                      className="rounded-full bg-surface-container hover:bg-surface-container-high text-on-surface-variant border border-hairline px-3.5 py-1.5 text-[10px] font-semibold uppercase tracking-wider flex items-center gap-1.5 cursor-pointer focus-ring disabled:opacity-50"
                     >
                       <Archive size={13} /> Reopen
                     </button>
@@ -167,9 +165,9 @@ const AdminFeedbackPage = () => {
         )}
       </div>
 
-      <div className="p-4 bg-surface-lowest border border-hairline rounded-2xl text-center">
-        <span className="text-xs font-mono text-on-surface-variant flex items-center justify-center gap-2">
-          <MessageSquare size={14} className="text-primary-coral" />
+      <div className="p-4 bg-surface-lowest border border-hairline/60 rounded-2xl shadow-sm text-center">
+        <span className="mono-micro-label text-on-surface-variant flex items-center justify-center gap-2">
+          <MessageSquare size={14} className="text-primary" />
           {feedback.filter((f) => f.status === 'open').length} open item(s) awaiting review.
         </span>
       </div>

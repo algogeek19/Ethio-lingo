@@ -33,6 +33,7 @@ const DailyExamRunner = () => {
     return 13;
   };
   const basePassThreshold = getBasePassThreshold(currentLevel || 'Beginner I');
+  const passPercent = Math.round((basePassThreshold / 20) * 100);
 
   const [examQuestions, setExamQuestions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -194,7 +195,7 @@ const DailyExamRunner = () => {
   if (loading) {
     return (
       <div className="max-w-4xl mx-auto py-16 px-4 space-y-6">
-        <div className="bg-surface-lowest border border-hairline rounded-2xl p-8 space-y-6 shadow-sm animate-skeleton">
+        <div className="bg-surface-container-lowest border border-hairline/60 rounded-2xl p-8 space-y-6 shadow-sm animate-skeleton">
           <div className="h-6 bg-surface-card rounded-md w-1/3" />
           <div className="h-10 bg-surface-card rounded-md w-3/4" />
           <div className="space-y-3 pt-4">
@@ -215,16 +216,16 @@ const DailyExamRunner = () => {
           initial={{ opacity: 0, scale: 0.96 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.3 }}
-          className="bg-surface-lowest border-2 border-amber-500/40 rounded-2xl p-8 text-center space-y-6 shadow-md"
+          className="bg-surface-container-lowest border border-warning-amber/30 rounded-2xl p-8 text-center space-y-6 shadow-sm"
         >
-          <div className="w-16 h-16 bg-amber-500/20 text-amber-600 dark:text-amber-300 rounded-2xl flex items-center justify-center mx-auto shadow-inner">
-            <Lock size={32} />
+          <div className="w-16 h-16 bg-warning-amber/15 text-warning-amber rounded-full flex items-center justify-center mx-auto shadow-inner">
+            <Lock size={28} />
           </div>
-          <div className="space-y-2">
-            <span className="px-3 py-1 bg-amber-500/20 text-amber-900 dark:text-amber-200 font-mono text-xs font-bold rounded-lg uppercase tracking-wider">
+          <div className="space-y-3">
+            <span className="inline-block px-3 py-1 bg-warning-amber/15 text-warning-amber font-mono text-[9px] font-bold rounded-full uppercase tracking-[0.2em]">
               {authUser?.role === 'admin' ? 'Admin Access Notice' : 'Daily Exam Locked'}
             </span>
-            <h2 className="font-serif font-bold text-2xl sm:text-3xl text-on-surface mt-2">
+            <h2 className="font-cormorant text-3xl font-medium text-on-surface mt-2">
               {authUser?.role === 'admin'
                 ? 'Admin Account Exemption'
                 : 'Complete 3 Workspace Tasks First'}
@@ -238,7 +239,7 @@ const DailyExamRunner = () => {
             {authUser?.role === 'admin' ? (
               <button
                 onClick={() => navigate('/admin')}
-                className="px-6 py-3 bg-surface-dark text-white font-semibold rounded-xl text-xs transition-all shadow-xs flex items-center gap-2 btn-interactive focus-ring cursor-pointer"
+                className="px-6 py-3 bg-primary text-on-primary font-semibold rounded-full text-xs uppercase tracking-wider transition-all shadow-xs flex items-center gap-2 btn-interactive focus-ring cursor-pointer hover:bg-primary-container"
               >
                 <span>Go to Admin Dashboard</span>
                 <ArrowRight size={16} />
@@ -246,23 +247,23 @@ const DailyExamRunner = () => {
             ) : isBalanceZero && !isFreeTrialMode ? (
               <button
                 onClick={() => navigate('/wallet')}
-                className="px-6 py-3 bg-primary-coral hover:bg-primary-hover text-white font-semibold rounded-xl text-xs transition-all shadow-xs flex items-center gap-2 btn-interactive focus-ring cursor-pointer"
+                className="px-6 py-3 bg-primary text-on-primary font-semibold rounded-full text-xs uppercase tracking-wider transition-all shadow-xs flex items-center gap-2 btn-interactive focus-ring cursor-pointer hover:bg-primary-container"
               >
-                <span>Top Up Escrow Stake in Vault →</span>
+                <span>Top Up Escrow Stake in Vault</span>
                 <ArrowRight size={16} />
               </button>
             ) : (
               <>
                 <button
                   onClick={() => navigate('/workspaces')}
-                  className="px-6 py-3 bg-primary-coral hover:bg-primary-hover text-white font-semibold rounded-xl text-xs transition-all shadow-xs flex items-center gap-2 btn-interactive focus-ring cursor-pointer"
+                  className="px-6 py-3 bg-primary text-on-primary font-semibold rounded-full text-xs uppercase tracking-wider transition-all shadow-xs flex items-center gap-2 btn-interactive focus-ring cursor-pointer hover:bg-primary-container"
                 >
                   <span>Open Learning Workspaces</span>
                   <ArrowRight size={16} />
                 </button>
                 <button
                   onClick={() => navigate('/dashboard')}
-                  className="px-6 py-3 bg-surface-card hover:bg-surface-high text-on-surface font-semibold rounded-xl text-xs transition-all focus-ring cursor-pointer"
+                  className="px-6 py-3 bg-surface-container text-on-surface font-semibold rounded-full text-xs uppercase tracking-wider border border-hairline transition-all focus-ring cursor-pointer hover:bg-surface-container-high"
                 >
                   Back to Dashboard
                 </button>
@@ -280,6 +281,8 @@ const DailyExamRunner = () => {
     answerIndex: 0,
   };
 
+  const headerQuestionCount = examQuestions.length || scoreResult?.total || 20;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 15 }}
@@ -288,26 +291,38 @@ const DailyExamRunner = () => {
       className="max-w-4xl mx-auto py-8 px-4 space-y-6 transition-colors duration-250"
     >
       {/* Header Bar */}
-      <div className="bg-surface-dark text-white rounded-2xl p-6 shadow-xl border border-stone-800 flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <span className="text-xs font-mono text-warning-amber uppercase tracking-wider font-bold block">
-            20 Questions • {currentLevel} Module Day {currentModuleDay}
-          </span>
-          <h1 className="font-serif font-bold text-2xl sm:text-3xl text-white mt-1">
+      <div className="bg-surface-container-lowest p-6 rounded-2xl border border-hairline/60 shadow-sm flex flex-wrap items-center justify-between gap-6">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2 mb-1.5">
+            <span className="font-mono text-[9px] bg-tertiary-fixed-dim/30 text-tertiary px-2 py-0.5 rounded font-bold uppercase tracking-[0.2em]">
+              Escrow at Stake
+            </span>
+            <span className="font-mono text-[10px] text-text-muted uppercase tracking-[0.2em]">
+              · {headerQuestionCount} Questions · {passPercent}% Pass Required
+            </span>
+          </div>
+          <h1 className="font-cormorant text-3xl text-on-surface font-medium leading-tight">
             Daily Diagnostic Exam ({currentLevel})
           </h1>
-          <p className="text-xs text-stone-400 font-mono mt-0.5">
-            Passing threshold: {basePassThreshold} / 20 correct answers ({basePassThreshold === 15 ? '75%' : '65%'}) — drops to 10/20 (50%) after 3 attempts
+          <p className="font-mono text-[11px] text-on-surface-variant mt-1.5">
+            Module Day {currentModuleDay} — threshold {basePassThreshold}/20 ({passPercent}%) — drops to 10/20 (50%) after 3 attempts
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
-          <div className="px-4 py-2 bg-stone-900 border border-stone-700 rounded-xl text-center shadow-inner">
-            <span className="text-[10px] text-stone-400 font-mono block uppercase font-bold flex items-center gap-1">
-              <Clock size={12} className="text-warning-amber" />
-              <span>TIME REMAINING</span>
+        <div className="flex items-center gap-8">
+          <div className="flex flex-col items-end">
+            <span className="font-mono text-[9px] text-text-muted uppercase tracking-[0.2em]">Penalty for Failure</span>
+            <span className="font-cormorant text-2xl text-tertiary font-bold tabular-nums">
+              -ETB {(scoreResult?.slashedPenalty || 25).toFixed(2)}
             </span>
-            <span className="font-mono text-xl font-bold text-warning-amber">
+          </div>
+          <div className="h-12 w-px bg-hairline/60 hidden sm:block" />
+          <div className="flex flex-col items-end">
+            <span className="font-mono text-[9px] text-text-muted uppercase tracking-[0.2em] flex items-center gap-1">
+              <Clock size={11} className="text-warning-amber" />
+              <span>Time Remaining</span>
+            </span>
+            <span className="font-mono text-2xl font-bold text-warning-amber tabular-nums leading-tight">
               {formatTimer(timerSeconds)}
             </span>
           </div>
@@ -316,14 +331,15 @@ const DailyExamRunner = () => {
 
       {/* Main Exam Quiz Area */}
       {!isSubmitted ? (
-        <div className="bg-surface-lowest border border-hairline rounded-2xl p-6 sm:p-8 space-y-6 shadow-xs">
-          {/* Question Counter & Progress */}
-          <div className="flex items-center justify-between text-xs font-mono text-on-surface-variant border-b border-hairline pb-4">
-            <span className="font-bold text-primary-coral">
-              QUESTION {currentIdx + 1} OF {examQuestions.length}
+        <div className="bg-surface-container-lowest p-6 sm:p-8 rounded-2xl border border-hairline/60 shadow-sm max-w-4xl mx-auto w-full">
+          {/* Question Meta Row */}
+          <div className="flex items-center justify-between pb-4 border-b border-hairline/60">
+            <span className="font-mono text-[11px] text-primary font-bold tracking-widest uppercase">
+              Question {currentIdx + 1} of {examQuestions.length}
             </span>
-            <span>
-              Answered: <strong>{Object.keys(selectedAnswers).length}</strong> / {examQuestions.length}
+            <span className="font-mono text-[10px] text-text-muted">
+              {currentQ.id != null && <span className="mr-3">ID: {currentQ.id}</span>}
+              Answered: <strong className="text-on-surface">{Object.keys(selectedAnswers).length}</strong> / {examQuestions.length}
             </span>
           </div>
 
@@ -337,12 +353,12 @@ const DailyExamRunner = () => {
               transition={{ duration: 0.2 }}
               className="space-y-6"
             >
-              <h3 className="font-serif font-bold text-xl sm:text-2xl text-on-surface leading-relaxed">
+              <h3 className="font-cormorant text-2xl text-on-surface leading-snug font-medium">
                 {currentQ.question}
               </h3>
 
               {/* Options Grid with High Contrast Selected State */}
-              <div className="space-y-3 pt-2">
+              <div className="flex flex-col gap-3 pt-2">
                 {currentQ.options.map((opt, oIdx) => {
                   const isSelected = selectedAnswers[currentIdx] === oIdx;
                   return (
@@ -351,16 +367,18 @@ const DailyExamRunner = () => {
                       whileHover={{ scale: 1.01 }}
                       whileTap={{ scale: 0.99 }}
                       onClick={() => handleSelectOption(currentIdx, oIdx)}
-                      className={`w-full text-left p-4 rounded-xl border text-sm transition-all flex items-center justify-between focus-ring cursor-pointer ${
+                      className={`w-full text-left p-4 rounded-xl bg-surface-container-low hover:bg-surface-container-high cursor-pointer border transition-all flex items-center justify-between gap-4 focus-ring ${
                         isSelected
-                          ? 'bg-primary-coral text-white border-primary-coral shadow-md font-semibold ring-2 ring-primary-coral/40'
-                          : 'bg-surface-lowest text-on-surface border-hairline hover:border-primary-coral'
+                          ? 'border-primary ring-1 ring-primary/40'
+                          : 'border-hairline/40'
                       }`}
                     >
-                      <span className="text-xs sm:text-sm font-medium">{opt}</span>
+                      <span className={`text-xs sm:text-sm ${isSelected ? 'font-medium text-on-surface' : 'text-on-surface'}`}>
+                        {opt}
+                      </span>
                       <span
-                        className={`w-7 h-7 rounded-full border flex items-center justify-center font-mono text-xs ${
-                          isSelected ? 'border-warning-amber text-warning-amber font-bold bg-black/25' : 'border-hairline text-text-muted'
+                        className={`w-7 h-7 rounded-full border flex items-center justify-center font-mono text-xs shrink-0 ${
+                          isSelected ? 'border-primary text-primary font-bold' : 'border-hairline text-text-muted'
                         }`}
                       >
                         {String.fromCharCode(65 + oIdx)}
@@ -374,26 +392,26 @@ const DailyExamRunner = () => {
 
           {/* Selection Required Warning Banner */}
           {selectedAnswers[currentIdx] === undefined && (
-            <div className="p-3 bg-amber-500/15 border border-amber-500/30 rounded-xl text-xs text-amber-800 dark:text-amber-200 font-mono text-center flex items-center justify-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping" />
+            <div className="p-3 bg-warning-amber/10 border border-warning-amber/30 rounded-xl text-xs text-warning-amber font-mono text-center flex items-center justify-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-warning-amber animate-ping" />
               <span>Please select an answer option above to proceed to the next question.</span>
             </div>
           )}
 
           {/* Navigation Controls */}
-          <div className="flex items-center justify-between pt-6 border-t border-hairline">
+          <div className="flex flex-wrap items-center justify-between gap-4 pt-6 border-t border-hairline/60">
             <button
               onClick={() => setCurrentIdx(Math.max(0, currentIdx - 1))}
               disabled={currentIdx === 0}
-              className="px-4 py-2.5 border border-hairline rounded-xl text-xs font-semibold text-on-surface-variant hover:bg-surface-card disabled:opacity-40 disabled:cursor-not-allowed focus-ring cursor-pointer"
+              className="px-5 py-2.5 border border-hairline/40 rounded-full text-xs font-semibold text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface disabled:opacity-40 disabled:cursor-not-allowed focus-ring cursor-pointer transition-colors"
             >
-              &larr; Previous Question
+              &larr; Previous
             </button>
 
             {submitError && (
-              <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-xl text-xs text-red-400 font-mono flex items-center justify-between">
+              <div className="p-3 bg-destructive-red/10 border border-destructive-red/30 rounded-xl text-xs text-destructive-red font-mono flex items-center justify-between gap-3">
                 <span>⚠️ {submitError}</span>
-                <button type="button" onClick={() => setSubmitError(null)} className="text-xs underline hover:opacity-80 ml-2">
+                <button type="button" onClick={() => setSubmitError(null)} className="text-xs underline hover:opacity-80 ml-2 shrink-0 cursor-pointer">
                   Dismiss
                 </button>
               </div>
@@ -407,9 +425,9 @@ const DailyExamRunner = () => {
                   }
                 }}
                 disabled={selectedAnswers[currentIdx] === undefined}
-                className={`px-5 py-2.5 rounded-xl text-xs font-semibold shadow-xs transition-all focus-ring ${
+                className={`px-6 py-2.5 rounded-full text-xs font-semibold uppercase tracking-wider shadow-sm transition-all focus-ring ${
                   selectedAnswers[currentIdx] !== undefined
-                    ? 'bg-primary-coral hover:bg-primary-hover text-white cursor-pointer btn-interactive'
+                    ? 'bg-primary text-on-primary hover:bg-primary-container cursor-pointer btn-interactive'
                     : 'bg-surface-card text-text-muted cursor-not-allowed opacity-60'
                 }`}
               >
@@ -423,14 +441,14 @@ const DailyExamRunner = () => {
                   }
                 }}
                 disabled={selectedAnswers[currentIdx] === undefined || submitting}
-                className={`px-6 py-2.5 rounded-xl text-xs font-bold shadow-xs transition-all focus-ring flex items-center gap-2 ${
+                className={`px-6 py-2.5 rounded-full text-xs font-semibold uppercase tracking-wider shadow-sm transition-all focus-ring flex items-center gap-2 ${
                   selectedAnswers[currentIdx] !== undefined && !submitting
-                    ? 'bg-success-green hover:bg-green-600 text-white cursor-pointer btn-interactive'
+                    ? 'bg-primary text-on-primary hover:bg-primary-container cursor-pointer btn-interactive'
                     : 'bg-surface-card text-text-muted cursor-not-allowed opacity-60'
                 }`}
               >
                 {submitting && <RefreshCw size={14} className="animate-spin" />}
-                {submitting ? 'Grading Assessment...' : 'Submit Exam & Grade Assessment'}
+                {submitting ? 'Grading Assessment...' : 'Submit & Seal Exam'}
               </button>
             )}
           </div>
@@ -440,30 +458,34 @@ const DailyExamRunner = () => {
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="bg-surface-lowest border border-hairline rounded-2xl p-8 text-center space-y-6 shadow-xl"
+          className="bg-surface-container-lowest border border-hairline/60 rounded-2xl p-6 sm:p-8 text-center space-y-6 shadow-sm max-w-4xl mx-auto w-full"
         >
           <div
-            className={`w-20 h-20 rounded-2xl flex items-center justify-center mx-auto shadow-inner ${
+            className={`w-20 h-20 rounded-full flex items-center justify-center mx-auto shadow-inner border ${
               scoreResult.passed
-                ? 'bg-green-500/20 text-success-green'
-                : 'bg-red-500/20 text-destructive-red'
+                ? 'bg-success-green/15 text-success-green border-success-green/30'
+                : 'bg-destructive-red/15 text-destructive-red border-destructive-red/30'
             }`}
           >
-            {scoreResult.passed ? <ShieldCheck size={44} /> : <ShieldAlert size={44} />}
+            {scoreResult.passed ? <ShieldCheck size={40} /> : <ShieldAlert size={40} />}
           </div>
 
           <div className="space-y-2">
-            <span className="px-3 py-1 bg-surface-dark text-warning-amber font-mono text-xs font-bold rounded-lg uppercase tracking-wider">
+            <span className={`inline-block px-3 py-1 font-mono text-[9px] font-bold rounded-full uppercase tracking-[0.2em] ${
+              scoreResult.passed
+                ? 'bg-success-green/15 text-success-green'
+                : 'bg-destructive-red/15 text-destructive-red'
+            }`}>
               {scoreResult.passed ? 'Exam Closed & Record Locked' : 'Assessment Result'}
             </span>
-            <h2 className="font-serif font-bold text-3xl text-on-surface mt-2">
+            <h2 className="font-cormorant text-3xl font-medium text-on-surface mt-2">
               {scoreResult.passed ? 'Daily Exam Passed!' : `Exam Failed — ETB ${scoreResult.slashedPenalty || 25} Penalty Slashed`}
             </h2>
             <p className="text-sm text-on-surface-variant">
-              Score achieved: <strong className="font-mono text-lg text-on-surface">{scoreResult.correctCount} / {scoreResult.total}</strong> ({scoreResult.score}%)
+              Score achieved: <strong className="font-mono text-lg text-on-surface tabular-nums">{scoreResult.correctCount} / {scoreResult.total}</strong> ({scoreResult.score}%)
             </p>
             <p className="text-xs font-mono text-on-surface-variant">
-              Passing threshold: <strong className="text-primary-coral">{scoreResult.passThreshold} / {scoreResult.total}</strong>
+              Passing threshold: <strong className="text-primary">{scoreResult.passThreshold} / {scoreResult.total}</strong>
               {scoreResult.adaptiveThresholdActive && (
                 <span className="ml-1 text-warning-amber">(adaptive bar active after 3 attempts)</span>
               )}
@@ -471,16 +493,16 @@ const DailyExamRunner = () => {
           </div>
 
           {/* Current Streak Badge */}
-          <div className="p-4 bg-amber-500/10 border border-amber-500/30 rounded-xl max-w-md mx-auto flex items-center justify-between text-xs font-mono">
-            <span className="font-bold text-amber-900 dark:text-amber-200">Current Learner Streak:</span>
-            <span className="px-3 py-1 bg-streak-orange text-white font-bold rounded-lg">
+          <div className="p-4 bg-surface-container-low border border-hairline/60 rounded-xl max-w-md mx-auto flex items-center justify-between gap-3 text-xs font-mono">
+            <span className="text-on-surface-variant">Current Learner Streak:</span>
+            <span className="px-3 py-1 bg-streak-orange text-white font-bold rounded-full tracking-wider whitespace-nowrap">
               🔥 {scoreResult.newStreak ?? streak?.count ?? 0} Day Streak
             </span>
           </div>
 
-          <div className="p-4 bg-surface-dark text-white rounded-xl max-w-md mx-auto text-xs space-y-2 font-mono">
+          <div className="p-4 bg-surface-dark text-stone-300 rounded-xl max-w-md mx-auto text-xs space-y-2 font-mono border border-stone-800">
             {scoreResult.passed ? (
-              <div className="text-green-400">
+              <div className="text-success-green">
                 {isFreeTrialMode ? (
                   currentModuleDay >= 3 ? (
                     <span>🎉 Congratulations! You have completed your 3-Day Free Trial! Deposit 1,000 ETB to unlock Day 1 of {authUser?.level || 'Beginner I'} on the Staked Escrow Tier.</span>
@@ -494,7 +516,7 @@ const DailyExamRunner = () => {
                 )}
               </div>
             ) : (
-              <div className="text-red-400 space-y-1">
+              <div className="text-destructive-red space-y-1">
                 <p>⚠ Score below passing threshold ({scoreResult.passThreshold || basePassThreshold}/20 required).</p>
                 <p>Task 4 remains INCOMPLETE and retake is required. {!isFreeTrialMode && `ETB ${scoreResult.slashedPenalty || 25} penalty deducted from escrow stake.`}</p>
               </div>
@@ -503,13 +525,13 @@ const DailyExamRunner = () => {
 
           {/* Mistakes Review with Explanations */}
           {scoreResult.mistakes && scoreResult.mistakes.length > 0 && (
-            <div className="p-4 sm:p-6 bg-surface-lowest border border-hairline rounded-2xl space-y-4 text-left shadow-xs">
+            <div className="p-4 sm:p-6 bg-surface-container-low border border-hairline/60 rounded-2xl space-y-4 text-left shadow-xs">
               <div className="flex items-center justify-between flex-wrap gap-2">
-                <div className="space-y-0.5">
-                  <span className="px-2.5 py-0.5 bg-destructive-red/15 text-destructive-red font-mono text-[10px] font-bold rounded uppercase">
+                <div className="space-y-1">
+                  <span className="px-2.5 py-0.5 bg-destructive-red/15 text-destructive-red font-mono text-[9px] font-bold rounded-full uppercase tracking-wider">
                     Mistakes Review
                   </span>
-                  <h3 className="font-serif font-bold text-lg text-on-surface">
+                  <h3 className="font-cormorant text-xl font-medium text-on-surface">
                     Review your incorrect answers
                   </h3>
                 </div>
@@ -520,24 +542,24 @@ const DailyExamRunner = () => {
 
               <div className="space-y-3 max-h-[360px] overflow-y-auto pr-1">
                 {scoreResult.mistakes.map((m, idx) => (
-                  <div key={m.questionId || idx} className="p-4 bg-surface-card/60 border border-hairline rounded-xl space-y-2">
-                    <div className="text-xs font-mono font-semibold text-destructive-red">
-                      QUESTION {idx + 1} — INCORRECT
+                  <div key={m.questionId || idx} className="p-4 bg-surface-container-lowest border border-hairline/60 rounded-xl space-y-2">
+                    <div className="text-xs font-mono font-semibold text-destructive-red tracking-wider uppercase">
+                      Question {idx + 1} — Incorrect
                     </div>
                     <p className="text-sm font-medium text-on-surface">{m.question}</p>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                      <div className="p-2.5 bg-red-500/10 border border-red-500/30 rounded-lg font-mono">
-                        <span className="font-bold text-red-400 block text-[10px] uppercase tracking-wider mb-0.5">Your answer</span>
-                        <span className="text-red-300">{m.yourAnswer || '(Not answered)'}</span>
+                      <div className="p-2.5 bg-destructive-red/10 border border-destructive-red/25 rounded-lg font-mono">
+                        <span className="font-bold text-destructive-red block text-[10px] uppercase tracking-wider mb-0.5">Your answer</span>
+                        <span className="text-destructive-red">{m.yourAnswer || '(Not answered)'}</span>
                       </div>
-                      <div className="p-2.5 bg-green-500/10 border border-green-500/30 rounded-lg font-mono">
-                        <span className="font-bold text-green-400 block text-[10px] uppercase tracking-wider mb-0.5">Correct answer</span>
-                        <span className="text-green-300">{m.correctAnswer}</span>
+                      <div className="p-2.5 bg-success-green/10 border border-success-green/25 rounded-lg font-mono">
+                        <span className="font-bold text-success-green block text-[10px] uppercase tracking-wider mb-0.5">Correct answer</span>
+                        <span className="text-success-green">{m.correctAnswer}</span>
                       </div>
                     </div>
                     {m.explanation && (
                       <div className="pt-1">
-                        <span className="font-bold text-primary-coral block text-[10px] uppercase tracking-wider">Explanation</span>
+                        <span className="font-bold text-primary block text-[10px] uppercase tracking-wider">Explanation</span>
                         <p className="text-xs text-on-surface-variant leading-relaxed mt-0.5">{m.explanation}</p>
                       </div>
                     )}
@@ -553,13 +575,13 @@ const DailyExamRunner = () => {
                 currentModuleDay >= 3 ? (
                   <button
                     onClick={() => navigate('/wallet')}
-                    className="px-6 py-3 bg-primary-coral hover:bg-primary-hover text-white font-bold rounded-xl text-xs flex items-center gap-2 shadow-md focus-ring btn-interactive cursor-pointer"
+                    className="px-6 py-3 bg-primary text-on-primary font-bold rounded-full text-xs uppercase tracking-wider flex items-center gap-2 shadow-sm focus-ring btn-interactive cursor-pointer hover:bg-primary-container"
                   >
                     <span>Deposit ETB 1,000 to Start Day 1 of {authUser?.level || 'Beginner I'}</span>
                     <ArrowRight size={16} />
                   </button>
                 ) : (
-                  <div className="px-5 py-3 bg-emerald-950 border border-emerald-800 text-emerald-300 font-mono text-xs font-semibold rounded-xl flex items-center gap-2 shadow-xs">
+                  <div className="px-5 py-3 bg-success-green/10 border border-success-green/30 text-success-green font-mono text-xs font-semibold rounded-full flex items-center gap-2 shadow-xs">
                     <Lock size={15} />
                     <span>Free Trial Day {currentModuleDay + 1} Unlocks at Midnight</span>
                   </div>
@@ -570,13 +592,13 @@ const DailyExamRunner = () => {
                     advanceToNextLevel();
                     navigate('/workspaces');
                   }}
-                  className="px-6 py-3 bg-[#8f482f] hover:bg-[#a9583e] text-white font-bold rounded-xl text-xs flex items-center gap-2 shadow-md focus-ring btn-interactive cursor-pointer"
+                  className="px-6 py-3 bg-primary text-on-primary font-bold rounded-full text-xs uppercase tracking-wider flex items-center gap-2 shadow-sm focus-ring btn-interactive cursor-pointer hover:bg-primary-container"
                 >
                   <span>Advance to {nextLevel || 'Next Level'} (Day 1)</span>
                   <ArrowRight size={16} />
                 </button>
               ) : (
-                <div className="px-5 py-3 bg-emerald-950 border border-emerald-800 text-emerald-300 font-mono text-xs font-semibold rounded-xl flex items-center gap-2 shadow-xs">
+                <div className="px-5 py-3 bg-success-green/10 border border-success-green/30 text-success-green font-mono text-xs font-semibold rounded-full flex items-center gap-2 shadow-xs">
                   <Lock size={15} />
                   <span>Day {currentModuleDay + 1} Unlocks at Midnight</span>
                 </div>
@@ -584,7 +606,7 @@ const DailyExamRunner = () => {
             ) : (
               <button
                 onClick={handleRetakeExam}
-                className="px-6 py-3 bg-destructive-red text-white font-extrabold rounded-xl text-xs hover:bg-red-700 flex items-center gap-2 shadow-md focus-ring btn-interactive cursor-pointer"
+                className="px-6 py-3 bg-destructive-red text-on-primary font-extrabold rounded-full text-xs uppercase tracking-wider hover:bg-destructive-red/80 flex items-center gap-2 shadow-sm focus-ring btn-interactive cursor-pointer"
               >
                 <RefreshCw size={16} />
                 <span>Retake Exam Required (-{scoreResult.slashedPenalty || 25} ETB Penalty)</span>
@@ -593,7 +615,7 @@ const DailyExamRunner = () => {
 
             <button
               onClick={() => navigate('/exam/review')}
-              className="px-6 py-3 bg-surface-card border border-hairline text-on-surface font-semibold rounded-xl text-xs hover:border-primary-coral hover:text-primary-coral flex items-center gap-2 shadow-xs focus-ring btn-interactive cursor-pointer"
+              className="px-6 py-3 bg-surface-container border border-hairline text-on-surface font-semibold rounded-full text-xs hover:bg-surface-container-high flex items-center gap-2 shadow-xs focus-ring btn-interactive cursor-pointer"
             >
               <BookOpen size={14} />
               <span>Review Exam Results</span>
@@ -601,7 +623,7 @@ const DailyExamRunner = () => {
 
             <button
               onClick={() => navigate('/dashboard')}
-              className="px-6 py-3 bg-primary-coral text-white font-semibold rounded-xl text-xs hover:bg-primary-hover flex items-center gap-2 shadow-xs focus-ring btn-interactive cursor-pointer"
+              className="px-6 py-3 bg-primary text-on-primary font-semibold rounded-full text-xs uppercase tracking-wider hover:bg-primary-container flex items-center gap-2 shadow-xs focus-ring btn-interactive cursor-pointer"
             >
               <span>Return to Dashboard</span>
               <ArrowRight size={16} />

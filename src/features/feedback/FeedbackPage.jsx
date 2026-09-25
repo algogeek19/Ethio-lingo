@@ -46,13 +46,16 @@ const FeedbackPage = () => {
   };
 
   return (
-    <div className="max-w-3xl mx-auto py-10 px-4">
-      <div className="bg-surface-dark text-white rounded-2xl p-6 shadow-xl border border-stone-800">
-        <span className="text-xs font-mono text-warning-amber uppercase tracking-wider font-bold flex items-center gap-1.5">
+    <div className="max-w-3xl mx-auto py-10 px-4 lg:px-6 space-y-8">
+      {/* Editorial page header */}
+      <div className="border-b border-hairline/50 pb-6">
+        <span className="font-mono text-[9px] tracking-widest text-primary uppercase font-semibold flex items-center gap-1.5">
           <MessageSquare size={14} /> Learner Feedback
         </span>
-        <h1 className="font-serif font-bold text-2xl sm:text-3xl text-white mt-1">Help us improve Ethio-Lingo</h1>
-        <p className="text-xs text-stone-400 font-mono mt-0.5">
+        <h1 className="font-cormorant text-4xl md:text-5xl font-normal text-on-surface mt-2">
+          Help us improve <span className="calligraphic-italic text-primary">Ethio-Lingo</span>
+        </h1>
+        <p className="text-sm text-on-surface-variant font-mono mt-2">
           Your feedback goes straight to the Birrend team. All reports are reviewed in the admin portal.
         </p>
       </div>
@@ -60,22 +63,22 @@ const FeedbackPage = () => {
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="mt-6 bg-surface-lowest border border-hairline rounded-2xl p-6 space-y-5"
+        className="bg-surface-container-lowest p-6 sm:p-8 rounded-2xl border border-hairline/60 shadow-sm space-y-6"
       >
         {success && (
-          <div className="p-4 bg-green-500/15 border border-green-500/30 rounded-xl text-sm text-green-700 dark:text-green-300 font-mono flex items-center gap-2">
+          <div className="p-4 bg-success-green/15 border border-success-green/30 rounded-xl text-sm text-success-green font-mono flex items-center gap-2">
             <CheckCircle2 size={16} /> Thank you! Your feedback has been submitted successfully.
           </div>
         )}
         {error && (
-          <div className="p-4 bg-red-500/10 border border-red-500/30 rounded-xl text-xs text-red-600 dark:text-red-300 font-mono">
+          <div className="p-4 bg-destructive-red/10 border border-destructive-red/30 rounded-xl text-xs text-destructive-red font-mono">
             {error}
           </div>
         )}
 
-        <form onSubmit={submit} className="space-y-5">
-          <div className="space-y-2">
-            <label className="text-xs font-mono font-bold text-on-surface-variant uppercase tracking-wider">
+        <form onSubmit={submit} className="space-y-6">
+          <div className="space-y-2.5">
+            <label className="font-mono text-[10px] tracking-widest uppercase text-on-surface-variant font-semibold block">
               Feedback Category *
             </label>
             <div className="flex flex-wrap gap-2">
@@ -84,10 +87,10 @@ const FeedbackPage = () => {
                   key={c.label}
                   type="button"
                   onClick={() => setCategory(c.value)}
-                  className={`px-3.5 py-2 rounded-xl border text-xs transition-all cursor-pointer focus-ring ${
+                  className={`px-4 py-2 rounded-full text-xs transition-all cursor-pointer focus-ring border ${
                     category === c.value
-                      ? 'bg-primary-coral text-white border-primary-coral font-semibold'
-                      : 'bg-surface-card text-on-surface-variant border-hairline hover:border-primary-coral'
+                      ? 'bg-primary text-on-primary border-primary font-semibold'
+                      : 'bg-surface-container text-on-surface-variant border-hairline/60 hover:border-primary'
                   }`}
                 >
                   {c.label}
@@ -96,8 +99,8 @@ const FeedbackPage = () => {
             </div>
           </div>
 
-          <div className="space-y-2">
-            <label className="text-xs font-mono font-bold text-on-surface-variant uppercase tracking-wider">
+          <div className="space-y-2.5">
+            <label className="font-mono text-[10px] tracking-widest uppercase text-on-surface-variant font-semibold block">
               Overall Rating
             </label>
             <div className="flex items-center gap-1.5">
@@ -125,8 +128,8 @@ const FeedbackPage = () => {
             </div>
           </div>
 
-          <div className="space-y-2">
-            <label className="text-xs font-mono font-bold text-on-surface-variant uppercase tracking-wider">
+          <div className="space-y-2.5">
+            <label className="font-mono text-[10px] tracking-widest uppercase text-on-surface-variant font-semibold block">
               Your Message *
             </label>
             <textarea
@@ -136,9 +139,9 @@ const FeedbackPage = () => {
               maxLength={2000}
               required
               placeholder="Tell us what worked well, what didn't, and what you'd love to see next..."
-              className="w-full px-4 py-3 bg-surface-card border border-hairline rounded-xl text-sm text-on-surface focus-ring resize-none"
+              className="w-full px-4 py-3 bg-surface-container-low rounded-xl border border-hairline/60 text-sm text-on-surface focus-ring resize-none"
             />
-            <div className="flex items-center justify-between text-[10px] font-mono text-on-surface-variant">
+            <div className="flex items-center justify-between font-mono text-[10px] text-on-surface-variant">
               <span className="flex items-center gap-1"><Info size={11} /> Submitted as {authUser?.name} ({authUser?.email})</span>
               <span>{message.length} / 2000</span>
             </div>
@@ -147,7 +150,7 @@ const FeedbackPage = () => {
           <button
             type="submit"
             disabled={!message.trim() || !category || submitting}
-            className="w-full py-3.5 bg-primary-coral hover:bg-primary-hover disabled:opacity-40 text-white font-bold rounded-xl text-xs transition-all flex items-center justify-center gap-2 cursor-pointer btn-interactive focus-ring"
+            className="w-full py-3 rounded-full bg-primary text-on-primary text-xs tracking-wider uppercase font-semibold hover:bg-primary-container transition-all flex items-center justify-center gap-2 disabled:opacity-40 cursor-pointer btn-interactive focus-ring"
           >
             {submitting ? (
               <Send size={14} className="animate-pulse" />

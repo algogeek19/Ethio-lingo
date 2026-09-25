@@ -82,13 +82,13 @@ const TestProgressWidget = () => {
       {!isOpen ? (
         <button
           onClick={() => setIsOpen(true)}
-          className="px-3.5 py-2 bg-[#181715] hover:bg-stone-800 text-warning-amber border border-stone-800 rounded-xl shadow-2xl flex items-center gap-2 text-xs font-mono font-bold transition-all hover:scale-105 cursor-pointer focus-ring"
+          className="px-4 py-2 bg-surface-dark hover:bg-surface-container-high text-warning-amber border border-stone-800 rounded-full shadow-2xl flex items-center gap-2 text-xs font-mono font-bold transition-all hover:scale-105 cursor-pointer focus-ring"
         >
-          <Wrench size={16} />
+          <Wrench size={15} />
           <span>Test Controls</span>
         </button>
       ) : (
-        <div className="w-80 bg-[#181715] text-white border border-stone-800 rounded-2xl p-4 shadow-2xl space-y-4 text-xs font-mono">
+        <div className="w-80 bg-surface-dark text-stone-300 border border-stone-800 rounded-2xl p-4 shadow-2xl space-y-4 text-xs font-mono">
           {/* Header */}
           <div className="flex items-center justify-between border-b border-stone-800 pb-3">
             <div className="flex items-center gap-2 text-warning-amber font-bold">
@@ -112,7 +112,7 @@ const TestProgressWidget = () => {
 
           {/* Section 1: Day Jumping */}
           <div className="space-y-2">
-            <label className="block text-[11px] font-mono text-stone-400 font-bold uppercase">
+            <label className="block text-[11px] font-mono text-stone-400 font-bold uppercase tracking-wider">
               1. Jump Module Day
             </label>
             <div className="grid grid-cols-4 gap-1.5">
@@ -120,13 +120,13 @@ const TestProgressWidget = () => {
                 <button
                   key={d}
                   onClick={() => handleJumpToDay(d)}
-                  className={`py-1.5 rounded-lg border text-xs font-bold transition-all cursor-pointer ${
+                  className={`py-1.5 rounded-full border text-xs font-bold transition-all cursor-pointer font-mono ${
                     currentModuleDay === d
-                      ? 'bg-amber-500 text-black border-amber-400 font-extrabold shadow-sm'
-                      : 'bg-stone-900 border-stone-800 text-stone-300 hover:bg-stone-800 hover:text-white'
+                      ? 'bg-tertiary text-on-primary border-tertiary shadow-sm'
+                      : 'bg-surface-low border-hairline/40 text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface'
                   }`}
                 >
-                  Day {d}
+                  Day <span className="font-cormorant text-base font-medium">{d}</span>
                 </button>
               ))}
             </div>
@@ -134,12 +134,12 @@ const TestProgressWidget = () => {
 
           {/* Section 2: Complete Workspace Tasks */}
           <div className="space-y-2 pt-2 border-t border-stone-800">
-            <label className="block text-[11px] font-mono text-stone-400 font-bold uppercase">
+            <label className="block text-[11px] font-mono text-stone-400 font-bold uppercase tracking-wider">
               2. Complete Workspace Tasks
             </label>
             <button
               onClick={handleCompleteAllTasks}
-              className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-mono font-bold flex items-center justify-center gap-2 transition-all cursor-pointer shadow-xs"
+              className="w-full py-2.5 bg-success-green hover:opacity-90 text-white rounded-full text-xs font-mono font-bold flex items-center justify-center gap-2 transition-all cursor-pointer shadow-xs"
             >
               <ShieldCheck size={16} />
               <span>Complete All 3 Tasks Today</span>
@@ -148,13 +148,13 @@ const TestProgressWidget = () => {
 
           {/* Section 3: Test Streak & Midnight Expiration */}
           <div className="space-y-2 pt-2 border-t border-stone-800">
-            <label className="block text-[11px] font-mono text-stone-400 font-bold uppercase">
+            <label className="block text-[11px] font-mono text-stone-400 font-bold uppercase tracking-wider">
               3. Test Streak & Trial Rules
             </label>
             <div className="grid grid-cols-1 gap-2">
               <button
                 onClick={handleSimulateDeposit}
-                className="w-full py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-mono font-bold flex items-center justify-center gap-2 transition-all cursor-pointer shadow-xs"
+                className="w-full py-2.5 bg-success-green hover:opacity-90 text-white rounded-full text-xs font-mono font-bold flex items-center justify-center gap-2 transition-all cursor-pointer shadow-xs"
               >
                 <ShieldCheck size={15} />
                 <span>💰 Deposit 1,000 ETB (Upgrade to Staked Day 1)</span>
@@ -162,7 +162,7 @@ const TestProgressWidget = () => {
 
               <button
                 onClick={handleSimulateMidnightSuccess}
-                className="w-full py-2.5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-mono font-bold flex items-center justify-center gap-2 transition-all cursor-pointer shadow-xs"
+                className="w-full py-2.5 bg-warning-amber text-black hover:opacity-90 rounded-full text-xs font-mono font-bold flex items-center justify-center gap-2 transition-all cursor-pointer shadow-xs"
               >
                 <Flame size={15} />
                 <span>⚡ Pass Midnight (Streak +1 Day & Next Day)</span>
@@ -170,7 +170,7 @@ const TestProgressWidget = () => {
 
               <button
                 onClick={handleFastForwardTrial}
-                className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-mono font-bold flex items-center justify-center gap-2 transition-all cursor-pointer shadow-xs"
+                className="w-full py-2.5 bg-primary text-on-primary hover:bg-primary-container rounded-full text-xs font-mono font-bold flex items-center justify-center gap-2 transition-all cursor-pointer shadow-xs"
               >
                 <FastForward size={15} />
                 <span>⏩ Fast-Forward Free Trial (-1 Day Left)</span>
@@ -178,7 +178,7 @@ const TestProgressWidget = () => {
 
               <button
                 onClick={handleSimulateMissedDay}
-                className="w-full py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-mono font-bold flex items-center justify-center gap-2 transition-all cursor-pointer shadow-xs"
+                className="w-full py-2.5 bg-destructive-red hover:opacity-90 text-white rounded-full text-xs font-mono font-bold flex items-center justify-center gap-2 transition-all cursor-pointer shadow-xs"
               >
                 <AlertTriangle size={15} />
                 <span>⚠️ Fail Midnight (-80 ETB Penalty & Reset)</span>
@@ -187,12 +187,12 @@ const TestProgressWidget = () => {
           </div>
 
           {/* Custom Day Select Dropdown */}
-          <div className="pt-2 border-t border-stone-800 flex items-center justify-between text-xs font-mono text-stone-400">
+          <div className="pt-2 border-t border-stone-800 flex items-center justify-between text-xs font-mono text-stone-400 gap-2">
             <span>Select Day (1–30):</span>
             <select
               value={currentModuleDay}
               onChange={(e) => handleJumpToDay(parseInt(e.target.value, 10))}
-              className="px-3 py-1 bg-stone-900 border border-stone-700 text-white rounded-lg font-bold text-xs focus-ring"
+              className="px-3 py-1 bg-surface-low border border-hairline/40 text-on-surface rounded-full font-bold text-xs focus-ring"
             >
               {Array.from({ length: 30 }, (_, i) => i + 1).map((d) => (
                 <option key={d} value={d}>

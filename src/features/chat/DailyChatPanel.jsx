@@ -158,9 +158,9 @@ const DailyChatPanel = ({ roomLevel = 'Daily Topic' }) => {
   const isBannedUser = !!authUser?.isBanned;
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       {notice && (
-        <div className="p-3 bg-green-500/15 border border-green-500/30 rounded-xl text-xs text-green-700 dark:text-green-300 font-mono flex items-center justify-between gap-3">
+        <div className="p-3 bg-success-green/10 border border-success-green/30 rounded-xl text-xs text-success-green font-mono flex items-center justify-between gap-3">
           <span>{notice}</span>
           <button onClick={() => setNotice('')} className="p-1 hover:opacity-70 cursor-pointer" aria-label="Dismiss">
             <X size={14} />
@@ -168,7 +168,7 @@ const DailyChatPanel = ({ roomLevel = 'Daily Topic' }) => {
         </div>
       )}
       {error && (
-        <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-xl text-xs text-red-600 dark:text-red-300 font-mono flex items-center justify-between gap-3">
+        <div className="p-3 bg-error/10 border border-error/30 rounded-xl text-xs text-error font-mono flex items-center justify-between gap-3">
           <span>{error}</span>
           <button onClick={() => setError('')} className="p-1 hover:opacity-70 cursor-pointer" aria-label="Dismiss">
             <X size={14} />
@@ -177,30 +177,29 @@ const DailyChatPanel = ({ roomLevel = 'Daily Topic' }) => {
       )}
 
       {isBannedUser && (
-        <div className="p-3.5 bg-red-500/10 border-2 border-red-500/40 rounded-2xl text-xs text-center font-mono text-red-600 dark:text-red-300 flex items-center justify-center gap-2">
+        <div className="p-3.5 bg-error/10 border border-error/40 rounded-2xl text-xs text-center font-mono text-error flex items-center justify-center gap-2">
           <ShieldAlert size={16} />
           <span>Your account is banned from the community chat due to a moderation decision.</span>
         </div>
       )}
 
       {/* Daily Topic banner */}
-      <div className="relative overflow-hidden bg-surface-dark text-white rounded-2xl p-4 sm:p-5 border border-stone-800 flex flex-col sm:flex-row sm:items-center gap-3">
-        <div className="absolute -top-14 -right-14 w-48 h-48 rounded-full bg-warning-amber/10 blur-3xl pointer-events-none" />
-        <div className="relative flex items-center gap-3 grow">
-          <div className="w-10 h-10 rounded-xl bg-warning-amber/20 text-warning-amber flex items-center justify-center shrink-0">
+      <div className="bg-surface-lowest rounded-2xl border border-hairline/60 shadow-sm p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center gap-3">
+        <div className="flex items-center gap-3 grow">
+          <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0">
             <Megaphone size={18} />
           </div>
-          <div>
-            <span className="text-[10px] font-mono text-warning-amber uppercase tracking-wider font-bold">
+          <div className="min-w-0">
+            <span className="font-mono text-[10px] uppercase tracking-widest text-primary font-semibold">
               Daily Chat Topic — {room} Room
             </span>
             {topic ? (
               <>
-                <h3 className="font-serif font-bold text-lg text-white leading-tight">{topic.name}</h3>
-                {topic.date && <span className="text-[10px] font-mono text-stone-500">{topic.date}</span>}
+                <h3 className="font-cormorant text-2xl font-medium text-on-surface leading-tight">{topic.name}</h3>
+                {topic.date && <span className="text-[10px] font-mono text-on-surface-variant">{topic.date}</span>}
               </>
             ) : (
-              <p className="text-sm text-stone-400 font-mono">Loading today's topic...</p>
+              <p className="text-sm text-on-surface-variant font-mono">Loading today's topic...</p>
             )}
           </div>
         </div>
@@ -208,22 +207,22 @@ const DailyChatPanel = ({ roomLevel = 'Daily Topic' }) => {
       </div>
 
       {/* Message Board */}
-      <div className="bg-surface-lowest border border-hairline rounded-2xl flex flex-col overflow-hidden h-[560px]">
-        <div className="px-5 py-3 border-b border-hairline bg-surface-card/50 flex items-center justify-between">
-          <div>
-            <h2 className="font-serif font-bold text-sm text-on-surface flex items-center gap-2">
-              <MessageCircle size={15} className="text-primary-coral" /> Daily Chat Lounge
+      <div className="bg-surface-lowest border border-hairline/60 rounded-2xl flex flex-col overflow-hidden h-[560px] shadow-sm">
+        <div className="px-5 py-3 border-b border-hairline/50 bg-surface-low/60 flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <h2 className="font-cormorant text-lg font-medium text-on-surface flex items-center gap-2">
+              <MessageCircle size={15} className="text-primary" /> Daily Chat Lounge
             </h2>
-            <p className="text-[11px] font-mono text-on-surface-variant">
+            <p className="text-[10px] font-mono text-on-surface-variant">
               Practice today's topic with learners at your level.
             </p>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 bg-surface-card border border-hairline rounded-lg text-[10px] font-mono font-bold text-on-surface-variant uppercase">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+          <div className="flex items-center gap-2 shrink-0">
+            <span className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 bg-success-green/10 text-success-green rounded-full text-[10px] font-mono font-bold uppercase tracking-wider">
+              <span className="w-1.5 h-1.5 rounded-full bg-success-green animate-pulse" />
               Live
             </span>
-            <button onClick={() => loadMessages(true)} className="p-1.5 text-on-surface-variant hover:text-primary-coral rounded-lg cursor-pointer focus-ring" aria-label="Refresh chat">
+            <button onClick={() => loadMessages(true)} className="p-1.5 text-on-surface-variant hover:text-primary rounded-full cursor-pointer focus-ring" aria-label="Refresh chat">
               <RefreshCw size={13} />
             </button>
           </div>
@@ -238,12 +237,12 @@ const DailyChatPanel = ({ roomLevel = 'Daily Topic' }) => {
               </div>
             ) : messages.length === 0 ? (
               <div className="h-full min-h-[320px] flex flex-col items-center justify-center text-center space-y-2">
-                <div className="w-14 h-14 rounded-2xl bg-surface-card border border-hairline text-on-surface-variant/60 flex items-center justify-center">
+                <div className="w-14 h-14 rounded-full bg-surface-container text-on-surface-variant/60 flex items-center justify-center">
                   <MessageCircle size={26} />
                 </div>
                 <p className="text-xs font-mono text-on-surface-variant font-semibold">No messages yet in the Daily Topic room.</p>
                 <p className="text-[11px] text-on-surface-variant">
-                  Start the conversation for <strong className="text-primary-coral">{topic?.name || room}</strong>!
+                  Start the conversation for <strong className="text-primary">{topic?.name || room}</strong>!
                 </p>
               </div>
             ) : (
@@ -276,7 +275,7 @@ const DailyChatPanel = ({ roomLevel = 'Daily Topic' }) => {
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.8, y: 8 }}
                 onClick={scrollToLatest}
-                className="absolute bottom-4 right-4 z-10 w-10 h-10 rounded-full bg-primary-coral hover:bg-primary-hover text-white shadow-lg border border-white/20 flex items-center justify-center cursor-pointer focus-ring"
+                className="absolute bottom-4 right-4 z-10 w-10 h-10 rounded-full bg-primary hover:bg-primary-container text-on-primary shadow-lg flex items-center justify-center cursor-pointer focus-ring"
                 aria-label="Scroll to latest messages"
               >
                 <ArrowDown size={17} />
@@ -286,7 +285,7 @@ const DailyChatPanel = ({ roomLevel = 'Daily Topic' }) => {
         </div>
 
         {/* Composer */}
-        <form onSubmit={handleSend} className="border-t border-hairline px-4 py-3 bg-surface-card/60 space-y-2">
+        <form onSubmit={handleSend} className="border-t border-hairline/50 px-4 py-3 bg-surface-low/60 space-y-2">
           <AnimatePresence>
             {showEmoji && (
               <motion.div
@@ -305,10 +304,10 @@ const DailyChatPanel = ({ roomLevel = 'Daily Topic' }) => {
               onClick={() => setShowEmoji((v) => !v)}
               aria-label="Toggle emoji picker"
               title="Emoji"
-              className={`shrink-0 w-10 h-10 rounded-xl border flex items-center justify-center transition-all cursor-pointer focus-ring ${
+              className={`shrink-0 w-10 h-10 rounded-full border flex items-center justify-center transition-all cursor-pointer focus-ring ${
                 showEmoji
-                  ? 'bg-primary-coral/10 border-primary-coral/40 text-primary-coral'
-                  : 'bg-surface-lowest border-hairline text-on-surface-variant hover:text-primary-coral hover:border-primary-coral/40'
+                  ? 'bg-primary/10 border-primary/40 text-primary'
+                  : 'bg-surface-low border-hairline text-on-surface-variant hover:text-primary hover:border-primary/40'
               }`}
             >
               <Smile size={18} />
@@ -323,7 +322,7 @@ const DailyChatPanel = ({ roomLevel = 'Daily Topic' }) => {
                 maxLength={1000}
                 disabled={isBannedUser || sending}
                 placeholder={isBannedUser ? 'Chat access revoked' : `Message the ${room} room...`}
-                className="w-full resize-none px-4 py-2.5 pr-14 bg-surface-lowest border border-hairline rounded-xl text-sm text-on-surface focus-ring disabled:opacity-50 leading-relaxed max-h-32 overflow-y-auto"
+                className="w-full resize-none px-4 py-2.5 pr-14 bg-surface-low rounded-full border border-hairline/50 text-sm text-on-surface focus-ring disabled:opacity-50 leading-relaxed max-h-32 overflow-y-auto"
               />
               <span className="absolute bottom-2 right-3 text-[9px] font-mono text-on-surface-variant/50 pointer-events-none select-none">
                 {draft.length}/1000
@@ -333,7 +332,7 @@ const DailyChatPanel = ({ roomLevel = 'Daily Topic' }) => {
               type="submit"
               whileTap={!draft.trim() || sending ? {} : { scale: 0.92 }}
               disabled={!draft.trim() || sending || isBannedUser}
-              className="shrink-0 px-4 h-10 bg-primary-coral hover:bg-primary-hover disabled:opacity-40 text-white rounded-xl text-xs font-bold flex items-center gap-2 transition-all cursor-pointer btn-interactive focus-ring"
+              className="shrink-0 px-5 h-10 bg-primary hover:bg-primary-container disabled:opacity-40 text-on-primary rounded-full text-xs tracking-wider uppercase font-semibold flex items-center gap-2 transition-all cursor-pointer btn-interactive focus-ring"
             >
               {sending ? <RefreshCw size={14} className="animate-spin" /> : <Send size={14} />}
               <span className="hidden sm:inline">Send</span>
@@ -349,7 +348,7 @@ const DailyChatPanel = ({ roomLevel = 'Daily Topic' }) => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
+            className="fixed inset-0 z-50 bg-stone-900/60 backdrop-blur-sm flex items-center justify-center p-4"
             onClick={() => setReportTarget(null)}
           >
             <motion.div
@@ -357,21 +356,21 @@ const DailyChatPanel = ({ roomLevel = 'Daily Topic' }) => {
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.95, y: 10 }}
               onClick={(e) => e.stopPropagation()}
-              className="max-w-md w-full bg-surface-lowest border border-hairline rounded-2xl p-6 shadow-2xl space-y-4"
+              className="max-w-md w-full bg-surface-lowest border border-hairline rounded-2xl p-8 shadow-2xl space-y-4"
             >
               <div className="flex items-start justify-between gap-3">
-                <div>
-                  <span className="px-2.5 py-0.5 bg-destructive-red/15 text-destructive-red font-mono text-[10px] font-bold rounded uppercase">
+                <div className="space-y-1">
+                  <span className="inline-block px-2.5 py-0.5 bg-error/10 text-error font-mono text-[10px] font-bold rounded-full uppercase tracking-wider">
                     Report Message
                   </span>
-                  <h3 className="font-serif font-bold text-lg text-on-surface mt-1">Why are you reporting this?</h3>
+                  <h3 className="font-cormorant text-2xl font-normal text-on-surface">Why are you reporting this?</h3>
                 </div>
-                <button onClick={() => setReportTarget(null)} className="p-1.5 text-on-surface-variant hover:text-on-surface rounded-lg cursor-pointer" aria-label="Close">
+                <button onClick={() => setReportTarget(null)} className="p-1.5 text-on-surface-variant hover:text-on-surface rounded-full cursor-pointer" aria-label="Close">
                   <X size={16} />
                 </button>
               </div>
 
-              <blockquote className="p-3 bg-surface-card border border-hairline rounded-xl text-xs text-on-surface-variant italic">
+              <blockquote className="p-3 bg-surface-low border border-hairline rounded-xl text-xs text-on-surface-variant italic">
                 "{reportTarget.content}"
               </blockquote>
 
@@ -383,8 +382,8 @@ const DailyChatPanel = ({ roomLevel = 'Daily Topic' }) => {
                     onClick={() => setReportReason(r)}
                     className={`w-full text-left px-3.5 py-2.5 rounded-xl border text-xs transition-all cursor-pointer focus-ring ${
                       reportReason === r
-                        ? 'bg-primary-coral text-white border-primary-coral font-semibold'
-                        : 'bg-surface-lowest text-on-surface border-hairline hover:border-primary-coral'
+                        ? 'bg-primary text-on-primary border-primary font-semibold'
+                        : 'bg-surface-low text-on-surface border-hairline hover:border-primary'
                     }`}
                   >
                     {r}
@@ -395,7 +394,7 @@ const DailyChatPanel = ({ roomLevel = 'Daily Topic' }) => {
               <button
                 onClick={handleReport}
                 disabled={!reportReason || reporting}
-                className="w-full py-3 bg-destructive-red hover:bg-red-600 disabled:opacity-40 text-white font-bold rounded-xl text-xs transition-all flex items-center justify-center gap-2 cursor-pointer btn-interactive focus-ring"
+                className="w-full py-3 bg-error hover:opacity-90 disabled:opacity-40 text-white font-bold rounded-full text-xs tracking-wider uppercase transition-all flex items-center justify-center gap-2 cursor-pointer btn-interactive focus-ring"
               >
                 {reporting ? <RefreshCw size={14} className="animate-spin" /> : <Flag size={14} />}
                 Submit Report to Moderators
@@ -430,7 +429,7 @@ const BubbleRow = ({ message, isMine, showHeader, onReport }) => {
       className={`group flex gap-2.5 ${isMine ? 'justify-end' : 'justify-start'}`}
     >
       {!isMine && (
-        <div className={`w-8 h-8 rounded-full bg-gradient-to-br from-surface-card to-surface-high border border-hairline flex items-center justify-center shrink-0 text-[11px] font-bold text-primary-coral overflow-hidden shadow-xs transition-opacity ${showHeader ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+        <div className={`w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0 text-[11px] font-bold shadow-xs overflow-hidden transition-opacity ${showHeader ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
           {message.user && message.user.name ? message.user.name[0].toUpperCase() : '?'}
         </div>
       )}
@@ -438,16 +437,16 @@ const BubbleRow = ({ message, isMine, showHeader, onReport }) => {
         {!isMine && showHeader && (
           <div className="flex items-center gap-2 pl-1">
             <span className="text-[10px] font-mono font-bold text-on-surface">{message.user?.name}</span>
-            <span className="px-1.5 py-0.5 bg-surface-card border border-hairline rounded text-[9px] font-mono font-bold uppercase text-primary-coral">
+            <span className="px-2 py-0.5 bg-primary/10 border border-primary/20 rounded-full text-[9px] font-mono font-bold uppercase text-primary">
               {message.user?.level || 'Learner'}
             </span>
           </div>
         )}
         <div
-          className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed shadow-xs break-words whitespace-pre-wrap ${
+          className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed shadow-sm break-words whitespace-pre-wrap ${
             isMine
-              ? 'bg-gradient-to-br from-primary-coral to-primary-hover text-white rounded-br-md'
-              : 'bg-surface-card border border-hairline text-on-surface rounded-bl-md'
+              ? 'bg-primary text-on-primary rounded-br-md'
+              : 'bg-surface-low text-on-surface rounded-bl-md'
           }`}
         >
           {message.content}
@@ -461,7 +460,7 @@ const BubbleRow = ({ message, isMine, showHeader, onReport }) => {
           <button
             onClick={handleCopy}
             title="Copy message"
-            className="flex items-center gap-1 text-[9px] font-mono text-on-surface-variant hover:text-primary-coral cursor-pointer focus-ring rounded px-0.5 transition-colors"
+            className="flex items-center gap-1 text-[9px] font-mono text-on-surface-variant hover:text-primary cursor-pointer focus-ring rounded px-0.5 transition-colors"
           >
             {copied ? <span className="text-success-green font-bold">✓</span> : <Copy size={10} />}
           </button>
@@ -469,7 +468,7 @@ const BubbleRow = ({ message, isMine, showHeader, onReport }) => {
             <button
               onClick={() => onReport(message)}
               title="Report this message"
-              className="flex items-center gap-1 text-[9px] font-mono text-on-surface-variant hover:text-destructive-red cursor-pointer focus-ring rounded px-0.5 transition-colors"
+              className="flex items-center gap-1 text-[9px] font-mono text-on-surface-variant hover:text-error cursor-pointer focus-ring rounded px-0.5 transition-colors"
             >
               <Flag size={10} /> Report
             </button>
@@ -483,7 +482,7 @@ const BubbleRow = ({ message, isMine, showHeader, onReport }) => {
 const LinkToChat = () => (
   <Link
     to="/chat"
-    className="inline-flex items-center gap-2 px-4 py-2.5 bg-primary-coral hover:bg-primary-hover text-white text-xs font-bold rounded-xl transition-all shadow-xs focus-ring btn-interactive shrink-0"
+    className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary hover:bg-primary-container text-on-primary text-xs tracking-wider uppercase font-semibold rounded-full transition-all shadow-sm focus-ring btn-interactive shrink-0"
   >
     <MessageCircle size={15} />
     <span>Open Full Chat →</span>

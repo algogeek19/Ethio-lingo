@@ -18,24 +18,24 @@ const ConfirmDialog = ({
 
   const typeConfig = {
     danger: {
-      badgeBg: 'bg-red-500/10 text-destructive-red border-red-500/30',
+      badgeBg: 'bg-error/10 text-destructive-red border-error/25',
       icon: Trash2,
-      btnBg: 'bg-destructive-red hover:bg-red-600 text-white',
+      btnBg: 'bg-destructive-red hover:bg-error text-white',
     },
     warning: {
-      badgeBg: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30',
+      badgeBg: 'bg-warning-amber/10 text-warning-amber border-warning-amber/30',
       icon: AlertTriangle,
-      btnBg: 'bg-warning-amber hover:bg-amber-600 text-white',
+      btnBg: 'bg-warning-amber hover:bg-warning-amber/90 text-white',
     },
     info: {
-      badgeBg: 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/30',
+      badgeBg: 'bg-primary/10 text-primary border-primary/25',
       icon: Info,
-      btnBg: 'bg-blue-600 hover:bg-blue-700 text-white',
+      btnBg: 'bg-primary hover:bg-primary-container text-on-primary',
     },
     success: {
-      badgeBg: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30',
+      badgeBg: 'bg-success-green/10 text-success-green border-success-green/30',
       icon: CheckCircle2,
-      btnBg: 'bg-emerald-600 hover:bg-emerald-700 text-white',
+      btnBg: 'bg-success-green hover:bg-success-green/90 text-white',
     },
   };
 
@@ -51,7 +51,7 @@ const ConfirmDialog = ({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={onCancel}
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm"
+          className="fixed inset-0 bg-stone-900/60 backdrop-blur-sm"
         />
 
         {/* Dialog Content Container */}
@@ -60,15 +60,15 @@ const ConfirmDialog = ({
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 10 }}
           transition={{ type: 'spring', duration: 0.3 }}
-          className="relative z-10 w-full max-w-md bg-canvas border border-hairline rounded-2xl p-6 shadow-2xl space-y-5"
+          className="relative z-10 w-full max-w-md bg-surface-lowest border border-hairline rounded-2xl p-6 shadow-2xl space-y-5"
         >
           {/* Header */}
           <div className="flex items-start gap-4">
-            <div className={`p-3 rounded-xl border shrink-0 ${config.badgeBg}`}>
-              <IconComponent size={22} />
+            <div className={`p-3 rounded-full border shrink-0 ${config.badgeBg}`}>
+              <IconComponent size={20} />
             </div>
             <div className="space-y-1 grow">
-              <h3 className="font-serif font-bold text-lg text-on-surface">
+              <h3 className="font-cormorant text-xl font-medium text-on-surface">
                 {title}
               </h3>
               <p className="text-xs text-on-surface-variant leading-relaxed">
@@ -90,7 +90,7 @@ const ConfirmDialog = ({
                 type="button"
                 onClick={onCancel}
                 disabled={isSubmitting}
-                className="px-4 py-2 text-xs font-semibold text-on-surface-variant hover:text-on-surface bg-surface-card hover:bg-surface-high border border-hairline rounded-xl transition-colors focus-ring cursor-pointer"
+                className="px-4 py-2 text-xs font-semibold text-on-surface-variant hover:text-on-surface bg-surface-container hover:bg-surface-container-high border border-hairline rounded-full transition-colors focus-ring cursor-pointer"
               >
                 {cancelLabel}
               </button>
@@ -99,7 +99,7 @@ const ConfirmDialog = ({
               type="button"
               onClick={onConfirm}
               disabled={isSubmitting}
-              className={`px-5 py-2 text-xs font-bold rounded-xl transition-all shadow-xs focus-ring btn-interactive cursor-pointer ${config.btnBg}`}
+              className={`px-5 py-2 text-xs font-bold rounded-full transition-all shadow-xs focus-ring btn-interactive cursor-pointer ${config.btnBg}`}
             >
               {isSubmitting ? 'Processing...' : confirmLabel}
             </button>

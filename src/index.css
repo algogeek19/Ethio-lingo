@@ -149,6 +149,8 @@
   --color-surface: var(--bg-surface);
   --color-surface-lowest: var(--bg-surface-lowest);
   --color-surface-low: var(--bg-surface-low);
+  --color-surface-container-lowest: var(--bg-surface-lowest);
+  --color-surface-container-low: var(--bg-surface-low);
   --color-surface-card: var(--bg-surface-card);
   --color-surface-container: var(--bg-surface-container);
   --color-surface-high: var(--bg-surface-high);

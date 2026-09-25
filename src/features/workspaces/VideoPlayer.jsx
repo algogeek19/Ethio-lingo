@@ -10,6 +10,8 @@ import {
   BookOpen,
   FileText,
   Lock,
+  Play,
+  Pause,
 } from 'lucide-react';
 import { useStaking } from '../../context/StakingContext';
 import { api } from '../../services/api';
@@ -30,7 +32,14 @@ const getCleanVideoUrl = (rawUrl, defaultUrl = 'https://www.youtube.com/watch?v=
   return cleaned;
 };
 
-const VideoPlayer = ({ mode = 'task1' }) => {
+const formatTime = (seconds) => {
+  if (!seconds || !isFinite(seconds) || seconds < 0) return '00:00';
+  const m = Math.floor(seconds / 60);
+  const s = Math.floor(seconds % 60);
+  return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+};
+
+const VideoPlayer = ({ mode = 'task1', onNavigate }) => {
   const { dailyTasks, completeTask, currentModuleDay, user, isFreeTrialMode, workspaceModule } = useStaking();
   const playerRef = useRef(null);
 
@@ -42,6 +51,10 @@ const VideoPlayer = ({ mode = 'task1' }) => {
   const [lastPlayedSeconds, setLastPlayedSeconds] = useState(0);
   const [seekWarning, setSeekWarning] = useState(false);
   const [downloadSuccess, setDownloadSuccess] = useState(false);
+
+  // Playback metrics for the editorial progress bar
+  const [playedFraction, setPlayedFraction] = useState(0);
+  const [duration, setDuration] = useState(0);
 
   // Task 2 Category State ('informative' | 'entertainment')
   const [listeningCategory, setListeningCategory] = useState('informative');
@@ -100,6 +113,13 @@ const VideoPlayer = ({ mode = 'task1' }) => {
     };
   }, [currentVideo.title, currentVideo.url]);
 
+  // Reset playback metrics whenever the active stream changes
+  useEffect(() => {
+    setLastPlayedSeconds(0);
+    setPlayedFraction(0);
+    setDuration(0);
+  }, [currentVideo.url]);
+
   // 1. PAGE VISIBILITY API: Auto-pause playback when tab is inactive/hidden
   useEffect(() => {
     const handleVisibilityChange = () => {
@@ -147,6 +167,7 @@ const VideoPlayer = ({ mode = 'task1' }) => {
   // 2. STRICT SEEKING LOCK ENFORCEMENT & TIMER PROGRESS
   const handleProgress = (state) => {
     const playedSecs = state.playedSeconds;
+    setPlayedFraction(state.played);
 
     if (playedSecs > lastPlayedSeconds + 1.2) {
       setSeekWarning(true);
@@ -240,13 +261,17 @@ INSTRUCTIONS:
     setTimeout(() => setDownloadSuccess(false), 3500);
   };
 
+  const taskDone = mode === 'task1' ? !!dailyTasks.lesson : !!dailyTasks.video;
+  const verificationPct = Math.round(Math.min(Math.max(playedFraction, 0), 1) * 100);
+  const refGuideTitle = moduleData?.refGuideTitle || currentVideo.referenceFile;
+
   return (
     <div className="space-y-6 transition-colors duration-250">
       {/* Tab Visibility Active Warning Banner */}
       {!isTabActive && (
-        <div className="p-4 bg-amber-500/15 border border-amber-500/30 rounded-xl text-xs text-amber-800 dark:text-amber-200 flex items-center justify-between shadow-xs animate-pulse font-mono">
+        <div className="p-3.5 bg-warning-amber/10 border border-warning-amber/30 rounded-xl text-xs text-warning-amber flex items-center justify-between shadow-xs animate-pulse font-mono">
           <div className="flex items-center gap-2">
-            <AlertCircle size={18} className="text-warning-amber shrink-0" />
+            <AlertCircle size={16} className="shrink-0" />
             <span>
               <strong>Playback Auto-Paused:</strong> Tab became inactive. Active focus required to validate task time.
             </span>
@@ -256,9 +281,9 @@ INSTRUCTIONS:
 
       {/* Seeking Lock Enforcement Alert */}
       {seekWarning && (
-        <div className="p-4 bg-red-500/15 border border-red-500/30 rounded-xl text-xs text-destructive-red flex items-center justify-between shadow-xs animate-bounce font-mono">
+        <div className="p-3.5 bg-error/10 border border-error/30 rounded-xl text-xs text-error flex items-center justify-between shadow-xs font-mono">
           <div className="flex items-center gap-2">
-            <Lock size={18} className="shrink-0" />
+            <Lock size={16} className="shrink-0" />
             <span>
               <strong>Seeking Restricted:</strong> Fast-forwarding is disabled on mandatory task videos. Returning to played timestamp.
             </span>
@@ -267,30 +292,30 @@ INSTRUCTIONS:
       )}
 
       {/* Header Bar with Task Type */}
-      <div className="bg-surface-lowest border border-hairline rounded-2xl p-6 shadow-xs flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="px-2.5 py-0.5 bg-surface-dark text-warning-amber font-mono text-[10px] font-bold rounded uppercase">
-              {mode === 'task1' ? 'TASK 1: LESSON LECTURE' : 'TASK 2: LISTENING SKILL'}
+      <div className="bg-surface-lowest border border-hairline/60 rounded-2xl p-6 shadow-sm flex flex-wrap items-center justify-between gap-4">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2.5 flex-wrap">
+            <span className="px-2.5 py-1 bg-primary/10 text-primary font-mono text-[9px] font-semibold rounded uppercase tracking-wider">
+              {mode === 'task1' ? 'Task 1 · Lesson Lecture' : 'Task 2 · Listening Skill'}
             </span>
-            <span className="text-xs font-mono text-on-surface-variant">
+            <span className="text-[10px] font-mono text-on-surface-variant uppercase tracking-wider">
               Day {currentModuleDay} • {user?.level || 'Beginner I'}
             </span>
           </div>
-          <h2 className="font-serif font-bold text-xl text-on-surface mt-1">{videoTitle}</h2>
+          <h2 className="font-cormorant text-2xl font-normal text-on-surface mt-2 leading-snug">{videoTitle}</h2>
         </div>
 
         {/* Task Completion Status Badge */}
-        <div className="flex items-center gap-2">
-          {((mode === 'task1' && dailyTasks.lesson) || (mode === 'task2' && dailyTasks.video)) ? (
-            <span className="px-4 py-2 bg-green-500/20 border border-green-500/40 text-success-green text-xs font-bold font-mono rounded-xl flex items-center gap-1.5 shadow-xs">
-              <CheckCircle size={16} />
-              <span>TASK COMPLETED</span>
+        <div className="flex items-center gap-2 shrink-0">
+          {taskDone ? (
+            <span className="px-4 py-2 bg-success-green/10 border border-success-green/25 text-success-green text-[10px] font-bold font-mono rounded-full uppercase tracking-wider flex items-center gap-1.5 shadow-xs">
+              <CheckCircle size={14} />
+              <span>Task Completed</span>
             </span>
           ) : (
-            <span className="px-4 py-2 bg-surface-card border border-hairline text-on-surface-variant text-xs font-semibold font-mono rounded-xl flex items-center gap-1.5">
-              <Clock size={16} className="text-primary-coral" />
-              <span>WATCH FULL VIDEO TO UNLOCK</span>
+            <span className="px-4 py-2 bg-surface-container text-on-surface-variant text-[10px] font-semibold font-mono rounded-full uppercase tracking-wider flex items-center gap-1.5">
+              <Clock size={14} className="text-primary" />
+              <span>Watch Full Video to Unlock</span>
             </span>
           )}
         </div>
@@ -298,16 +323,16 @@ INSTRUCTIONS:
 
       {/* Task 2 Category Selector (Informative vs Entertainment Choice) */}
       {mode === 'task2' && (
-        <div className="bg-surface-card p-1.5 rounded-2xl border border-hairline flex items-center gap-2 max-w-md mx-auto">
+        <div className="bg-surface-container/60 p-1 rounded-full border border-hairline/40 shadow-sm flex items-center gap-1 max-w-md mx-auto">
           <button
             onClick={() => {
               setListeningCategory('informative');
               setLastPlayedSeconds(0);
               setIsPlaying(false);
             }}
-            className={`flex-1 py-2.5 px-3 text-xs font-semibold rounded-xl transition-all flex items-center justify-center gap-2 focus-ring cursor-pointer ${
+            className={`flex-1 py-2 px-3 text-xs font-medium rounded-full transition-all flex items-center justify-center gap-2 focus-ring cursor-pointer ${
               listeningCategory === 'informative'
-                ? 'bg-primary-coral text-white shadow-xs'
+                ? 'bg-surface-lowest text-on-surface shadow-sm border border-hairline/40'
                 : 'text-on-surface-variant hover:text-on-surface'
             }`}
           >
@@ -321,9 +346,9 @@ INSTRUCTIONS:
               setLastPlayedSeconds(0);
               setIsPlaying(false);
             }}
-            className={`flex-1 py-2.5 px-3 text-xs font-semibold rounded-xl transition-all flex items-center justify-center gap-2 focus-ring cursor-pointer ${
+            className={`flex-1 py-2 px-3 text-xs font-medium rounded-full transition-all flex items-center justify-center gap-2 focus-ring cursor-pointer ${
               listeningCategory === 'entertainment'
-                ? 'bg-primary-coral text-white shadow-xs'
+                ? 'bg-surface-lowest text-on-surface shadow-sm border border-hairline/40'
                 : 'text-on-surface-variant hover:text-on-surface'
             }`}
           >
@@ -333,138 +358,259 @@ INSTRUCTIONS:
         </div>
       )}
 
-      {/* Video Viewport & ReactPlayer */}
-      <div className="bg-stone-950 rounded-2xl overflow-hidden shadow-2xl border border-stone-800 relative group">
-        <div className="aspect-video w-full relative">
-          <ReactPlayer
-            key={currentVideo.url}
-            ref={playerRef}
-            url={currentVideo.url}
-            width="100%"
-            height="100%"
-            playing={isPlaying && isTabActive}
-            controls={false}
-            onPlay={() => setIsPlaying(true)}
-            onPause={() => setIsPlaying(false)}
-            onProgress={handleProgress}
-            onEnded={handleEnded}
-            onStart={() => setIsPlaying(true)}
-            onError={(err) => {
-              console.warn('ReactPlayer playback warning:', err);
-            }}
-            progressInterval={500}
-            config={{
-              youtube: {
-                playerVars: {
-                  playsinline: 1,
-                  modestbranding: 1,
-                  rel: 0,
-                  origin: typeof window !== 'undefined' ? window.location.origin : 'http://localhost:5173',
-                },
-              },
-            }}
-          />
+      {/* Video frame — seek-locked lecture / listening stream */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        <div className={`${mode === 'task1' ? 'lg:col-span-8' : 'lg:col-span-12'} flex flex-col gap-4`}>
+          <div className="relative group bg-[#1a1413] rounded-2xl overflow-hidden shadow-xl">
+            <div className="relative aspect-video w-full">
+              <div className="absolute inset-0">
+                <ReactPlayer
+                  key={currentVideo.url}
+                  ref={playerRef}
+                  url={currentVideo.url}
+                  width="100%"
+                  height="100%"
+                  playing={isPlaying && isTabActive}
+                  controls={false}
+                  onPlay={() => setIsPlaying(true)}
+                  onPause={() => setIsPlaying(false)}
+                  onProgress={handleProgress}
+                  onEnded={handleEnded}
+                  onStart={() => setIsPlaying(true)}
+                  onDuration={(d) => setDuration(d)}
+                  onError={(err) => {
+                    console.warn('ReactPlayer playback warning:', err);
+                  }}
+                  progressInterval={500}
+                  config={{
+                    youtube: {
+                      playerVars: {
+                        playsinline: 1,
+                        modestbranding: 1,
+                        rel: 0,
+                        origin: typeof window !== 'undefined' ? window.location.origin : 'http://localhost:5173',
+                      },
+                    },
+                  }}
+                />
+              </div>
 
-          {/* Custom Play Overlay — shown until the video starts */}
-          {!isPlaying && (
-            <button
-              type="button"
-              onClick={() => setIsPlaying(true)}
-              aria-label="Play video"
-              className="absolute inset-0 z-10 flex items-center justify-center bg-black/30 hover:bg-black/20 transition-colors cursor-pointer focus-ring"
-            >
-              <span className="w-20 h-20 rounded-full bg-primary-coral/95 hover:bg-primary-hover text-white flex items-center justify-center shadow-2xl transition-transform hover:scale-105">
-                <svg width="34" height="34" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                  <path d="M8 5v14l11-7z" />
-                </svg>
-              </span>
-            </button>
-          )}
-        </div>
-
-        {/* Custom Control Bar */}
-        <div className="flex items-center justify-between px-4 py-3 bg-stone-900 border-t border-stone-800">
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={() => setIsPlaying((prev) => !prev)}
-              aria-label={isPlaying ? 'Pause video' : 'Play video'}
-              className="w-10 h-10 rounded-full bg-primary-coral hover:bg-primary-hover text-white flex items-center justify-center shadow-xs transition-transform hover:scale-105 focus-ring cursor-pointer"
-            >
-              {isPlaying ? (
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                  <path d="M6 5h4v14H6zM14 5h4v14h-4z" />
-                </svg>
-              ) : (
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                  <path d="M8 5v14l11-7z" />
-                </svg>
+              {/* Full-area play overlay — shown until the video starts */}
+              {!isPlaying && (
+                <button
+                  type="button"
+                  onClick={() => setIsPlaying(true)}
+                  aria-label="Play video"
+                  className="absolute inset-0 z-10 flex items-center justify-center bg-black/30 hover:bg-black/20 transition-colors cursor-pointer focus-ring"
+                />
               )}
-            </button>
-            <span className="text-xs font-mono text-stone-300">
-              {isPlaying ? 'Playing…' : 'Paused'} • Watching full video unlocks your daily tasks
-            </span>
-          </div>
-          <span className="text-[10px] font-mono text-stone-500 uppercase tracking-wider">
-            {mode === 'task1' ? 'Task 1 • Lesson' : 'Task 2 • Listening'}
-          </span>
-        </div>
-      </div>
 
-      {/* Task 1 Companion Reference PDF Guide Section */}
-      {mode === 'task1' && (
-        <div className="bg-surface-lowest border border-hairline rounded-2xl p-6 space-y-4 shadow-xs">
-          <div className="flex flex-wrap items-center justify-between gap-4 border-b border-hairline pb-4">
-            <div className="flex items-center gap-2 min-w-0">
-              <BookOpen size={20} className="text-primary-coral shrink-0" />
-              <h3 className="font-serif font-bold text-lg text-on-surface">
-                Companion Study Manual & Reference Guide
-              </h3>
+              {/* Archive + seek-lock chips */}
+              <div className="absolute top-0 inset-x-0 z-30 flex items-center justify-between gap-3 p-4 sm:p-5 pointer-events-none">
+                <span className="font-mono text-[9px] bg-black/60 text-stone-300 px-2.5 py-1 rounded tracking-wider border border-white/10">
+                  ETHIO-LINGO ARCHIVE
+                </span>
+                <span className="inline-flex items-center gap-1.5 bg-primary/90 text-on-primary px-3 py-1 rounded-full text-[10px] font-mono font-semibold tracking-wider shadow-lg">
+                  <Lock size={12} />
+                  <span>Forward Seek Disabled · 100% Required</span>
+                </span>
+              </div>
+
+              {/* Center play/pause + stream title */}
+              <div className="absolute inset-0 z-20 flex flex-col items-center justify-center text-center gap-4 pointer-events-none px-4">
+                <button
+                  type="button"
+                  onClick={() => setIsPlaying((prev) => !prev)}
+                  aria-label={isPlaying ? 'Pause video' : 'Play video'}
+                  className="pointer-events-auto w-16 h-16 md:w-20 md:h-20 rounded-full bg-primary text-on-primary flex items-center justify-center shadow-2xl ring-4 ring-black/20 transition-transform hover:scale-105 focus-ring cursor-pointer"
+                >
+                  {isPlaying ? (
+                    <Pause size={30} />
+                  ) : (
+                    <Play size={30} className="ml-1" />
+                  )}
+                </button>
+                <div className="max-w-lg">
+                  <div className="font-cormorant text-xl md:text-2xl text-stone-100 leading-snug">{videoTitle}</div>
+                  <div className="font-mono text-[9px] text-stone-400 tracking-widest uppercase mt-1.5">
+                    Day {currentModuleDay} · {user?.level || 'Beginner I'}
+                  </div>
+                </div>
+              </div>
+
+              {/* Bottom overlay: progress bar + timing */}
+              <div className="absolute bottom-0 inset-x-0 z-30 p-3.5 pointer-events-none">
+                <div className="bg-black/60 backdrop-blur-sm border border-white/10 rounded-xl p-3 space-y-2">
+                  <div className="relative w-full h-1.5 bg-stone-700/80 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-primary rounded-full transition-[width] duration-300"
+                      style={{ width: `${verificationPct}%` }}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between gap-2 font-mono text-[10px]">
+                    <span className="text-stone-300">
+                      {formatTime(lastPlayedSeconds)} / {formatTime(duration)}
+                    </span>
+                    <span className="text-primary-fixed-dim">
+                      {isPlaying ? 'Now Playing' : 'Paused'} · {taskDone ? 'Task Completed' : `Task Verification ${verificationPct}%`}
+                    </span>
+                  </div>
+                </div>
+              </div>
             </div>
-
-            <button
-              onClick={handleDownloadReference}
-              className="px-4 py-2 bg-primary-coral hover:bg-primary-hover text-white font-semibold rounded-xl text-xs transition-colors flex items-center gap-2 shadow-xs focus-ring btn-interactive cursor-pointer shrink-0"
-            >
-              <Download size={14} />
-              <span>Download PDF Reference</span>
-            </button>
           </div>
 
-          {downloadSuccess && (
-            <div className="p-3 bg-green-500/15 border border-green-500/30 text-success-green text-xs rounded-xl font-mono flex items-center gap-2">
-              <CheckCircle size={16} />
-              <span>Reference guide downloaded successfully! Save for exam prep.</span>
+          {/* Task 1 Companion Reference PDF Guide Section */}
+          {mode === 'task1' && (
+            <div className="bg-surface-lowest border border-hairline/60 rounded-2xl p-6 space-y-4 shadow-sm">
+              <div className="flex flex-wrap items-center justify-between gap-4 border-b border-hairline/50 pb-4">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <BookOpen size={18} className="text-primary shrink-0" />
+                  <div className="min-w-0">
+                    <h3 className="font-cormorant text-xl font-normal text-on-surface">
+                      Companion Study Manual
+                    </h3>
+                    <span className="text-[10px] font-mono text-on-surface-variant uppercase tracking-wider">
+                      Reference Guide · PDF
+                    </span>
+                  </div>
+                </div>
+
+                <button
+                  onClick={handleDownloadReference}
+                  className="px-5 py-2.5 bg-primary hover:bg-primary-container text-on-primary font-semibold rounded-full text-xs tracking-wider uppercase transition-all flex items-center gap-2 shadow-sm focus-ring btn-interactive cursor-pointer shrink-0"
+                >
+                  <Download size={14} />
+                  <span>Download PDF Reference</span>
+                </button>
+              </div>
+
+              {downloadSuccess && (
+                <div className="p-3 bg-success-green/10 border border-success-green/30 text-success-green text-xs rounded-xl font-mono flex items-center gap-2">
+                  <CheckCircle size={14} />
+                  <span>Reference guide downloaded successfully! Save for exam prep.</span>
+                </div>
+              )}
+
+              <div
+                onClick={handleDownloadReference}
+                className="p-4 bg-canvas border border-hairline rounded-xl flex items-center justify-between text-xs font-mono min-w-0 hover:border-primary transition-colors cursor-pointer group"
+              >
+                <div className="flex items-center gap-3 min-w-0 flex-1 overflow-hidden">
+                  <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0 group-hover:bg-primary group-hover:text-on-primary transition-colors">
+                    <FileText size={20} />
+                  </div>
+                  <div className="min-w-0 flex-1 overflow-hidden font-sans">
+                    <span
+                      className="font-bold text-on-surface block truncate max-w-full text-sm group-hover:text-primary transition-colors"
+                      title={refGuideTitle}
+                    >
+                      {refGuideTitle}
+                    </span>
+                    <span className="text-on-surface-variant text-xs block truncate mt-0.5">
+                      {moduleData?.refGuideDescription || 'PDF Reference Manual • Grammar Rules & Vocabulary Guide'}
+                    </span>
+                  </div>
+                </div>
+                <span className="text-xs font-mono font-bold text-primary flex items-center gap-1 shrink-0 ml-2 group-hover:underline">
+                  <Download size={14} />
+                  <span>Download .pdf</span>
+                </span>
+              </div>
             </div>
           )}
+        </div>
 
-          <div
-            onClick={handleDownloadReference}
-            className="p-4 bg-canvas border border-hairline rounded-xl flex items-center justify-between text-xs font-mono min-w-0 hover:border-primary-coral transition-colors cursor-pointer group"
-          >
-            <div className="flex items-center gap-3 min-w-0 flex-1 overflow-hidden">
-              <div className="w-10 h-10 rounded-xl bg-primary-coral/10 text-primary-coral flex items-center justify-center shrink-0 group-hover:bg-primary-coral group-hover:text-white transition-colors">
-                <FileText size={20} />
+        {/* Syllabus / corner card — Task 1 */}
+        {mode === 'task1' && (
+          <div className="lg:col-span-4 bg-surface-lowest rounded-2xl border border-hairline/60 shadow-sm p-6 flex flex-col justify-between">
+            <div>
+              <span className="mono-micro-label text-primary font-semibold">Syllabus Milestones</span>
+              <h4 className="font-cormorant text-2xl font-medium text-on-surface mt-2 mb-4">Module {currentModuleDay} Roadmap</h4>
+              <div className="flex flex-col gap-3 font-sans text-xs">
+                {[
+                  { label: '1 · Mandatory Lecture', done: !!dailyTasks.lesson },
+                  { label: '2 · Listening Skill', done: !!dailyTasks.video },
+                  { label: '3 · Daily Exam', done: !!dailyTasks.exam },
+                ].map((item) => (
+                  <div key={item.label} className="p-3 bg-surface-low rounded-xl flex items-center justify-between gap-2">
+                    <span className="font-medium text-on-surface">{item.label}</span>
+                    <span className={`px-2 py-0.5 rounded-full text-[9px] font-mono font-bold uppercase tracking-wider ${item.done ? 'bg-success-green/15 text-success-green' : 'bg-warning-amber/15 text-warning-amber'}`}>
+                      {item.done ? 'Done' : 'Pending'}
+                    </span>
+                  </div>
+                ))}
               </div>
-              <div className="min-w-0 flex-1 overflow-hidden font-sans">
-                <span
-                  className="font-bold text-on-surface block truncate max-w-full text-sm group-hover:text-primary-coral transition-colors"
-                  title={moduleData?.refGuideTitle || currentVideo.referenceFile}
-                >
-                  {moduleData?.refGuideTitle || currentVideo.referenceFile}
-                </span>
-                <span className="text-on-surface-variant text-xs block truncate mt-0.5">
-                  {moduleData?.refGuideDescription || 'PDF Reference Manual • Grammar Rules & Vocabulary Guide'}
-                </span>
+              <div className="mt-4 p-3 bg-surface-low rounded-xl">
+                <span className="mono-micro-label text-on-surface-variant">Reference Guide</span>
+                <p className="text-xs font-medium text-on-surface mt-1.5 truncate" title={refGuideTitle}>
+                  {refGuideTitle}
+                </p>
               </div>
             </div>
-            <span className="text-xs font-mono font-bold text-primary-coral flex items-center gap-1 shrink-0 ml-2 group-hover:underline">
-              <Download size={14} />
-              <span>Download .pdf</span>
-            </span>
+            {onNavigate && (
+              <button
+                onClick={() => onNavigate('task2')}
+                className="mt-6 w-full py-3 rounded-full bg-primary text-on-primary text-xs tracking-wider uppercase font-semibold hover:bg-primary-container transition-all shadow-sm"
+              >
+                Proceed to Task 2 →
+              </button>
+            )}
           </div>
-        </div>
-      )}
+        )}
+
+        {/* Listening Lab — Task 2 */}
+        {mode === 'task2' && (
+          <div className="lg:col-span-12 grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div className="lg:col-span-7 flex flex-col gap-4">
+              <h3 className="font-cormorant text-2xl md:text-3xl font-normal text-on-surface">Task 2 · Listening Lab Track</h3>
+              <div className="bg-surface-lowest rounded-2xl border border-hairline/60 shadow-sm p-6">
+                <span className="mono-micro-label inline-block bg-primary/10 text-primary px-2 py-1 rounded font-semibold">
+                  {listeningCategory === 'informative' ? 'Option A · Informative (Academic)' : 'Option B · Entertainment (Culture)'}
+                </span>
+                <h4 className="font-cormorant text-2xl font-medium text-on-surface mt-3 leading-snug">{currentVideo.title}</h4>
+                <p className="font-sans text-xs text-on-surface-variant mt-2 leading-relaxed">
+                  Native-cadence audio stream for {listeningCategory === 'informative' ? 'academic & global English' : 'cultural & storytelling English'} listening practice.
+                </p>
+              </div>
+            </div>
+
+            <div className="lg:col-span-5 bg-surface-lowest rounded-2xl border border-hairline/60 shadow-sm p-6 flex flex-col justify-between">
+              <div>
+                <span className="mono-micro-label text-primary font-semibold">Audio Stream</span>
+                <h4 className="font-cormorant text-2xl font-medium text-on-surface mt-2 mb-6">
+                  {user?.level || 'Beginner I'} · Day {currentModuleDay}
+                </h4>
+                <div className="flex items-center justify-between h-14 px-4 bg-surface-low rounded-xl">
+                  {[10, 18, 8, 22, 13, 26, 9, 20, 14].map((h, i) => (
+                    <span
+                      key={i}
+                      className={`w-1.5 bg-primary rounded-full ${i % 3 === 0 ? 'animate-pulse' : ''}`}
+                      style={{ height: `${h * 4}px` }}
+                    />
+                  ))}
+                </div>
+                <div className="mt-3 flex items-center justify-between gap-2">
+                  <span className="text-[10px] font-mono text-on-surface-variant uppercase tracking-wider">Cue · Listening</span>
+                  {taskDone ? (
+                    <span className="text-[10px] font-mono text-success-green uppercase tracking-wider font-semibold">Task Completed</span>
+                  ) : (
+                    <span className="text-[10px] font-mono text-warning-amber uppercase tracking-wider">Watch Full Track to Unlock</span>
+                  )}
+                </div>
+              </div>
+              {onNavigate && (
+                <button
+                  onClick={() => onNavigate('task3')}
+                  className="mt-6 w-full py-3 rounded-full bg-primary text-on-primary text-xs tracking-wider uppercase font-semibold hover:bg-primary-container transition-all shadow-sm"
+                >
+                  Proceed to Daily Chat Room →
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

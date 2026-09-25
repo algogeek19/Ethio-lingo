@@ -196,52 +196,52 @@ export const StudentDetailsDrawer = ({ studentId, onClose, onStudentUpdated }) =
   if (!studentId) return null;
 
   return (
-    <div className="fixed inset-0 z-50 overflow-hidden flex justify-end bg-black/60 backdrop-blur-xs animate-fade-in">
+    <div className="fixed inset-0 z-50 overflow-hidden flex justify-end bg-stone-900/60 backdrop-blur-sm animate-fade-in">
       <div
-        className="w-full max-w-3xl bg-surface-lowest text-on-surface shadow-2xl h-full flex flex-col border-l border-hairline transition-all duration-300 transform animate-slide-in-right"
+        className="w-full max-w-3xl bg-surface-lowest text-on-surface shadow-2xl h-full flex flex-col border-l border-hairline/60 transition-all duration-300 transform animate-slide-in-right"
         role="dialog"
         aria-modal="true"
       >
         {/* DRAWER HEADER */}
-        <div className="p-6 border-b border-hairline bg-surface-card flex items-start justify-between gap-4 shrink-0">
+        <div className="p-6 border-b border-hairline bg-surface-container/60 flex items-start justify-between gap-4 shrink-0">
           <div className="flex items-start gap-3.5">
-            <div className="w-12 h-12 rounded-2xl bg-surface-dark text-white flex items-center justify-center font-bold text-lg font-serif shrink-0 border border-stone-800">
+            <div className="w-12 h-12 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-lg font-cormorant shrink-0">
               {studentData?.name ? studentData.name.charAt(0).toUpperCase() : <User size={24} />}
             </div>
             <div>
               <div className="flex flex-wrap items-center gap-2">
-                <h2 className="font-serif font-bold text-xl text-on-surface">
+                <h2 className="font-cormorant text-2xl font-normal text-on-surface">
                   {studentData?.name || 'Loading Learner...'}
                 </h2>
                 <span
-                  className={`px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase ${
+                  className={`font-mono text-[9px] px-2 py-0.5 rounded-full uppercase tracking-wider ${
                     formData.status === 'ACTIVE'
-                      ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30'
+                      ? 'bg-success-green/10 text-success-green'
                       : formData.status === 'SUSPENDED'
-                      ? 'bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/30'
-                      : 'bg-stone-500/15 text-stone-600 dark:text-stone-400 border border-stone-500/30'
+                      ? 'bg-destructive-red/10 text-destructive-red'
+                      : 'bg-surface-container text-on-surface-variant'
                   }`}
                 >
                   {formData.status}
                 </span>
                 {studentData?.wallet?.isFreeTrial && (
-                  <span className="px-2 py-0.5 bg-amber-500/15 text-warning-amber border border-amber-500/30 text-[10px] font-mono font-bold rounded">
+                  <span className="px-2 py-0.5 bg-warning-amber/10 text-warning-amber border border-warning-amber/30 text-[10px] font-mono font-semibold rounded uppercase tracking-wider">
                     FREE TRIAL ({studentData?.wallet?.freeTrialDaysLeft}d left)
                   </span>
                 )}
               </div>
-              <p className="text-xs font-mono text-text-muted mt-0.5">
-                {studentData?.email} • ID: <span className="text-primary-coral font-bold">{studentId}</span>
+              <p className="text-xs font-mono text-text-muted mt-1">
+                {studentData?.email} • ID: <span className="text-primary font-bold">{studentId}</span>
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 shrink-0">
             <button
               onClick={handleDownloadPdf}
               disabled={!studentData || isGeneratingPdf}
               title="Download Student Report (PDF)"
-              className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold bg-primary-coral text-white rounded-xl hover:bg-primary-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus-ring cursor-pointer"
+              className="rounded-full bg-primary hover:bg-primary-container text-on-primary text-[10px] tracking-wider uppercase font-semibold px-4 py-2 flex items-center gap-1.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed focus-ring cursor-pointer"
             >
               {isGeneratingPdf ? <Loader2 size={14} className="animate-spin" /> : <FileDown size={14} />}
               <span className="hidden sm:inline">{isGeneratingPdf ? 'Generating…' : 'Download Report'}</span>
@@ -250,14 +250,14 @@ export const StudentDetailsDrawer = ({ studentId, onClose, onStudentUpdated }) =
               onClick={() => loadStudentDetails(false)}
               disabled={isLoading}
               title="Refresh Data"
-              className="p-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-soft rounded-xl transition-colors focus-ring cursor-pointer"
+              className="p-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-soft rounded-full transition-colors focus-ring cursor-pointer"
             >
-              <RefreshCw size={16} className={isLoading ? 'animate-spin text-primary-coral' : ''} />
+              <RefreshCw size={16} className={isLoading ? 'animate-spin text-primary' : ''} />
             </button>
             <button
               onClick={onClose}
               aria-label="Close drawer"
-              className="p-2 text-on-surface-variant hover:text-destructive-red hover:bg-surface-soft rounded-xl transition-colors focus-ring cursor-pointer"
+              className="p-2 text-on-surface-variant hover:text-destructive-red hover:bg-surface-soft rounded-full transition-colors focus-ring cursor-pointer"
             >
               <X size={20} />
             </button>
@@ -266,44 +266,44 @@ export const StudentDetailsDrawer = ({ studentId, onClose, onStudentUpdated }) =
 
         {/* QUICK STATS STRIP */}
         {studentData && (
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 p-4 bg-canvas border-b border-hairline shrink-0 text-xs font-mono">
-            <div className="p-3 bg-surface-lowest rounded-xl border border-hairline space-y-0.5">
-              <span className="text-[10px] text-text-muted uppercase">Level & Day</span>
-              <div className="font-bold text-on-surface text-sm">
-                {studentData.level || 'Beginner I'} <span className="text-primary-coral">D{studentData.currentDay || 1}</span>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 p-4 bg-surface-low border-b border-hairline/50 shrink-0 text-xs font-mono">
+            <div className="p-3 bg-surface-lowest rounded-xl border border-hairline/60 space-y-0.5">
+              <span className="mono-micro-label text-text-muted block">Level & Day</span>
+              <div className="font-cormorant text-lg font-normal text-on-surface">
+                {studentData.level || 'Beginner I'} <span className="text-primary">D{studentData.currentDay || 1}</span>
               </div>
             </div>
-            <div className="p-3 bg-surface-lowest rounded-xl border border-hairline space-y-0.5">
-              <span className="text-[10px] text-text-muted uppercase">Staked Escrow</span>
-              <div className="font-bold text-on-surface text-sm">
+            <div className="p-3 bg-surface-lowest rounded-xl border border-hairline/60 space-y-0.5">
+              <span className="mono-micro-label text-text-muted block">Staked Escrow</span>
+              <div className="font-cormorant text-lg font-normal text-on-surface tabular-nums">
                 {formatETB(studentData.wallet?.stakedAmount || 0)}
               </div>
             </div>
-            <div className="p-3 bg-surface-lowest rounded-xl border border-hairline space-y-0.5">
-              <span className="text-[10px] text-text-muted uppercase">Available Balance</span>
-              <div className="font-bold text-emerald-600 dark:text-emerald-400 text-sm">
+            <div className="p-3 bg-surface-lowest rounded-xl border border-hairline/60 space-y-0.5">
+              <span className="mono-micro-label text-text-muted block">Available Balance</span>
+              <div className="font-cormorant text-lg font-normal text-success-green tabular-nums">
                 {formatETB(studentData.wallet?.availableBalance || 0)}
               </div>
             </div>
-            <div className="p-3 bg-surface-lowest rounded-xl border border-hairline space-y-0.5">
-              <span className="text-[10px] text-text-muted uppercase">Streak Record</span>
-              <div className="font-bold text-streak-orange text-sm flex items-center gap-1">
+            <div className="p-3 bg-surface-lowest rounded-xl border border-hairline/60 space-y-0.5">
+              <span className="mono-micro-label text-text-muted block">Streak Record</span>
+              <div className="font-cormorant text-lg font-normal text-streak-orange flex items-center gap-1.5">
                 <Flame size={14} />
-                <span>{studentData.wallet?.streakCount || 0} Days</span>
+                <span className="tabular-nums">{studentData.wallet?.streakCount || 0} Days</span>
               </div>
             </div>
           </div>
         )}
 
         {/* NAVIGATION TABS */}
-        <div className="flex items-center gap-2 px-6 border-b border-hairline bg-surface-lowest shrink-0" role="tablist">
+        <div className="flex items-center gap-2 px-6 border-b border-hairline bg-surface-lowest shrink-0 overflow-x-auto" role="tablist">
           <button
             role="tab"
             aria-selected={activeTab === 'overview'}
             onClick={() => setActiveTab('overview')}
-            className={`py-3 px-4 text-xs font-semibold border-b-2 transition-all flex items-center gap-2 focus-ring cursor-pointer ${
+            className={`py-3 px-4 text-xs font-semibold border-b-2 transition-all flex items-center gap-2 focus-ring cursor-pointer whitespace-nowrap ${
               activeTab === 'overview'
-                ? 'border-primary-coral text-primary-coral'
+                ? 'border-primary text-primary'
                 : 'border-transparent text-on-surface-variant hover:text-on-surface'
             }`}
           >
@@ -315,9 +315,9 @@ export const StudentDetailsDrawer = ({ studentId, onClose, onStudentUpdated }) =
             role="tab"
             aria-selected={activeTab === 'progress'}
             onClick={() => setActiveTab('progress')}
-            className={`py-3 px-4 text-xs font-semibold border-b-2 transition-all flex items-center gap-2 focus-ring cursor-pointer ${
+            className={`py-3 px-4 text-xs font-semibold border-b-2 transition-all flex items-center gap-2 focus-ring cursor-pointer whitespace-nowrap ${
               activeTab === 'progress'
-                ? 'border-primary-coral text-primary-coral'
+                ? 'border-primary text-primary'
                 : 'border-transparent text-on-surface-variant hover:text-on-surface'
             }`}
           >
@@ -329,9 +329,9 @@ export const StudentDetailsDrawer = ({ studentId, onClose, onStudentUpdated }) =
             role="tab"
             aria-selected={activeTab === 'ledger'}
             onClick={() => setActiveTab('ledger')}
-            className={`py-3 px-4 text-xs font-semibold border-b-2 transition-all flex items-center gap-2 focus-ring cursor-pointer ${
+            className={`py-3 px-4 text-xs font-semibold border-b-2 transition-all flex items-center gap-2 focus-ring cursor-pointer whitespace-nowrap ${
               activeTab === 'ledger'
-                ? 'border-primary-coral text-primary-coral'
+                ? 'border-primary text-primary'
                 : 'border-transparent text-on-surface-variant hover:text-on-surface'
             }`}
           >
@@ -343,9 +343,9 @@ export const StudentDetailsDrawer = ({ studentId, onClose, onStudentUpdated }) =
             role="tab"
             aria-selected={activeTab === 'exams'}
             onClick={() => setActiveTab('exams')}
-            className={`py-3 px-4 text-xs font-semibold border-b-2 transition-all flex items-center gap-2 focus-ring cursor-pointer ${
+            className={`py-3 px-4 text-xs font-semibold border-b-2 transition-all flex items-center gap-2 focus-ring cursor-pointer whitespace-nowrap ${
               activeTab === 'exams'
-                ? 'border-primary-coral text-primary-coral'
+                ? 'border-primary text-primary'
                 : 'border-transparent text-on-surface-variant hover:text-on-surface'
             }`}
           >
@@ -355,21 +355,21 @@ export const StudentDetailsDrawer = ({ studentId, onClose, onStudentUpdated }) =
         </div>
 
         {/* DRAWER BODY (SCROLLABLE) */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+        <div className="flex-1 overflow-y-auto p-6 lg:p-8 space-y-6">
           {isLoading ? (
             <div className="py-20 flex flex-col items-center justify-center gap-3 text-on-surface-variant font-mono text-xs">
-              <Loader2 size={30} className="animate-spin text-primary-coral" />
+              <Loader2 size={30} className="animate-spin text-primary" />
               <span>Loading complete student record...</span>
             </div>
           ) : error ? (
-            <div className="p-4 bg-red-500/15 border border-red-500/30 text-destructive-red text-xs rounded-xl flex items-center gap-2 font-mono">
+            <div className="p-4 bg-destructive-red/10 border border-destructive-red/30 text-destructive-red text-xs rounded-xl flex items-center gap-2 font-mono">
               <AlertCircle size={18} className="shrink-0" />
               <span>{error}</span>
             </div>
           ) : (
             <>
               {pdfNotice && (
-                <div className="p-3 bg-primary-coral/10 border border-primary-coral/30 text-primary-coral dark:text-primary-warm text-xs font-mono font-semibold rounded-xl flex items-center gap-2 animate-fade-in">
+                <div className="p-3 bg-primary/10 border border-primary/30 text-primary text-xs font-mono font-semibold rounded-xl flex items-center gap-2 animate-fade-in">
                   <FileDown size={16} className="shrink-0" />
                   <span>{pdfNotice}</span>
                 </div>
@@ -378,20 +378,24 @@ export const StudentDetailsDrawer = ({ studentId, onClose, onStudentUpdated }) =
               {activeTab === 'overview' && (
                 <div className="space-y-6">
                   {saveSuccessMsg && (
-                    <div className="p-3 bg-emerald-500/15 border border-emerald-500/30 text-emerald-700 dark:text-emerald-300 text-xs font-mono font-semibold rounded-xl flex items-center gap-2 animate-fade-in">
+                    <div className="p-3 bg-success-green/10 border border-success-green/30 text-success-green text-xs font-mono font-semibold rounded-xl flex items-center gap-2 animate-fade-in">
                       <CheckCircle size={16} />
                       <span>{saveSuccessMsg}</span>
                     </div>
                   )}
 
                   {/* Profile & Academic Track Form */}
-                  <form onSubmit={handleSaveProfile} className="bg-canvas border border-hairline rounded-2xl p-5 space-y-4 shadow-xs">
-                    <div className="flex items-center justify-between border-b border-hairline pb-3">
-                      <h3 className="font-serif font-bold text-base text-on-surface flex items-center gap-2">
-                        <Shield size={16} className="text-primary-coral" />
-                        <span>Academic Track & Account Permissions</span>
-                      </h3>
-                      <span className="text-[10px] font-mono text-text-muted">
+                  <form onSubmit={handleSaveProfile} className="bg-surface-lowest border border-hairline/60 rounded-2xl p-6 shadow-sm space-y-5">
+                    <div className="flex items-center justify-between gap-3 border-b border-hairline/50 pb-4">
+                      <div>
+                        <span className="mono-micro-label text-primary flex items-center gap-1.5">
+                          <Shield size={13} /> Account
+                        </span>
+                        <h3 className="font-cormorant text-xl font-normal text-on-surface mt-1">
+                          Academic Track & Account Permissions
+                        </h3>
+                      </div>
+                      <span className="text-[10px] font-mono text-text-muted shrink-0">
                         Created: {formatDate(studentData?.createdAt)}
                       </span>
                     </div>
@@ -399,27 +403,27 @@ export const StudentDetailsDrawer = ({ studentId, onClose, onStudentUpdated }) =
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {/* Name */}
                       <div>
-                        <label className="block text-[11px] font-mono font-bold text-on-surface-variant mb-1">
+                        <label className="mono-micro-label text-on-surface-variant block mb-1.5">
                           Full Name
                         </label>
                         <input
                           type="text"
                           value={formData.name}
                           onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                          className="w-full px-3 py-2 bg-surface-lowest border border-hairline rounded-xl text-xs text-on-surface focus-ring"
+                          className="w-full px-3 py-2 bg-surface-low border border-hairline rounded-xl text-xs text-on-surface outline-none focus:border-primary"
                           required
                         />
                       </div>
 
                       {/* Account Status / Lockout */}
                       <div>
-                        <label className="block text-[11px] font-mono font-bold text-on-surface-variant mb-1">
+                        <label className="mono-micro-label text-on-surface-variant block mb-1.5">
                           Account Access Status
                         </label>
                         <select
                           value={formData.status}
                           onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                          className="w-full px-3 py-2 bg-surface-lowest border border-hairline rounded-xl text-xs font-semibold text-on-surface focus-ring cursor-pointer"
+                          className="w-full px-3 py-2 bg-surface-low border border-hairline rounded-xl text-xs font-semibold text-on-surface outline-none focus:border-primary cursor-pointer"
                         >
                           <option value="ACTIVE">ACTIVE (Full Platform Access)</option>
                           <option value="SUSPENDED">SUSPENDED (Lockout Screen Enforced)</option>
@@ -429,13 +433,13 @@ export const StudentDetailsDrawer = ({ studentId, onClose, onStudentUpdated }) =
 
                       {/* Curriculum Level */}
                       <div>
-                        <label className="block text-[11px] font-mono font-bold text-on-surface-variant mb-1">
+                        <label className="mono-micro-label text-on-surface-variant block mb-1.5">
                           Curriculum Level Track
                         </label>
                         <select
                           value={formData.level}
                           onChange={(e) => setFormData({ ...formData, level: e.target.value })}
-                          className="w-full px-3 py-2 bg-surface-lowest border border-hairline rounded-xl text-xs font-semibold text-on-surface focus-ring cursor-pointer"
+                          className="w-full px-3 py-2 bg-surface-low border border-hairline rounded-xl text-xs font-semibold text-on-surface outline-none focus:border-primary cursor-pointer"
                         >
                           {ALL_LEVELS.map((lvl) => (
                             <option key={lvl} value={lvl}>
@@ -447,7 +451,7 @@ export const StudentDetailsDrawer = ({ studentId, onClose, onStudentUpdated }) =
 
                       {/* Current Day (1 to 30) */}
                       <div>
-                        <label className="block text-[11px] font-mono font-bold text-on-surface-variant mb-1">
+                        <label className="mono-micro-label text-on-surface-variant block mb-1.5">
                           Current Module Day (1 to {formData.level === 'Free Trial' ? '7' : '30'})
                         </label>
                         <div className="flex items-center gap-2">
@@ -457,14 +461,14 @@ export const StudentDetailsDrawer = ({ studentId, onClose, onStudentUpdated }) =
                             max={formData.level === 'Free Trial' ? 7 : 30}
                             value={formData.currentDay}
                             onChange={(e) => setFormData({ ...formData, currentDay: e.target.value })}
-                            className="w-full px-3 py-2 bg-surface-lowest border border-hairline rounded-xl text-xs font-mono text-on-surface focus-ring"
+                            className="w-full px-3 py-2 bg-surface-low border border-hairline rounded-xl text-xs font-mono text-on-surface outline-none focus:border-primary"
                           />
                         </div>
                       </div>
 
                       {/* Streak Days */}
                       <div>
-                        <label className="block text-[11px] font-mono font-bold text-on-surface-variant mb-1">
+                        <label className="mono-micro-label text-on-surface-variant block mb-1.5">
                           Streak Days Counter 🔥
                         </label>
                         <input
@@ -472,20 +476,20 @@ export const StudentDetailsDrawer = ({ studentId, onClose, onStudentUpdated }) =
                           min="0"
                           value={formData.streakCount}
                           onChange={(e) => setFormData({ ...formData, streakCount: e.target.value })}
-                          className="w-full px-3 py-2 bg-surface-lowest border border-hairline rounded-xl text-xs font-mono text-on-surface focus-ring"
+                          className="w-full px-3 py-2 bg-surface-low border border-hairline rounded-xl text-xs font-mono text-on-surface outline-none focus:border-primary"
                         />
                       </div>
 
                       {/* Free Trial Toggle & Days Left */}
                       <div>
-                        <label className="block text-[11px] font-mono font-bold text-on-surface-variant mb-1">
+                        <label className="mono-micro-label text-on-surface-variant block mb-1.5">
                           Free Trial Status
                         </label>
                         <div className="flex items-center gap-2">
                           <select
                             value={formData.isFreeTrial ? 'true' : 'false'}
                             onChange={(e) => setFormData({ ...formData, isFreeTrial: e.target.value === 'true' })}
-                            className="w-1/2 px-3 py-2 bg-surface-lowest border border-hairline rounded-xl text-xs font-semibold text-on-surface focus-ring cursor-pointer"
+                            className="w-1/2 px-3 py-2 bg-surface-low border border-hairline rounded-xl text-xs font-semibold text-on-surface outline-none focus:border-primary cursor-pointer"
                           >
                             <option value="true">Trial Active</option>
                             <option value="false">Staked Mode</option>
@@ -499,17 +503,17 @@ export const StudentDetailsDrawer = ({ studentId, onClose, onStudentUpdated }) =
                             value={formData.freeTrialDaysLeft}
                             onChange={(e) => setFormData({ ...formData, freeTrialDaysLeft: e.target.value })}
                             placeholder="Days left"
-                            className="w-1/2 px-3 py-2 bg-surface-lowest border border-hairline rounded-xl text-xs font-mono text-on-surface focus-ring disabled:opacity-50"
+                            className="w-1/2 px-3 py-2 bg-surface-low border border-hairline rounded-xl text-xs font-mono text-on-surface outline-none focus:border-primary disabled:opacity-50"
                           />
                         </div>
                       </div>
                     </div>
 
-                    <div className="flex justify-end pt-3 border-t border-hairline">
+                    <div className="flex justify-end pt-4 border-t border-hairline/50">
                       <button
                         type="submit"
                         disabled={isSavingProfile}
-                        className="px-5 py-2.5 bg-primary-coral hover:bg-primary-hover disabled:opacity-50 text-white font-semibold text-xs rounded-xl flex items-center gap-2 shadow-xs focus-ring btn-interactive cursor-pointer"
+                        className="rounded-full bg-primary hover:bg-primary-container disabled:opacity-50 text-on-primary font-semibold text-xs tracking-wider uppercase px-5 py-2.5 flex items-center gap-2 shadow-sm focus-ring btn-interactive cursor-pointer"
                       >
                         {isSavingProfile ? (
                           <>
@@ -527,28 +531,30 @@ export const StudentDetailsDrawer = ({ studentId, onClose, onStudentUpdated }) =
                   </form>
 
                   {/* Manual Stake & Financial Adjustment Panel */}
-                  <form onSubmit={handleAdjustBalance} className="bg-canvas border border-hairline rounded-2xl p-5 space-y-4 shadow-xs">
-                    <div className="flex items-center justify-between border-b border-hairline pb-3">
+                  <form onSubmit={handleAdjustBalance} className="bg-surface-lowest border border-hairline/60 rounded-2xl p-6 shadow-sm space-y-5">
+                    <div className="border-b border-hairline/50 pb-4">
                       <div>
-                        <h3 className="font-serif font-bold text-base text-on-surface flex items-center gap-2">
-                          <DollarSign size={16} className="text-emerald-600 dark:text-emerald-400" />
-                          <span>Audited Balance & Stake Adjustment</span>
+                        <span className="mono-micro-label text-primary flex items-center gap-1.5">
+                          <DollarSign size={13} /> Escrow
+                        </span>
+                        <h3 className="font-cormorant text-xl font-normal text-on-surface mt-1">
+                          Audited Balance & Stake Adjustment
                         </h3>
-                        <p className="text-[11px] text-on-surface-variant mt-0.5">
-                          Directly credit or deduct ETB. An immutable <code className="font-mono text-primary-coral">ADMIN_ADJUSTMENT</code> transaction will be automatically written to the ledger.
+                        <p className="text-[11px] text-on-surface-variant mt-1">
+                          Directly credit or deduct ETB. An immutable <code className="font-mono text-primary">ADMIN_ADJUSTMENT</code> transaction will be automatically written to the ledger.
                         </p>
                       </div>
                     </div>
 
                     {adjustSuccessMsg && (
-                      <div className="p-3 bg-emerald-500/15 border border-emerald-500/30 text-emerald-700 dark:text-emerald-300 text-xs font-mono font-semibold rounded-xl flex items-center gap-2 animate-fade-in">
+                      <div className="p-3 bg-success-green/10 border border-success-green/30 text-success-green text-xs font-mono font-semibold rounded-xl flex items-center gap-2 animate-fade-in">
                         <CheckCircle size={16} />
                         <span>{adjustSuccessMsg}</span>
                       </div>
                     )}
 
                     {adjustErrorMsg && (
-                      <div className="p-3 bg-red-500/15 border border-red-500/30 text-destructive-red text-xs rounded-xl flex items-center gap-2 font-mono animate-fade-in">
+                      <div className="p-3 bg-destructive-red/10 border border-destructive-red/30 text-destructive-red text-xs rounded-xl flex items-center gap-2 font-mono animate-fade-in">
                         <AlertCircle size={16} />
                         <span>{adjustErrorMsg}</span>
                       </div>
@@ -557,13 +563,13 @@ export const StudentDetailsDrawer = ({ studentId, onClose, onStudentUpdated }) =
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                       {/* Balance Type */}
                       <div>
-                        <label className="block text-[11px] font-mono font-bold text-on-surface-variant mb-1">
+                        <label className="mono-micro-label text-on-surface-variant block mb-1.5">
                           Account Balance Target
                         </label>
                         <select
                           value={adjustForm.balanceType}
                           onChange={(e) => setAdjustForm({ ...adjustForm, balanceType: e.target.value })}
-                          className="w-full px-3 py-2 bg-surface-lowest border border-hairline rounded-xl text-xs font-semibold text-on-surface focus-ring cursor-pointer"
+                          className="w-full px-3 py-2 bg-surface-low border border-hairline rounded-xl text-xs font-semibold text-on-surface outline-none focus:border-primary cursor-pointer"
                         >
                           <option value="stakedAmount">Staked Escrow Vault</option>
                           <option value="availableBalance">Available Balance</option>
@@ -572,16 +578,16 @@ export const StudentDetailsDrawer = ({ studentId, onClose, onStudentUpdated }) =
 
                       {/* Action Type */}
                       <div>
-                        <label className="block text-[11px] font-mono font-bold text-on-surface-variant mb-1">
+                        <label className="mono-micro-label text-on-surface-variant block mb-1.5">
                           Action
                         </label>
                         <div className="grid grid-cols-2 gap-1.5">
                           <button
                             type="button"
                             onClick={() => setAdjustForm({ ...adjustForm, actionType: 'add' })}
-                            className={`py-2 px-2 rounded-xl text-xs font-bold font-mono flex items-center justify-center gap-1 border transition-colors cursor-pointer ${
+                            className={`py-2 px-2 rounded-full text-xs font-bold font-mono flex items-center justify-center gap-1 border transition-colors cursor-pointer ${
                               adjustForm.actionType === 'add'
-                                ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border-emerald-500'
+                                ? 'bg-success-green/15 text-success-green border-success-green'
                                 : 'bg-surface-lowest text-on-surface-variant border-hairline'
                             }`}
                           >
@@ -591,9 +597,9 @@ export const StudentDetailsDrawer = ({ studentId, onClose, onStudentUpdated }) =
                           <button
                             type="button"
                             onClick={() => setAdjustForm({ ...adjustForm, actionType: 'deduct' })}
-                            className={`py-2 px-2 rounded-xl text-xs font-bold font-mono flex items-center justify-center gap-1 border transition-colors cursor-pointer ${
+                            className={`py-2 px-2 rounded-full text-xs font-bold font-mono flex items-center justify-center gap-1 border transition-colors cursor-pointer ${
                               adjustForm.actionType === 'deduct'
-                                ? 'bg-rose-500/20 text-rose-700 dark:text-rose-300 border-rose-500'
+                                ? 'bg-destructive-red/15 text-destructive-red border-destructive-red'
                                 : 'bg-surface-lowest text-on-surface-variant border-hairline'
                             }`}
                           >
@@ -605,7 +611,7 @@ export const StudentDetailsDrawer = ({ studentId, onClose, onStudentUpdated }) =
 
                       {/* Amount */}
                       <div>
-                        <label className="block text-[11px] font-mono font-bold text-on-surface-variant mb-1">
+                        <label className="mono-micro-label text-on-surface-variant block mb-1.5">
                           Adjustment Amount (ETB)
                         </label>
                         <input
@@ -615,7 +621,7 @@ export const StudentDetailsDrawer = ({ studentId, onClose, onStudentUpdated }) =
                           placeholder="e.g. 500"
                           value={adjustForm.amount}
                           onChange={(e) => setAdjustForm({ ...adjustForm, amount: e.target.value })}
-                          className="w-full px-3 py-2 bg-surface-lowest border border-hairline rounded-xl text-xs font-mono font-bold text-on-surface focus-ring"
+                          className="w-full px-3 py-2 bg-surface-low border border-hairline rounded-xl text-xs font-mono font-semibold text-on-surface outline-none focus:border-primary"
                           required
                         />
                       </div>
@@ -623,7 +629,7 @@ export const StudentDetailsDrawer = ({ studentId, onClose, onStudentUpdated }) =
 
                     {/* Reason / Admin Audit Note */}
                     <div>
-                      <label className="block text-[11px] font-mono font-bold text-on-surface-variant mb-1">
+                      <label className="mono-micro-label text-on-surface-variant block mb-1.5">
                         Reason & Audit Memo <span className="text-text-muted font-normal">(Logged into student transaction ledger)</span>
                       </label>
                       <input
@@ -631,19 +637,19 @@ export const StudentDetailsDrawer = ({ studentId, onClose, onStudentUpdated }) =
                         placeholder="e.g. Manual bank deposit verification ref #12345 / Technical streak reimbursement"
                         value={adjustForm.reason}
                         onChange={(e) => setAdjustForm({ ...adjustForm, reason: e.target.value })}
-                        className="w-full px-3 py-2 bg-surface-lowest border border-hairline rounded-xl text-xs text-on-surface focus-ring"
+                        className="w-full px-3 py-2 bg-surface-low border border-hairline rounded-xl text-xs text-on-surface outline-none focus:border-primary"
                       />
                     </div>
 
-                    <div className="flex items-center justify-between pt-3 border-t border-hairline">
-                      <div className="flex items-center gap-1.5">
+                    <div className="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-hairline/50">
+                      <div className="flex flex-wrap items-center gap-1.5">
                         <span className="text-[10px] font-mono text-text-muted">Presets:</span>
                         {['100', '250', '500', '1000'].map((preset) => (
                           <button
                             key={preset}
                             type="button"
                             onClick={() => setAdjustForm({ ...adjustForm, amount: preset })}
-                            className="px-2 py-0.5 bg-surface-card border border-hairline hover:border-primary-coral text-on-surface font-mono text-[10px] rounded-lg transition-colors cursor-pointer"
+                            className="px-2.5 py-0.5 bg-surface-container border border-hairline hover:border-primary text-on-surface font-mono text-[10px] rounded-full transition-colors cursor-pointer"
                           >
                             {preset} ETB
                           </button>
@@ -653,10 +659,10 @@ export const StudentDetailsDrawer = ({ studentId, onClose, onStudentUpdated }) =
                       <button
                         type="submit"
                         disabled={isAdjustingBalance || !adjustForm.amount}
-                        className={`px-5 py-2.5 text-white font-semibold text-xs rounded-xl flex items-center gap-2 shadow-xs focus-ring btn-interactive cursor-pointer disabled:opacity-50 ${
+                        className={`rounded-full text-white font-semibold text-[10px] tracking-wider uppercase px-5 py-2.5 flex items-center gap-2 shadow-sm focus-ring btn-interactive cursor-pointer disabled:opacity-50 transition-colors ${
                           adjustForm.actionType === 'add'
-                            ? 'bg-emerald-600 hover:bg-emerald-700'
-                            : 'bg-rose-600 hover:bg-rose-700'
+                            ? 'bg-success-green hover:bg-success-green/90'
+                            : 'bg-destructive-red hover:bg-destructive-red/90'
                         }`}
                       >
                         {isAdjustingBalance ? (
@@ -678,39 +684,40 @@ export const StudentDetailsDrawer = ({ studentId, onClose, onStudentUpdated }) =
 
               {/* TAB 2: DAILY PROGRESS & EXAMS */}
               {activeTab === 'progress' && (
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
+                <div className="space-y-5">
+                  <div className="flex items-center justify-between gap-3">
                     <div>
-                      <h3 className="font-serif font-bold text-base text-on-surface">Daily Task & Exam Records</h3>
-                      <p className="text-xs text-on-surface-variant">
+                      <span className="mono-micro-label text-primary">Daily Records</span>
+                      <h3 className="font-cormorant text-xl font-normal text-on-surface mt-1">Daily Task & Exam Records</h3>
+                      <p className="text-xs text-on-surface-variant mt-1">
                         Chronological record of completed daily lessons, listening, and exam evaluations.
                       </p>
                     </div>
                   </div>
 
                   {studentData?.dailyProgress && studentData.dailyProgress.length > 0 ? (
-                    <div className="overflow-x-auto rounded-2xl border border-hairline bg-canvas">
+                    <div className="overflow-x-auto rounded-2xl border border-hairline/60 bg-surface-lowest shadow-sm">
                       <table className="w-full text-left border-collapse">
                         <thead>
-                          <tr className="bg-surface-card border-b border-hairline text-[10px] font-semibold text-on-surface-variant uppercase tracking-wider font-mono">
-                            <th className="py-3 px-4">Day & Date</th>
-                            <th className="py-3 px-3">Level Track</th>
-                            <th className="py-3 px-3">Task 1 (Lesson)</th>
-                            <th className="py-3 px-3">Task 2 (Listening)</th>
-                            <th className="py-3 px-4 text-right">Daily Exam</th>
+                          <tr className="font-mono text-[10px] uppercase tracking-widest text-text-muted">
+                            <th className="py-3 px-4 font-normal">Day & Date</th>
+                            <th className="py-3 px-3 font-normal">Level Track</th>
+                            <th className="py-3 px-3 font-normal">Task 1 (Lesson)</th>
+                            <th className="py-3 px-3 font-normal">Task 2 (Listening)</th>
+                            <th className="py-3 px-4 text-right font-normal">Daily Exam</th>
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-hairline text-xs font-mono">
+                        <tbody className="text-xs font-mono">
                           {studentData.dailyProgress.map((dp) => (
-                            <tr key={dp.id} className="hover:bg-surface-soft transition-colors">
+                            <tr key={dp.id} className="border-t border-hairline/50 hover:bg-surface-soft transition-colors">
                               <td className="py-3 px-4">
-                                <span className="font-bold text-on-surface">Day {dp.dayNumber}</span>
+                                <span className="font-semibold text-on-surface">Day {dp.dayNumber}</span>
                                 <span className="text-[10px] text-text-muted block">{dp.progressDate}</span>
                               </td>
                               <td className="py-3 px-3 text-[11px] text-on-surface">{dp.level}</td>
                               <td className="py-3 px-3">
                                 {dp.task1LessonCompleted ? (
-                                  <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-bold text-[11px]">
+                                  <span className="inline-flex items-center gap-1 text-success-green font-semibold text-[11px]">
                                     <Check size={13} /> Completed
                                   </span>
                                 ) : (
@@ -719,7 +726,7 @@ export const StudentDetailsDrawer = ({ studentId, onClose, onStudentUpdated }) =
                               </td>
                               <td className="py-3 px-3">
                                 {dp.task2ListeningCompleted ? (
-                                  <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-bold text-[11px]">
+                                  <span className="inline-flex items-center gap-1 text-success-green font-semibold text-[11px]">
                                     <Check size={13} /> Completed
                                   </span>
                                 ) : (
@@ -729,10 +736,10 @@ export const StudentDetailsDrawer = ({ studentId, onClose, onStudentUpdated }) =
                               <td className="py-3 px-4 text-right">
                                 {dp.examCompleted ? (
                                   <span
-                                    className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                                    className={`font-mono text-[9px] px-2 py-0.5 rounded uppercase tracking-wider ${
                                       dp.examPassed
-                                        ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30'
-                                        : 'bg-rose-500/15 text-rose-700 dark:text-rose-300 border border-rose-500/30'
+                                        ? 'bg-success-green/10 text-success-green'
+                                        : 'bg-destructive-red/10 text-destructive-red'
                                     }`}
                                   >
                                     {dp.examScore}/20 ({dp.examPassed ? 'PASSED' : 'FAILED'})
@@ -747,7 +754,7 @@ export const StudentDetailsDrawer = ({ studentId, onClose, onStudentUpdated }) =
                       </table>
                     </div>
                   ) : (
-                    <div className="py-12 bg-canvas rounded-2xl border border-hairline flex flex-col items-center justify-center gap-2 text-on-surface-variant font-sans">
+                    <div className="py-12 bg-surface-lowest rounded-2xl border border-hairline/60 shadow-sm flex flex-col items-center justify-center gap-2 text-on-surface-variant font-sans">
                       <Calendar size={28} className="text-text-muted opacity-40" />
                       <p className="font-semibold text-xs">No daily progress recorded yet</p>
                       <p className="text-[11px] text-text-muted">Progress entries will automatically populate as this student studies.</p>
@@ -761,43 +768,46 @@ export const StudentDetailsDrawer = ({ studentId, onClose, onStudentUpdated }) =
                 <div className="space-y-6">
                   {/* Ledger Transactions */}
                   <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <h3 className="font-serif font-bold text-base text-on-surface">Financial Ledger Audit Trail</h3>
-                      <span className="text-xs font-mono text-text-muted">
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <span className="mono-micro-label text-primary">Ledger</span>
+                        <h3 className="font-cormorant text-xl font-normal text-on-surface mt-1">Financial Ledger Audit Trail</h3>
+                      </div>
+                      <span className="text-xs font-mono text-text-muted shrink-0">
                         Total Transactions: {studentData?.ledgerTransactions?.length || 0}
                       </span>
                     </div>
 
                     {studentData?.ledgerTransactions && studentData.ledgerTransactions.length > 0 ? (
-                      <div className="overflow-x-auto rounded-2xl border border-hairline bg-canvas">
+                      <div className="overflow-x-auto rounded-2xl border border-hairline/60 bg-surface-lowest shadow-sm">
                         <table className="w-full text-left border-collapse">
                           <thead>
-                            <tr className="bg-surface-card border-b border-hairline text-[10px] font-semibold text-on-surface-variant uppercase tracking-wider font-mono">
-                              <th className="py-3 px-4">Transaction Type</th>
-                              <th className="py-3 px-3">Amount</th>
-                              <th className="py-3 px-3">Status</th>
-                              <th className="py-3 px-4">Description / Audit Memo</th>
-                              <th className="py-3 px-4 text-right">Timestamp</th>
+                            <tr className="font-mono text-[10px] uppercase tracking-widest text-text-muted">
+                              <th className="py-3 px-4 font-normal">Transaction Type</th>
+                              <th className="py-3 px-3 font-normal">Amount</th>
+                              <th className="py-3 px-3 font-normal">Status</th>
+                              <th className="py-3 px-4 font-normal">Description / Audit Memo</th>
+                              <th className="py-3 px-4 text-right font-normal">Timestamp</th>
                             </tr>
                           </thead>
-                          <tbody className="divide-y divide-hairline text-xs font-mono">
+                          <tbody className="text-xs font-mono">
                             {studentData.ledgerTransactions.map((tx) => (
-                              <tr key={tx.id} className="hover:bg-surface-soft transition-colors">
+                              <tr key={tx.id} className="border-t border-hairline/50 hover:bg-surface-soft transition-colors">
                                 <td className="py-3 px-4">
-                                  <span className="font-bold text-on-surface block text-[11px]">{tx.type}</span>
+                                  <span className="font-semibold text-on-surface block text-[11px]">{tx.type}</span>
                                   <span className="text-[9px] text-text-muted">{tx.id}</span>
                                 </td>
-                                <td className="py-3 px-3 font-bold text-on-surface">
+                                <td className="py-3 px-3 font-semibold text-on-surface tabular-nums">
                                   {formatETB(tx.amount || 0)}
                                 </td>
                                 <td className="py-3 px-3">
                                   <span
-                                    className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                                    className={`font-mono text-[9px] px-2 py-0.5 rounded uppercase tracking-wider ${
                                       tx.status === 'SUCCESS' || tx.status === 'COMPLETED'
-                                        ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300'
+                                        ? 'bg-success-green/10 text-success-green'
                                         : tx.status === 'PENALTY'
-                                        ? 'bg-rose-500/15 text-rose-700 dark:text-rose-300'
-                                        : 'bg-amber-500/15 text-warning-amber'
+                                        ? 'bg-destructive-red/10 text-destructive-red'
+                                        : 'bg-warning-amber/10 text-warning-amber'
                                     }`}
                                   >
                                     {tx.status}
@@ -806,7 +816,7 @@ export const StudentDetailsDrawer = ({ studentId, onClose, onStudentUpdated }) =
                                 <td className="py-3 px-4 text-on-surface-variant font-sans text-xs max-w-xs break-words">
                                   {tx.description || 'N/A'}
                                   {tx.chapaTxRef && (
-                                    <span className="block text-[10px] font-mono text-primary-coral mt-0.5">
+                                    <span className="block text-[10px] font-mono text-primary mt-0.5">
                                       Ref: {tx.chapaTxRef}
                                     </span>
                                   )}
@@ -820,7 +830,7 @@ export const StudentDetailsDrawer = ({ studentId, onClose, onStudentUpdated }) =
                         </table>
                       </div>
                     ) : (
-                      <div className="py-10 bg-canvas rounded-2xl border border-hairline flex flex-col items-center justify-center gap-2 text-on-surface-variant font-sans">
+                      <div className="py-10 bg-surface-lowest rounded-2xl border border-hairline/60 shadow-sm flex flex-col items-center justify-center gap-2 text-on-surface-variant font-sans">
                         <FileText size={24} className="text-text-muted opacity-40" />
                         <p className="font-semibold text-xs">No ledger transactions on record</p>
                       </div>
@@ -829,34 +839,37 @@ export const StudentDetailsDrawer = ({ studentId, onClose, onStudentUpdated }) =
 
                   {/* Withdrawal Requests Sub-Section */}
                   {studentData?.withdrawals && studentData.withdrawals.length > 0 && (
-                    <div className="space-y-3 pt-4 border-t border-hairline">
-                      <h3 className="font-serif font-bold text-base text-on-surface">Withdrawal Payout Requests</h3>
-                      <div className="overflow-x-auto rounded-2xl border border-hairline bg-canvas">
+                    <div className="space-y-3 pt-5 border-t border-hairline/50">
+                      <div>
+                        <span className="mono-micro-label text-primary">Payouts</span>
+                        <h3 className="font-cormorant text-xl font-normal text-on-surface mt-1">Withdrawal Payout Requests</h3>
+                      </div>
+                      <div className="overflow-x-auto rounded-2xl border border-hairline/60 bg-surface-lowest shadow-sm">
                         <table className="w-full text-left border-collapse">
                           <thead>
-                            <tr className="bg-surface-card border-b border-hairline text-[10px] font-semibold text-on-surface-variant uppercase tracking-wider font-mono">
-                              <th className="py-3 px-4">Amount</th>
-                              <th className="py-3 px-3">Bank & Account</th>
-                              <th className="py-3 px-3">Status</th>
-                              <th className="py-3 px-4 text-right">Requested Date</th>
+                            <tr className="font-mono text-[10px] uppercase tracking-widest text-text-muted">
+                              <th className="py-3 px-4 font-normal">Amount</th>
+                              <th className="py-3 px-3 font-normal">Bank & Account</th>
+                              <th className="py-3 px-3 font-normal">Status</th>
+                              <th className="py-3 px-4 text-right font-normal">Requested Date</th>
                             </tr>
                           </thead>
-                          <tbody className="divide-y divide-hairline text-xs font-mono">
+                          <tbody className="text-xs font-mono">
                             {studentData.withdrawals.map((w) => (
-                              <tr key={w.id} className="hover:bg-surface-soft transition-colors">
-                                <td className="py-3 px-4 font-bold text-on-surface">{formatETB(w.amount)}</td>
+                              <tr key={w.id} className="border-t border-hairline/50 hover:bg-surface-soft transition-colors">
+                                <td className="py-3 px-4 font-semibold text-on-surface tabular-nums">{formatETB(w.amount)}</td>
                                 <td className="py-3 px-3 font-sans text-xs">
                                   <div>{w.bankName}</div>
                                   <span className="font-mono text-text-muted text-[10px]">{w.accountNumber}</span>
                                 </td>
                                 <td className="py-3 px-3">
                                   <span
-                                    className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                                    className={`font-mono text-[9px] px-2 py-0.5 rounded uppercase tracking-wider ${
                                       w.status === 'approved' || w.status === 'completed'
-                                        ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300'
+                                        ? 'bg-success-green/10 text-success-green'
                                         : w.status === 'declined'
-                                        ? 'bg-rose-500/15 text-rose-700 dark:text-rose-300'
-                                        : 'bg-amber-500/15 text-warning-amber'
+                                        ? 'bg-destructive-red/10 text-destructive-red'
+                                        : 'bg-warning-amber/10 text-warning-amber'
                                     }`}
                                   >
                                     {w.status}
@@ -877,16 +890,17 @@ export const StudentDetailsDrawer = ({ studentId, onClose, onStudentUpdated }) =
 
               {/* TAB 4: COMPLETE EXAM RESULTS */}
               {activeTab === 'exams' && (
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
+                <div className="space-y-5">
+                  <div className="flex items-center justify-between gap-3">
                     <div>
-                      <h3 className="font-serif font-bold text-base text-on-surface">Complete Exam History</h3>
-                      <p className="text-xs text-on-surface-variant">
+                      <span className="mono-micro-label text-primary">Exams</span>
+                      <h3 className="font-cormorant text-xl font-normal text-on-surface mt-1">Complete Exam History</h3>
+                      <p className="text-xs text-on-surface-variant mt-1">
                         Every exam this student has taken — expand any attempt to review each question, the student's answer,
                         and the correct answer.
                       </p>
                     </div>
-                    <span className="text-xs font-mono text-text-muted">
+                    <span className="text-xs font-mono text-text-muted shrink-0">
                       {studentData?.examAttempts?.length || 0} exam(s) recorded
                     </span>
                   </div>
@@ -904,7 +918,7 @@ export const StudentDetailsDrawer = ({ studentId, onClose, onStudentUpdated }) =
                         return (
                           <div
                             key={attempt.id}
-                            className="rounded-2xl border border-hairline bg-canvas overflow-hidden"
+                            className="rounded-2xl border border-hairline/60 bg-surface-lowest shadow-sm overflow-hidden"
                           >
                             {/* Attempt Header */}
                             <button
@@ -913,23 +927,23 @@ export const StudentDetailsDrawer = ({ studentId, onClose, onStudentUpdated }) =
                               className="w-full flex flex-wrap items-center gap-x-3 gap-y-2 px-5 py-4 hover:bg-surface-soft transition-colors cursor-pointer text-left"
                             >
                               <div className="flex items-center gap-2">
-                                <span className="font-mono font-bold text-on-surface text-xs">
+                                <span className="font-mono font-semibold text-on-surface text-xs">
                                   Day {attempt.dayNumber}
                                 </span>
-                                <span className="px-2 py-0.5 rounded-full bg-surface-card border border-hairline text-[10px] font-mono text-on-surface-variant">
+                                <span className="font-mono text-[9px] px-2 py-0.5 rounded-full uppercase tracking-wider bg-surface-container text-on-surface-variant border border-hairline">
                                   {attempt.level}
                                 </span>
                               </div>
                               <span
-                                className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                                className={`font-mono text-[9px] px-2 py-0.5 rounded uppercase tracking-wider ${
                                   attempt.passed
-                                    ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30'
-                                    : 'bg-rose-500/15 text-rose-700 dark:text-rose-300 border border-rose-500/30'
+                                    ? 'bg-success-green/10 text-success-green'
+                                    : 'bg-destructive-red/10 text-destructive-red'
                                 }`}
                               >
                                 {attempt.passed ? 'PASSED' : 'FAILED'}
                               </span>
-                              <span className="text-xs font-mono text-on-surface font-bold">
+                              <span className="text-xs font-mono text-on-surface font-semibold tabular-nums">
                                 {attempt.score}/{attempt.totalQuestions}
                               </span>
                               <span className="text-[10px] font-mono text-text-muted">
@@ -946,7 +960,7 @@ export const StudentDetailsDrawer = ({ studentId, onClose, onStudentUpdated }) =
 
                             {/* Per-Question Review */}
                             {isExpanded && (
-                              <div className="border-t border-hairline divide-y divide-hairline">
+                              <div className="border-t border-hairline/50 divide-y divide-hairline/50">
                                 {review.length === 0 ? (
                                   <div className="px-5 py-6 text-xs text-text-muted font-mono">
                                     No per-question detail recorded for this attempt.
@@ -956,33 +970,33 @@ export const StudentDetailsDrawer = ({ studentId, onClose, onStudentUpdated }) =
                                     <div key={q.questionId || idx} className="px-5 py-4 space-y-2.5">
                                       <div className="flex items-start justify-between gap-3">
                                         <p className="text-xs font-semibold text-on-surface font-sans leading-relaxed">
-                                          <span className="font-mono text-primary-coral mr-1.5">Q{idx + 1}.</span>
+                                          <span className="font-mono text-primary mr-1.5">Q{idx + 1}.</span>
                                           {q.question}
                                         </p>
                                         <span
-                                          className={`shrink-0 px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                                          className={`shrink-0 px-2 py-0.5 rounded uppercase tracking-wider font-mono text-[9px] ${
                                             q.isCorrect
-                                              ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300'
-                                              : 'bg-rose-500/15 text-rose-700 dark:text-rose-300'
+                                              ? 'bg-success-green/10 text-success-green'
+                                              : 'bg-destructive-red/10 text-destructive-red'
                                           }`}
                                         >
                                           {q.isCorrect ? 'Matched' : 'Incorrect'}
                                         </span>
                                       </div>
                                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] font-mono">
-                                        <div className="px-3 py-2 rounded-xl border border-hairline bg-surface-lowest">
-                                          <span className="text-[9px] uppercase text-text-muted block mb-0.5">Student's Answer</span>
-                                          <span className={q.isCorrect ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}>
+                                        <div className="px-3 py-2 rounded-xl border border-hairline bg-surface-low">
+                                          <span className="mono-micro-label text-text-muted block mb-1">Student's Answer</span>
+                                          <span className={q.isCorrect ? 'text-success-green' : 'text-destructive-red'}>
                                             {q.yourAnswer || '(Not answered)'}
                                           </span>
                                         </div>
-                                        <div className="px-3 py-2 rounded-xl border border-hairline bg-surface-lowest">
-                                          <span className="text-[9px] uppercase text-text-muted block mb-0.5">Correct Answer</span>
-                                          <span className="text-emerald-600 dark:text-emerald-400">{q.correctAnswer || 'N/A'}</span>
+                                        <div className="px-3 py-2 rounded-xl border border-hairline bg-surface-low">
+                                          <span className="mono-micro-label text-text-muted block mb-1">Correct Answer</span>
+                                          <span className="text-success-green">{q.correctAnswer || 'N/A'}</span>
                                         </div>
                                       </div>
                                       {q.explanation && (
-                                        <p className="text-[11px] text-on-surface-variant font-sans leading-relaxed bg-surface-lowest border border-hairline rounded-xl px-3 py-2">
+                                        <p className="text-[11px] text-on-surface-variant font-sans leading-relaxed bg-surface-low border border-hairline rounded-xl px-3 py-2">
                                           <span className="font-mono text-[9px] uppercase text-text-muted">Why: </span>
                                           {q.explanation}
                                         </p>
@@ -997,7 +1011,7 @@ export const StudentDetailsDrawer = ({ studentId, onClose, onStudentUpdated }) =
                       })}
                     </div>
                   ) : (
-                    <div className="py-12 bg-canvas rounded-2xl border border-hairline flex flex-col items-center justify-center gap-2 text-on-surface-variant font-sans">
+                    <div className="py-12 bg-surface-lowest rounded-2xl border border-hairline/60 shadow-sm flex flex-col items-center justify-center gap-2 text-on-surface-variant font-sans">
                       <AlertTriangle size={28} className="text-text-muted opacity-40" />
                       <p className="font-semibold text-xs">No exam results recorded</p>
                       <p className="text-[11px] text-text-muted">Exam attempts will appear here once this student takes their daily exam.</p>

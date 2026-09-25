@@ -6,7 +6,7 @@ import { QUICK_EMOJIS, dayLabel } from './chatUtils';
 export const DayDivider = ({ iso }) => (
   <div className="flex items-center justify-center gap-3 py-3 select-none" aria-hidden="true">
     <span className="h-px w-10 bg-hairline" />
-    <span className="px-2.5 py-1 rounded-full bg-surface-card border border-hairline text-[10px] font-mono font-bold text-on-surface-variant uppercase tracking-wider shadow-xs">
+    <span className="px-2.5 py-1 rounded-full bg-surface-container text-on-surface-variant text-[10px] font-mono font-bold uppercase tracking-wider shadow-xs">
       {dayLabel(iso)}
     </span>
     <span className="h-px w-10 bg-hairline" />

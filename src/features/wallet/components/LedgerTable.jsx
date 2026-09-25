@@ -4,35 +4,35 @@ import { ShieldAlert, ShieldCheck } from 'lucide-react';
 
 export const LedgerTable = ({ transactions = [] }) => {
   return (
-    <div className="overflow-x-auto rounded-2xl border border-hairline bg-canvas transition-colors duration-250">
+    <div className="overflow-x-auto rounded-2xl border border-hairline/50 bg-surface-container-lowest transition-colors duration-250">
       <table className="w-full text-left border-collapse">
         <thead>
-          <tr className="bg-surface-card border-b border-hairline text-[11px] font-semibold text-on-surface-variant uppercase tracking-wider">
-            <th className="py-3.5 px-4">Transaction ID</th>
-            <th className="py-3.5 px-4">Timestamp</th>
-            <th className="py-3.5 px-4">Description</th>
-            <th className="py-3.5 px-4 text-right">Amount (ETB)</th>
-            <th className="py-3.5 px-4 text-center">Status</th>
+          <tr className="font-mono text-[10px] uppercase tracking-widest text-text-muted border-b border-hairline">
+            <th className="py-3.5 px-4 font-medium">Transaction ID</th>
+            <th className="py-3.5 px-4 font-medium">Timestamp</th>
+            <th className="py-3.5 px-4 font-medium">Description</th>
+            <th className="py-3.5 px-4 font-medium text-right">Amount (ETB)</th>
+            <th className="py-3.5 px-4 font-medium text-center">Status</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-hairline text-xs font-mono">
+        <tbody className="text-xs font-mono">
           {transactions.map((tx) => {
             const isPenalty = tx.amount < 0 || tx.type === 'PENALTY_DEDUCTION';
             const isDeposit = tx.amount > 0;
 
             return (
-              <tr key={tx.id} className="hover:bg-surface-soft transition-colors">
+              <tr key={tx.id} className="border-t border-hairline/50 hover:bg-surface-soft transition-colors">
                 <td className="py-3.5 px-4 font-semibold text-on-surface">
                   {tx.id}
                 </td>
-                <td className="py-3.5 px-4 text-text-muted">
+                <td className="py-3.5 px-4 text-text-muted tabular-nums">
                   {formatDate(tx.createdAt)}
                 </td>
                 <td className="py-3.5 px-4 font-sans text-on-surface-variant">
                   {tx.description}
                 </td>
                 <td
-                  className={`py-3.5 px-4 text-right font-bold ${
+                  className={`py-3.5 px-4 text-right font-semibold tabular-nums ${
                     isPenalty
                       ? 'text-destructive-red'
                       : isDeposit
@@ -46,12 +46,12 @@ export const LedgerTable = ({ transactions = [] }) => {
                 </td>
                 <td className="py-3.5 px-4 text-center">
                   {isPenalty ? (
-                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-sans font-medium bg-red-500/15 text-destructive-red">
+                    <span className="inline-flex items-center gap-1 font-mono text-[9px] px-2 py-0.5 rounded uppercase tracking-wider bg-error/10 text-error">
                       <ShieldAlert size={12} />
                       PENALTY
                     </span>
                   ) : (
-                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-sans font-medium bg-green-500/15 text-success-green">
+                    <span className="inline-flex items-center gap-1 font-mono text-[9px] px-2 py-0.5 rounded uppercase tracking-wider bg-primary/10 text-primary">
                       <ShieldCheck size={12} />
                       PROTECTED
                     </span>
@@ -62,6 +62,17 @@ export const LedgerTable = ({ transactions = [] }) => {
           })}
         </tbody>
       </table>
+      {transactions.length === 0 && (
+        <div className="py-12 px-4 text-center space-y-2">
+          <div className="w-10 h-10 rounded-full bg-surface-soft border border-hairline flex items-center justify-center mx-auto text-on-surface-variant">
+            <ShieldCheck size={20} className="text-primary" />
+          </div>
+          <p className="font-cormorant text-xl text-on-surface">No Escrow Transactions Yet</p>
+          <p className="text-[11px] text-on-surface-variant font-mono max-w-sm mx-auto">
+            Your staked escrow activity and exam penalty deductions will be recorded here in full transparency.
+          </p>
+        </div>
+      )}
     </div>
   );
 };

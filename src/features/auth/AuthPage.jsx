@@ -35,6 +35,12 @@ const LISTENING_MINUTES_OPTIONS = [
 const INTEREST_OPTIONS = ['Business', 'Travel', 'Health', 'Technology', 'Education', 'Music', 'Sports', 'Science'];
 const LISTENING_CATEGORY_OPTIONS = ['Informative', 'Entertainment', 'Academic', 'News', 'Conversations', 'Music'];
 
+const inputClass = 'w-full bg-surface-container-low text-xs px-4 py-2.5 rounded-xl border border-hairline/60 outline-none focus:border-primary/50 text-on-surface placeholder:text-text-muted focus-ring';
+const labelClass = 'block font-mono text-[10px] text-on-surface-variant uppercase tracking-widest mb-1';
+const primaryButtonClass = 'w-full py-3 rounded-full bg-primary text-on-primary text-xs tracking-wider uppercase font-semibold hover:bg-primary-container disabled:opacity-50 shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer focus-ring btn-interactive';
+const statusChipPrimary = 'font-mono text-[9px] px-2 py-0.5 rounded uppercase tracking-wider bg-primary/10 text-primary';
+const statusChipNeutral = 'font-mono text-[9px] px-2 py-0.5 rounded uppercase tracking-wider bg-surface-container text-on-surface-variant';
+
 const AuthPage = () => {
   const navigate = useNavigate();
   const { authUser, role, login, signup, googleLogin } = useRole();
@@ -358,8 +364,8 @@ const AuthPage = () => {
             onClick={() => onToggle(opt)}
             className={`px-3 py-1.5 rounded-full border text-xs transition-all cursor-pointer focus-ring ${
               isSel
-                ? 'bg-primary-coral text-white border-primary-coral font-semibold shadow-xs'
-                : 'bg-surface-lowest text-on-surface-variant border-hairline hover:border-primary-coral'
+                ? 'bg-primary text-on-primary border-primary font-semibold shadow-xs'
+                : 'bg-surface-lowest text-on-surface-variant border-hairline hover:border-primary'
             }`}
           >
             {opt}
@@ -371,25 +377,30 @@ const AuthPage = () => {
 
   return (
     <div className="max-w-xl mx-auto py-12 px-4">
-      <div className="bg-canvas border border-hairline rounded-2xl p-6 sm:p-8 shadow-xl space-y-6 transition-colors duration-250">
+      <div className="bg-surface-container-lowest rounded-2xl border border-hairline/60 shadow-sm p-8 space-y-6 transition-colors duration-250">
         {/* Brand Header */}
-        <div className="text-center space-y-2">
-          <div className="w-14 h-14 bg-surface-card border border-hairline rounded-2xl flex items-center justify-center p-2 mx-auto shadow-md">
+        <div className="text-center space-y-3">
+          <div className="w-14 h-14 bg-surface-card border border-hairline/60 rounded-2xl flex items-center justify-center p-2 mx-auto shadow-sm">
             <img src="/ethiolingo-logo.png" alt="Ethio-Lingo" className="w-full h-full object-contain" />
           </div>
-          <h2 className="font-serif font-bold text-2xl text-on-surface">
-            {mode === 'signin' ? 'Sign In to Ethio-Lingo' : 'Create Ethio-Lingo Account'}
-          </h2>
-          <p className="text-xs text-on-surface-variant">
-            {mode === 'signin'
-              ? 'Access your daily learning workspace and escrow vault.'
-              : 'Sign up for a secure learning account.'}
-          </p>
+          <div className="space-y-1.5">
+            <span className="mono-micro-label font-bold text-primary block">
+              {mode === 'signin' ? 'Scholar Access' : 'Scholar Enrollment'}
+            </span>
+            <h2 className="font-cormorant text-3xl font-normal text-on-surface">
+              {mode === 'signin' ? 'Enter Academic Vault' : 'Create Scholar Account'}
+            </h2>
+            <p className="text-xs text-on-surface-variant">
+              {mode === 'signin'
+                ? 'Access your daily learning workspace and escrow vault.'
+                : 'Sign up for a secure learning account.'}
+            </p>
+          </div>
         </div>
 
         {/* Auth Mode Toggle Tabs (Sign In vs Sign Up) */}
         {step === 'form' && (
-          <div className="flex bg-surface-card p-1 rounded-xl border border-hairline">
+          <div className="flex bg-surface-card p-1 rounded-full border border-hairline/60">
             <button
               onClick={() => {
                 setMode('signin');
@@ -397,9 +408,9 @@ const AuthPage = () => {
                 setPassword('');
                 setAuthError('');
               }}
-              className={`flex-1 py-2.5 text-xs font-semibold rounded-lg transition-all flex items-center justify-center gap-2 focus-ring cursor-pointer ${
+              className={`flex-1 py-2.5 text-xs font-semibold rounded-full transition-all flex items-center justify-center gap-2 focus-ring cursor-pointer ${
                 mode === 'signin'
-                  ? 'bg-primary-coral text-white shadow-xs'
+                  ? 'bg-primary text-on-primary shadow-xs'
                   : 'text-on-surface-variant hover:text-on-surface'
               }`}
             >
@@ -415,9 +426,9 @@ const AuthPage = () => {
                 setName('');
                 setAuthError('');
               }}
-              className={`flex-1 py-2.5 text-xs font-semibold rounded-lg transition-all flex items-center justify-center gap-2 focus-ring cursor-pointer ${
+              className={`flex-1 py-2.5 text-xs font-semibold rounded-full transition-all flex items-center justify-center gap-2 focus-ring cursor-pointer ${
                 mode === 'signup'
-                  ? 'bg-primary-coral text-white shadow-xs'
+                  ? 'bg-primary text-on-primary shadow-xs'
                   : 'text-on-surface-variant hover:text-on-surface'
               }`}
             >
@@ -429,8 +440,8 @@ const AuthPage = () => {
 
         {/* Error Alert */}
         {authError && (
-          <div className="p-3.5 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 text-xs rounded-xl flex items-center gap-2.5 font-mono">
-            <AlertCircle size={16} className="shrink-0 text-red-600 dark:text-red-400" />
+          <div className="p-3.5 bg-error/10 border border-error/30 text-error text-xs rounded-xl flex items-center gap-2.5 font-mono">
+            <AlertCircle size={16} className="shrink-0 text-error" />
             <span>{authError}</span>
           </div>
         )}
@@ -439,7 +450,7 @@ const AuthPage = () => {
         {step === 'form' && GOOGLE_CLIENT_ID && (
           <div className="space-y-3">
             {gsiError && (
-              <p className="text-xs text-red-600 dark:text-red-400 font-mono bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 rounded-lg px-3 py-2">
+              <p className="text-xs text-error font-mono bg-error/10 border border-error/30 rounded-lg px-3 py-2">
                 {gsiError}
               </p>
             )}
@@ -457,7 +468,7 @@ const AuthPage = () => {
         {/* Google-verified email notice */}
         {step === 'form' && (
           <p className="text-[11px] text-on-surface-variant font-mono flex items-center gap-1.5 leading-relaxed">
-            <ShieldCheck size={13} className="shrink-0 text-primary-coral" />
+            <ShieldCheck size={13} className="shrink-0 text-primary" />
             Only Google-verified email addresses (Gmail) are accepted — no temporary or disposable emails.
           </p>
         )}
@@ -466,7 +477,7 @@ const AuthPage = () => {
         {mode === 'signin' && step === 'form' && (
           <form onSubmit={handleSignIn} className="space-y-4">
             <div>
-              <label className="block text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-1">
+              <label className={labelClass}>
                 Email Address
               </label>
               <input
@@ -474,13 +485,13 @@ const AuthPage = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="User@example.com"
-                className="w-full px-4 py-2.5 bg-surface-lowest border border-hairline rounded-xl text-sm text-on-surface focus-ring"
+                className={inputClass}
                 required
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-1">
+              <label className={labelClass}>
                 Password
               </label>
               <div className="relative">
@@ -489,7 +500,7 @@ const AuthPage = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter password"
-                  className="w-full pl-4 pr-11 py-2.5 bg-surface-lowest border border-hairline rounded-xl text-sm text-on-surface focus-ring"
+                  className="w-full bg-surface-container-low text-xs pl-4 pr-11 py-2.5 rounded-xl border border-hairline/60 outline-none focus:border-primary/50 text-on-surface placeholder:text-text-muted focus-ring"
                   required
                 />
                 <button
@@ -506,7 +517,7 @@ const AuthPage = () => {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full py-3.5 bg-primary-coral hover:bg-primary-hover active:bg-primary-active disabled:opacity-50 text-white font-medium rounded-xl shadow-sm transition-all flex items-center justify-center gap-2 text-sm mt-4 cursor-pointer btn-interactive focus-ring"
+              className={primaryButtonClass + ' mt-4'}
             >
               <span>{isSubmitting ? 'Authenticating...' : 'Sign In to Account'}</span>
               <ArrowRight size={16} />
@@ -518,21 +529,21 @@ const AuthPage = () => {
         {mode === 'signup' && step === 'form' && (
           <form onSubmit={handleSignUpForm} className="space-y-4">
             <div>
-              <label className="block text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-1">
+              <label className={labelClass}>
                 Full Name
               </label>
               <input
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="e.g. Abebe Kebede"
-                className="w-full px-4 py-2.5 bg-surface-lowest border border-hairline rounded-xl text-sm text-on-surface focus-ring"
+                placeholder="Enter your full name"
+                className={inputClass}
                 required
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-1">
+              <label className={labelClass}>
                 Email Address
               </label>
               <input
@@ -540,13 +551,13 @@ const AuthPage = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="student@example.com"
-                className="w-full px-4 py-2.5 bg-surface-lowest border border-hairline rounded-xl text-sm text-on-surface focus-ring"
+                className={inputClass}
                 required
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-1">
+              <label className={labelClass}>
                 Password
               </label>
               <div className="relative">
@@ -555,7 +566,7 @@ const AuthPage = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Create a password (min 6 chars)"
-                  className="w-full pl-4 pr-11 py-2.5 bg-surface-lowest border border-hairline rounded-xl text-sm text-on-surface focus-ring"
+                  className="w-full bg-surface-container-low text-xs pl-4 pr-11 py-2.5 rounded-xl border border-hairline/60 outline-none focus:border-primary/50 text-on-surface placeholder:text-text-muted focus-ring"
                   required
                 />
                 <button
@@ -572,7 +583,7 @@ const AuthPage = () => {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full py-3.5 bg-primary-coral hover:bg-primary-hover active:bg-primary-active disabled:opacity-50 text-white font-medium rounded-xl shadow-sm transition-all flex items-center justify-center gap-2 text-sm mt-4 cursor-pointer btn-interactive focus-ring"
+              className={primaryButtonClass + ' mt-4'}
             >
               <span>Continue to Profile Setup</span>
               <ArrowRight size={16} />
@@ -583,18 +594,18 @@ const AuthPage = () => {
         {/* STEP 1B: Onboarding / Demographics Profile */}
         {mode === 'signup' && step === 'onboarding' && (
           <form onSubmit={handleOnboardingSubmit} className="space-y-5">
-            <div className="space-y-1">
-              <span className="px-2.5 py-0.5 bg-surface-card border border-hairline text-primary-coral font-mono text-[10px] font-bold rounded uppercase">
+            <div className="space-y-1.5">
+              <span className={statusChipPrimary}>
                 ONBOARDING PROFILE
               </span>
-              <h3 className="font-serif font-bold text-xl text-on-surface">Tell us about your learning goals</h3>
+              <h3 className="font-cormorant text-2xl font-normal text-on-surface">Tell us about your learning goals</h3>
               <p className="text-xs text-on-surface-variant">
                 Your daily listening track is personalized to your interests and schedule.
               </p>
             </div>
 
             <div>
-              <label className="flex items-center gap-1.5 text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-1">
+              <label className="flex items-center gap-1.5 font-mono text-[10px] text-on-surface-variant uppercase tracking-widest mb-1">
                 <Phone size={13} /> Phone Number (optional)
               </label>
               <input
@@ -602,19 +613,19 @@ const AuthPage = () => {
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 placeholder="e.g. 0911223344"
-                className="w-full px-4 py-2.5 bg-surface-lowest border border-hairline rounded-xl text-sm text-on-surface focus-ring"
+                className={inputClass}
               />
               <p className="text-[11px] text-on-surface-variant font-mono mt-1">Used for profile only. SMS verification is disabled in this build.</p>
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-1">
+              <label className={labelClass}>
                 Age (15–70)
               </label>
               <select
                 value={age}
                 onChange={(e) => setAge(e.target.value)}
-                className="w-full px-4 py-2.5 bg-surface-lowest border border-hairline rounded-xl text-sm text-on-surface focus-ring"
+                className={inputClass}
               >
                 <option value="">Select age...</option>
                 {Array.from({ length: 56 }, (_, i) => i + 15).map((a) => (
@@ -624,14 +635,14 @@ const AuthPage = () => {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-1">
+              <label className={labelClass}>
                 What are you most interested in learning about?
               </label>
               {renderChips({ options: INTEREST_OPTIONS, selected: interests, onToggle: (v) => toggleChip(interests, setInterests, v) })}
             </div>
 
             <div>
-              <label className="flex items-center gap-1.5 text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-2">
+              <label className="flex items-center gap-1.5 font-mono text-[10px] text-on-surface-variant uppercase tracking-widest mb-2">
                 <Headphones size={13} /> Daily Listening Track
               </label>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -643,18 +654,18 @@ const AuthPage = () => {
                       type="button"
                       onClick={() => setListeningMinutes(opt.value)}
                       aria-pressed={isSelected}
-                      className={`p-4 rounded-xl border-2 text-left transition-all cursor-pointer focus-ring btn-interactive ${
+                      className={`p-4 rounded-2xl border-2 text-left transition-all cursor-pointer focus-ring btn-interactive ${
                         isSelected
-                          ? 'border-primary-coral bg-primary-coral/10 shadow-sm'
-                          : 'border-hairline bg-surface-lowest hover:border-primary-coral/60'
+                          ? 'border-primary bg-primary/10 shadow-sm'
+                          : 'border-hairline bg-surface-lowest hover:border-primary/60'
                       }`}
                     >
                       <div className="flex items-center justify-between gap-2">
-                        <span className={`font-serif font-bold text-sm ${isSelected ? 'text-primary-coral' : 'text-on-surface'}`}>
+                        <span className={`font-cormorant text-lg font-medium ${isSelected ? 'text-primary' : 'text-on-surface'}`}>
                           {opt.label}
                         </span>
                         <span className={`px-2.5 py-1 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider ${
-                          isSelected ? 'bg-primary-coral text-white' : 'bg-surface-card text-on-surface-variant border border-hairline'
+                          isSelected ? 'bg-primary text-on-primary' : 'bg-surface-card text-on-surface-variant border border-hairline'
                         }`}>
                           {isSelected ? '✓ Chosen' : 'Choose'}
                         </span>
@@ -672,7 +683,7 @@ const AuthPage = () => {
             </div>
 
             <div>
-              <label className="flex items-center gap-1.5 text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-1">
+              <label className="flex items-center gap-1.5 font-mono text-[10px] text-on-surface-variant uppercase tracking-widest mb-1">
                 <Users size={13} /> Listening categories you prefer
               </label>
               {renderChips({
@@ -687,7 +698,7 @@ const AuthPage = () => {
 
             <button
               type="submit"
-              className="w-full py-3.5 bg-primary-coral hover:bg-primary-hover active:bg-primary-active disabled:opacity-50 text-white font-medium rounded-xl shadow-sm transition-all flex items-center justify-center gap-2 text-sm cursor-pointer btn-interactive focus-ring"
+              className={primaryButtonClass}
             >
               <span>Continue to Level Placement</span>
               <ArrowRight size={16} />
@@ -698,11 +709,11 @@ const AuthPage = () => {
         {/* STEP 2: Level Placement Choice */}
         {step === 'level_choice' && (
           <div className="space-y-6">
-            <div className="space-y-1">
-              <span className="px-2.5 py-0.5 bg-surface-card border border-hairline text-primary-coral font-mono text-[10px] font-bold rounded uppercase">
+            <div className="space-y-1.5">
+              <span className={statusChipPrimary}>
                 ONBOARDING LEVEL PLACEMENT
               </span>
-              <h3 className="font-serif font-bold text-xl text-on-surface">Set your starting curriculum level</h3>
+              <h3 className="font-cormorant text-2xl font-normal text-on-surface">Set your starting curriculum level</h3>
               <p className="text-xs text-on-surface-variant">
                 Placement quiz maps you to <strong>Beginner I</strong>, <strong>Beginner II</strong>, or <strong>Intermediate I</strong>.
               </p>
@@ -711,13 +722,13 @@ const AuthPage = () => {
             <div className="grid grid-cols-1 gap-4">
               <div
                 onClick={handleChooseBeginner}
-                className="p-5 rounded-2xl border border-hairline bg-surface-lowest hover:border-primary-coral hover:bg-surface-soft cursor-pointer transition-all space-y-2 group btn-interactive"
+                className="p-5 rounded-2xl border border-hairline bg-surface-lowest hover:border-primary hover:bg-surface-soft cursor-pointer transition-all space-y-2 group btn-interactive"
               >
-                <div className="flex items-center justify-between">
-                  <h4 className="font-serif font-bold text-base text-on-surface group-hover:text-primary-coral">
+                <div className="flex items-center justify-between gap-3">
+                  <h4 className="font-cormorant text-xl font-normal text-on-surface group-hover:text-primary">
                     Start Directly as Beginner I
                   </h4>
-                  <span className="px-2 py-0.5 bg-surface-card text-on-surface-variant text-[10px] font-mono font-bold rounded">
+                  <span className={statusChipNeutral}>
                     BEGINNER I TRACK
                   </span>
                 </div>
@@ -728,13 +739,13 @@ const AuthPage = () => {
 
               <div
                 onClick={() => setStep('quiz')}
-                className="p-5 rounded-2xl border border-primary-coral bg-surface-soft cursor-pointer transition-all space-y-2 group btn-interactive"
+                className="p-5 rounded-2xl border border-primary bg-surface-soft cursor-pointer transition-all space-y-2 group btn-interactive"
               >
-                <div className="flex items-center justify-between">
-                  <h4 className="font-serif font-bold text-base text-primary-coral">
+                <div className="flex items-center justify-between gap-3">
+                  <h4 className="font-cormorant text-xl font-normal text-primary">
                     Take 15-Question Placement Quiz
                   </h4>
-                  <span className="px-2 py-0.5 bg-primary-coral text-white text-[10px] font-mono font-bold rounded">
+                  <span className="font-mono text-[9px] px-2 py-0.5 rounded uppercase tracking-wider bg-primary text-on-primary">
                     RECOMMENDED
                   </span>
                 </div>
@@ -749,16 +760,16 @@ const AuthPage = () => {
         {/* STEP 2B: 15-Question Placement Quiz */}
         {step === 'quiz' && (
           <form onSubmit={handleQuizSubmit} className="space-y-6">
-            <div className="space-y-1">
-              <span className="px-2.5 py-0.5 bg-surface-card border border-hairline text-primary-coral font-mono text-[10px] font-bold rounded uppercase">
+            <div className="space-y-1.5">
+              <span className={statusChipPrimary}>
                 15-QUESTION ENGLISH PLACEMENT QUIZ
               </span>
-              <h3 className="font-serif font-bold text-xl text-on-surface">Placement Diagnostic Test</h3>
+              <h3 className="font-cormorant text-2xl font-normal text-on-surface">Placement Diagnostic Test</h3>
               <p className="text-xs text-on-surface-variant">Select the correct answer for each sentence to determine your level.</p>
             </div>
 
             {!placementQuestions ? (
-              <div className="p-8 text-center text-sm text-on-surface-variant border border-hairline rounded-xl bg-surface-lowest animate-skeleton">
+              <div className="p-8 text-center text-sm text-on-surface-variant border border-hairline rounded-xl bg-surface-card animate-skeleton">
                 Loading placement questions...
               </div>
             ) : (
@@ -766,10 +777,10 @@ const AuthPage = () => {
                 <div className="space-y-5 max-h-[420px] overflow-y-auto pr-1">
                   {placementQuestions.map((q, idx) => (
                     <div key={q.id || idx} className="p-4 bg-surface-lowest border border-hairline rounded-xl space-y-3">
-                      <div className="text-xs font-mono font-semibold text-primary-coral">
+                      <div className="text-xs font-mono font-semibold text-primary">
                         QUESTION {idx + 1} OF {placementQuestions.length}
                       </div>
-                      <p className="font-serif font-medium text-sm text-on-surface">{q.question}</p>
+                      <p className="font-cormorant font-medium text-sm text-on-surface">{q.question}</p>
                       <div className="grid grid-cols-2 gap-2">
                         {q.options.map((opt, oIdx) => {
                           const isSelected = quizAnswers[idx] === oIdx;
@@ -780,8 +791,8 @@ const AuthPage = () => {
                               onClick={() => setQuizAnswers({ ...quizAnswers, [idx]: oIdx })}
                               className={`p-2.5 rounded-lg border text-xs text-left transition-all cursor-pointer focus-ring ${
                                 isSelected
-                                  ? 'bg-primary-coral text-white border-primary-coral font-semibold shadow-xs ring-2 ring-primary-coral/40'
-                                  : 'bg-surface-lowest text-on-surface border-hairline hover:border-primary-coral'
+                                  ? 'bg-primary text-on-primary border-primary font-semibold shadow-xs ring-2 ring-primary/40'
+                                  : 'bg-surface-lowest text-on-surface border-hairline hover:border-primary'
                               }`}
                             >
                               <span className="font-mono mr-2">{String.fromCharCode(65 + oIdx)}.</span>
@@ -797,7 +808,7 @@ const AuthPage = () => {
                 <button
                   type="submit"
                   disabled={Object.keys(quizAnswers).length < placementQuestions.length}
-                  className="w-full py-3.5 bg-primary-coral hover:bg-primary-hover disabled:opacity-50 text-white font-medium rounded-xl shadow-sm transition-all flex items-center justify-center gap-2 text-sm cursor-pointer btn-interactive focus-ring"
+                  className={primaryButtonClass}
                 >
                   <span>Submit Placement Test & Evaluate</span>
                   <Award size={16} />
@@ -810,7 +821,7 @@ const AuthPage = () => {
         {/* STEP 3: Stake Commitment Choice */}
         {step === 'stake' && (
           <div className="space-y-6">
-            <div className="p-4 bg-green-500/15 border border-green-500/30 rounded-xl space-y-1">
+            <div className="p-4 bg-success-green/10 border border-success-green/30 rounded-xl space-y-1">
               <div className="flex items-center gap-2 text-success-green font-semibold text-sm">
                 <CheckCircle size={18} />
                 <span>Assigned Placement Level: {evaluatedLevel}</span>
@@ -823,23 +834,23 @@ const AuthPage = () => {
             </div>
 
             <div className="space-y-3">
-              <label className="block text-xs font-mono font-semibold text-on-surface-variant uppercase">
+              <label className="block font-mono text-[10px] font-semibold text-on-surface-variant uppercase tracking-widest">
                 Choose Access Mode
               </label>
 
               <div
                 onClick={() => setStakeOption('stake_1000')}
-                className={`p-4 rounded-xl border cursor-pointer transition-all space-y-2 btn-interactive ${
+                className={`p-4 rounded-2xl border cursor-pointer transition-all space-y-2 btn-interactive ${
                   stakeOption === 'stake_1000'
-                    ? 'border-primary-coral bg-surface-soft ring-1 ring-primary-coral'
-                    : 'border-hairline bg-surface-lowest hover:border-primary-coral'
+                    ? 'border-primary bg-surface-soft ring-1 ring-primary'
+                    : 'border-hairline bg-surface-lowest hover:border-primary'
                 }`}
               >
-                <div className="flex items-center justify-between">
-                  <span className="font-serif font-bold text-lg text-on-surface">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="font-cormorant text-2xl font-normal text-on-surface">
                     Accountability Stake Tier ({formatETB(1000)})
                   </span>
-                  <span className="px-2 py-0.5 bg-primary-coral text-white text-[10px] font-mono font-bold rounded">
+                  <span className="font-mono text-[9px] px-2 py-0.5 rounded uppercase tracking-wider bg-primary text-on-primary">
                     RECOMMENDED
                   </span>
                 </div>
@@ -850,17 +861,17 @@ const AuthPage = () => {
 
               <div
                 onClick={() => setStakeOption('free_trial')}
-                className={`p-4 rounded-xl border cursor-pointer transition-all space-y-2 btn-interactive ${
+                className={`p-4 rounded-2xl border cursor-pointer transition-all space-y-2 btn-interactive ${
                   stakeOption === 'free_trial'
-                    ? 'border-primary-coral bg-surface-soft ring-1 ring-primary-coral'
-                    : 'border-hairline bg-surface-lowest hover:border-primary-coral'
+                    ? 'border-primary bg-surface-soft ring-1 ring-primary'
+                    : 'border-hairline bg-surface-lowest hover:border-primary'
                 }`}
               >
-                <div className="flex items-center justify-between">
-                  <span className="font-serif font-bold text-lg text-on-surface">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="font-cormorant text-2xl font-normal text-on-surface">
                     3-Day Free Trial Mode
                   </span>
-                  <span className="px-2 py-0.5 bg-surface-card border border-hairline text-on-surface-variant text-[10px] font-mono font-bold rounded">
+                  <span className={statusChipNeutral}>
                     3 DAYS FREE
                   </span>
                 </div>
@@ -873,7 +884,7 @@ const AuthPage = () => {
             <button
               onClick={handleFinalSignUp}
               disabled={isSubmitting}
-              className="w-full py-3.5 bg-primary-coral hover:bg-primary-hover disabled:opacity-50 text-white font-medium rounded-xl shadow-sm transition-all flex items-center justify-center gap-2 text-sm cursor-pointer btn-interactive focus-ring"
+              className={primaryButtonClass}
             >
               <span>{isSubmitting ? 'Creating Account...' : 'Complete Account Creation & Enter Portal'}</span>
               <ArrowRight size={16} />

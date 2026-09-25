@@ -142,42 +142,39 @@ const VerifyEmailPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#faf9f5] flex items-center justify-center p-4 sm:p-6 lg:p-8">
-      <div className="max-w-xl w-full bg-white border-2 border-[#e6dfd8] rounded-2xl p-6 sm:p-8 shadow-2xl space-y-6 animate-fade-in relative overflow-hidden">
-        {/* Top Gradient Banner */}
-        <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-[#8f482f] via-[#e8a55a] to-[#181715]" />
-
+    <div className="min-h-screen bg-canvas flex items-center justify-center p-4 sm:p-6 lg:p-8">
+      <div className="max-w-xl w-full bg-surface-container-lowest border border-hairline/60 rounded-2xl p-6 sm:p-8 shadow-2xl space-y-6 animate-fade-in relative overflow-hidden">
         {/* Header */}
         <div className="text-center space-y-3 pt-2">
-          <div className="w-16 h-16 rounded-2xl bg-[#faf9f5] border border-[#e6dfd8] flex items-center justify-center mx-auto text-[#8f482f] shadow-inner">
-            <MailCheck size={32} className="text-[#8f482f]" />
+          <div className="w-16 h-16 rounded-2xl bg-surface-low border border-hairline/60 flex items-center justify-center mx-auto text-primary shadow-sm">
+            <MailCheck size={32} className="text-primary" />
           </div>
 
-          <div className="inline-block px-3 py-1 bg-[#181715] text-[#e8a55a] font-mono text-[10px] font-bold rounded uppercase tracking-wider">
+          <div className="inline-block px-3 py-1 bg-primary/10 text-primary font-mono text-[10px] font-bold rounded uppercase tracking-wider">
             EMAIL VERIFICATION REQUIRED
           </div>
 
-          <h2 className="font-serif font-bold text-2xl sm:text-3xl text-[#1b1c1a]">
+          <h2 className="font-cormorant text-3xl font-normal text-on-surface">
             Verify your Google email
           </h2>
 
-          <p className="text-xs sm:text-sm text-[#54433e] max-w-md mx-auto leading-relaxed">
+          <p className="text-xs sm:text-sm text-on-surface-variant max-w-md mx-auto leading-relaxed">
             To keep Ethio-Lingo free of bots and temporary accounts, every account must be
             tied to a <strong>Google-verified email address</strong>. We sent a 6-digit code to{' '}
-            <strong className="break-all text-[#8f482f]">{email || 'your email'}</strong> — or verify
+            <strong className="break-all text-primary">{email || 'your email'}</strong> — or verify
             instantly with your Google account below.
           </p>
         </div>
 
         {/* Error / Notice */}
         {error && (
-          <div className="p-3.5 bg-red-50 border border-red-200 text-red-700 text-xs rounded-xl flex items-center gap-2.5 font-mono">
-            <AlertCircle size={16} className="shrink-0 text-red-600" />
+          <div className="p-3.5 bg-error/10 border border-error/30 text-error text-xs rounded-xl flex items-center gap-2.5 font-mono">
+            <AlertCircle size={16} className="shrink-0 text-error" />
             <span>{error}</span>
           </div>
         )}
         {notice && (
-          <div className="p-3.5 bg-[#eef7ee] border border-[#c3e6c3] text-[#2b662b] text-xs rounded-xl flex items-center gap-2.5 font-mono">
+          <div className="p-3.5 bg-success-green/10 border border-success-green/30 text-success-green text-xs rounded-xl flex items-center gap-2.5 font-mono">
             <CheckCircle size={16} className="shrink-0" />
             <span>{notice}</span>
           </div>
@@ -185,14 +182,14 @@ const VerifyEmailPage = () => {
 
         {/* Dev-only debug code */}
         {debugCode && (
-          <div className="p-4 bg-[#f5f0e8] border-2 border-dashed border-[#e8a55a] rounded-xl space-y-1.5">
-            <div className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#8f482f]">
+          <div className="p-4 bg-primary/10 border-2 border-dashed border-primary/40 rounded-xl space-y-1.5">
+            <div className="text-[10px] font-mono font-bold uppercase tracking-wider text-primary">
               ⚠ Development Verification Code (no SMTP in this build)
             </div>
-            <div className="font-mono text-2xl font-bold tracking-[0.3em] text-[#1b1c1a] text-center py-1">
+            <div className="font-mono text-2xl font-bold tracking-[0.3em] text-on-surface text-center py-1">
               {debugCode}
             </div>
-            <p className="text-[10px] text-[#6c6a64] text-center">
+            <p className="text-[10px] text-text-muted text-center">
               Enter this 6-digit code below to simulate receiving the email.
             </p>
           </div>
@@ -202,17 +199,17 @@ const VerifyEmailPage = () => {
         {GOOGLE_CLIENT_ID && (
           <div className="space-y-3">
             {gsiError && (
-              <p className="text-xs text-red-600 font-mono bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+              <p className="text-xs text-error font-mono bg-error/10 border border-error/30 rounded-lg px-3 py-2">
                 {gsiError}
               </p>
             )}
             <div ref={gsiButtonRef} className="w-full min-h-[46px] flex items-center justify-center" />
             <div className="flex items-center gap-3">
-              <div className="h-px flex-1 bg-[#e6dfd8]" />
-              <span className="text-[10px] text-[#6c6a64] uppercase font-mono font-semibold tracking-wider">
+              <div className="h-px flex-1 bg-hairline" />
+              <span className="text-[10px] text-on-surface-variant uppercase font-mono font-semibold tracking-wider">
                 or enter the code
               </span>
-              <div className="h-px flex-1 bg-[#e6dfd8]" />
+              <div className="h-px flex-1 bg-hairline" />
             </div>
           </div>
         )}
@@ -220,8 +217,8 @@ const VerifyEmailPage = () => {
         {/* Code entry form */}
         <form onSubmit={handleVerifyByCode} className="space-y-4">
           <div>
-            <label className="flex items-center gap-1.5 text-xs font-semibold text-[#54433e] uppercase tracking-wider mb-1">
-              <KeyRound size={13} className="text-[#8f482f]" /> 6-Digit Verification Code
+            <label className="flex items-center gap-1.5 font-mono text-[10px] text-on-surface-variant uppercase tracking-widest mb-1">
+              <KeyRound size={13} className="text-primary" /> 6-Digit Verification Code
             </label>
             <input
               type="text"
@@ -230,7 +227,7 @@ const VerifyEmailPage = () => {
               value={code}
               onChange={(e) => setCode(e.target.value.replace(/[^0-9]/g, ''))}
               placeholder="000000"
-              className="w-full px-4 py-3 bg-[#faf9f5] border border-[#e6dfd8] rounded-xl text-center font-mono text-2xl tracking-[0.4em] text-[#1b1c1a] focus-ring"
+              className="w-full bg-surface-container-low px-4 py-3 rounded-xl border border-hairline/60 outline-none focus:border-primary/50 text-center font-mono text-2xl tracking-[0.4em] text-on-surface focus-ring"
               autoFocus
             />
           </div>
@@ -238,7 +235,7 @@ const VerifyEmailPage = () => {
           <button
             type="submit"
             disabled={verifying || !code || code.length !== 6}
-            className="w-full py-3 bg-[#8f482f] hover:bg-[#a9583e] disabled:opacity-50 text-white font-semibold text-xs rounded-xl flex items-center justify-center gap-2 shadow-xs transition-all"
+            className="w-full py-3 rounded-full bg-primary text-on-primary text-xs tracking-wider uppercase font-semibold hover:bg-primary-container disabled:opacity-50 shadow-sm transition-all flex items-center justify-center gap-2 focus-ring cursor-pointer"
           >
             {verifying ? (
               <RefreshCw size={16} className="animate-spin" />
@@ -255,7 +252,7 @@ const VerifyEmailPage = () => {
             <button
               onClick={handleResend}
               disabled={resending}
-              className="w-full py-3 bg-[#181715] hover:bg-[#282622] text-white font-semibold text-xs rounded-xl flex items-center justify-center gap-2 shadow-xs transition-all"
+              className="w-full py-3 rounded-full bg-surface-container text-on-surface border border-hairline hover:bg-surface-container-high disabled:opacity-50 text-xs tracking-wider uppercase font-semibold flex items-center justify-center gap-2 shadow-sm transition-all focus-ring cursor-pointer"
             >
               <RefreshCw size={16} className={resending ? 'animate-spin' : ''} />
               <span>{resending ? 'Sending...' : 'Resend Verification Code'}</span>
@@ -263,13 +260,13 @@ const VerifyEmailPage = () => {
           </div>
 
           <div className="flex justify-between items-center text-xs font-mono pt-2">
-            <span className="text-[#6c6a64]">Logged in as: {email}</span>
+            <span className="text-text-muted">Logged in as: {email}</span>
             <button
               onClick={() => {
                 logout();
                 navigate('/auth');
               }}
-              className="text-red-600 hover:text-red-800 font-bold flex items-center gap-1"
+              className="text-destructive-red hover:text-error font-bold flex items-center gap-1 cursor-pointer"
             >
               <LogOut size={14} />
               <span>Sign Out</span>

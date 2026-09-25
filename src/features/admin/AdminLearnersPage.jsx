@@ -72,17 +72,15 @@ const AdminLearnersPage = () => {
   });
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6 transition-colors duration-250">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 py-10 space-y-8 transition-colors duration-250">
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-hairline pb-4">
+      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-hairline/50 pb-6">
         <div>
-          <span className="text-xs font-mono text-primary-coral uppercase tracking-wider font-semibold">
-            Admin Management Portal
-          </span>
-          <h1 className="font-serif font-bold text-3xl text-on-surface mt-1">
+          <span className="mono-micro-label text-primary">GOVERNANCE</span>
+          <h1 className="font-cormorant text-4xl md:text-5xl font-normal text-on-surface mt-2">
             Student Management & Directory
           </h1>
-          <p className="text-xs text-on-surface-variant mt-1">
+          <p className="text-xs text-on-surface-variant mt-2">
             Inspect individual student profiles, edit levels and days, manage account suspensions, adjust audited balances, and process escrow payout requests.
           </p>
         </div>
@@ -90,9 +88,9 @@ const AdminLearnersPage = () => {
         <button
           onClick={() => loadData(false)}
           disabled={isRefreshing}
-          className="px-4 py-2.5 bg-surface-lowest border border-hairline hover:border-primary-coral text-on-surface font-semibold text-xs rounded-xl transition-all flex items-center gap-2 shadow-xs focus-ring btn-interactive cursor-pointer"
+          className="rounded-full bg-surface-container text-on-surface border border-hairline hover:bg-surface-container-high text-xs tracking-wider uppercase font-semibold px-5 py-2.5 transition-all flex items-center gap-2 focus-ring btn-interactive cursor-pointer"
         >
-          <RefreshCw size={14} className={isRefreshing ? 'animate-spin text-primary-coral' : 'text-primary-coral'} />
+          <RefreshCw size={14} className={isRefreshing ? 'animate-spin text-primary' : 'text-primary'} />
           <span>{isRefreshing ? 'Refreshing Data...' : 'Refresh Directory & Withdrawals'}</span>
         </button>
       </div>
@@ -105,7 +103,7 @@ const AdminLearnersPage = () => {
           onClick={() => setActiveTab('directory')}
           className={`px-5 py-3 text-sm font-semibold border-b-2 transition-all flex items-center gap-2 focus-ring ${
             activeTab === 'directory'
-              ? 'border-primary-coral text-primary-coral'
+              ? 'border-primary text-primary'
               : 'border-transparent text-on-surface-variant hover:text-on-surface'
           }`}
         >
@@ -118,7 +116,7 @@ const AdminLearnersPage = () => {
           onClick={() => setActiveTab('withdrawals')}
           className={`px-5 py-3 text-sm font-semibold border-b-2 transition-all flex items-center gap-2 focus-ring ${
             activeTab === 'withdrawals'
-              ? 'border-primary-coral text-primary-coral'
+              ? 'border-primary text-primary'
               : 'border-transparent text-on-surface-variant hover:text-on-surface'
           }`}
         >
@@ -128,10 +126,10 @@ const AdminLearnersPage = () => {
 
       {/* TAB 1: Learner Directory */}
       {activeTab === 'directory' && (
-        <div className="space-y-4">
+        <div className="space-y-5">
           {/* Controls Bar */}
           <div className="flex flex-wrap items-center justify-between gap-4">
-            <div className="flex items-center gap-2 px-3.5 py-2 bg-surface-lowest border border-hairline rounded-xl flex-1 max-w-md focus-within:border-primary-coral transition-colors">
+            <div className="flex items-center gap-2.5 px-4 py-2.5 bg-surface-lowest border border-hairline rounded-full flex-1 max-w-md focus-within:border-primary transition-colors">
               <Search size={16} className="text-on-surface-variant" />
               <input
                 type="text"
@@ -149,7 +147,7 @@ const AdminLearnersPage = () => {
                 value={selectedLevelFilter}
                 onChange={(e) => setSelectedLevelFilter(e.target.value)}
                 aria-label="Filter learners by curriculum level"
-                className="px-3 py-2 bg-surface-lowest border border-hairline rounded-xl text-xs font-semibold text-on-surface focus-ring"
+                className="px-3.5 py-2 bg-surface-lowest border border-hairline rounded-full text-xs font-semibold text-on-surface focus-ring"
               >
                 <option value="ALL">All Curriculum Levels</option>
                 <option value="Free Trial">Free Trial</option>
@@ -163,62 +161,62 @@ const AdminLearnersPage = () => {
           </div>
 
           {/* Directory Table */}
-          <div className="overflow-x-auto rounded-2xl border border-hairline bg-canvas">
+          <div className="overflow-x-auto rounded-2xl border border-hairline/60 bg-surface-lowest shadow-sm">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-surface-card border-b border-hairline text-[11px] font-semibold text-on-surface-variant uppercase tracking-wider">
-                  <th className="py-3.5 px-4">Learner Name & ID</th>
-                  <th className="py-3.5 px-4">Email</th>
-                  <th className="py-3.5 px-4">Track & Day</th>
-                  <th className="py-3.5 px-4">Staked Vault</th>
-                  <th className="py-3.5 px-4">Streak</th>
-                  <th className="py-3.5 px-4">Access Status</th>
-                  <th className="py-3.5 px-4 text-right">Actions</th>
+                <tr className="font-mono text-[10px] uppercase tracking-widest text-text-muted">
+                  <th className="py-3.5 px-4 font-normal">Learner Name & ID</th>
+                  <th className="py-3.5 px-4 font-normal">Email</th>
+                  <th className="py-3.5 px-4 font-normal">Track & Day</th>
+                  <th className="py-3.5 px-4 font-normal">Staked Vault</th>
+                  <th className="py-3.5 px-4 font-normal">Streak</th>
+                  <th className="py-3.5 px-4 font-normal">Access Status</th>
+                  <th className="py-3.5 px-4 text-right font-normal">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-hairline text-xs font-mono">
+              <tbody className="text-xs font-mono">
                 {filteredLearners.length > 0 ? (
                   filteredLearners.map((l) => {
                     const status = l.status || (l.isActive ? 'ACTIVE' : 'SUSPENDED');
                     return (
-                      <tr key={l.id} className="hover:bg-surface-soft transition-colors">
+                      <tr key={l.id} className="border-t border-hairline/50 hover:bg-surface-soft transition-colors">
                         <td className="py-3.5 px-4">
-                          <span className="font-sans font-bold text-on-surface block">{l.name}</span>
+                          <span className="font-sans font-semibold text-on-surface block">{l.name}</span>
                           <span className="text-text-muted font-mono text-[10px] truncate max-w-[140px] block">{l.id}</span>
                         </td>
                         <td className="py-3.5 px-4 text-on-surface-variant font-sans">{l.email}</td>
                         <td className="py-3.5 px-4">
                           <div className="flex items-center gap-1.5">
-                            <span className="px-2.5 py-0.5 bg-surface-card text-primary-coral font-bold rounded-lg text-[10px]">
+                            <span className="font-mono text-[9px] px-2 py-0.5 rounded uppercase tracking-wider bg-primary/10 text-primary">
                               {l.level || 'Beginner I'}
                             </span>
-                            <span className="text-[10px] font-mono text-text-muted font-bold">
+                            <span className="text-[10px] font-mono text-text-muted font-semibold">
                               D{l.currentDay || 1}
                             </span>
                           </div>
                         </td>
-                        <td className="py-3.5 px-4 font-bold text-on-surface">
+                        <td className="py-3.5 px-4 font-semibold text-on-surface tabular-nums">
                           <div>{formatETB(l.stakedAmount ?? 0)}</div>
                           {l.isFreeTrial && (
                             <span className="text-[9px] text-warning-amber font-mono block">Free Trial</span>
                           )}
                         </td>
-                        <td className="py-3.5 px-4 text-streak-orange font-bold">
+                        <td className="py-3.5 px-4 text-streak-orange font-semibold tabular-nums">
                           {l.streakCount || 0} Days 🔥
                         </td>
                         <td className="py-3.5 px-4">
                           <span
-                            className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase inline-flex items-center gap-1 ${
+                            className={`font-mono text-[9px] px-2 py-0.5 rounded uppercase tracking-wider inline-flex items-center gap-1 ${
                               status === 'ACTIVE'
-                                ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30'
+                                ? 'bg-success-green/10 text-success-green'
                                 : status === 'SUSPENDED'
-                                ? 'bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/30'
-                                : 'bg-stone-500/15 text-stone-600 dark:text-stone-400 border border-stone-500/30'
+                                ? 'bg-destructive-red/10 text-destructive-red'
+                                : 'bg-surface-container text-on-surface-variant'
                             }`}
                           >
                             <span
                               className={`w-1.5 h-1.5 rounded-full ${
-                                status === 'ACTIVE' ? 'bg-emerald-500' : status === 'SUSPENDED' ? 'bg-rose-500' : 'bg-stone-400'
+                                status === 'ACTIVE' ? 'bg-success-green' : status === 'SUSPENDED' ? 'bg-destructive-red' : 'bg-text-muted'
                               }`}
                             />
                             <span>{status}</span>
@@ -227,7 +225,7 @@ const AdminLearnersPage = () => {
                         <td className="py-3.5 px-4 text-right">
                           <button
                             onClick={() => setSelectedStudentId(l.id)}
-                            className="px-3.5 py-1.5 bg-primary-coral hover:bg-primary-hover text-white font-sans font-semibold rounded-xl text-[11px] transition-colors focus-ring shadow-xs flex items-center gap-1.5 ml-auto cursor-pointer"
+                            className="rounded-full bg-primary hover:bg-primary-container text-on-primary font-sans font-semibold text-[10px] uppercase tracking-wider px-4 py-1.5 transition-all focus-ring shadow-sm flex items-center gap-1.5 ml-auto cursor-pointer"
                           >
                             <Settings2 size={13} />
                             <span>Manage Student</span>
@@ -238,7 +236,7 @@ const AdminLearnersPage = () => {
                   })
                 ) : (
                   <tr>
-                    <td colSpan={7} className="py-10 text-center text-on-surface-variant font-sans">
+                    <td colSpan={7} className="py-10 text-center text-on-surface-variant font-sans border-t border-hairline/50">
                       <p className="font-semibold text-xs">No learners found matching the search or filter.</p>
                     </td>
                   </tr>
@@ -251,40 +249,40 @@ const AdminLearnersPage = () => {
 
       {/* TAB 2: Withdrawal Requests Management */}
       {activeTab === 'withdrawals' && (
-        <div className="space-y-4">
-          <div className="p-4 bg-surface-soft border border-hairline rounded-xl text-xs text-on-surface-variant space-y-1">
-            <span className="font-bold text-primary-coral block">Manual Bank & Telebirr Payout Protocol:</span>
+        <div className="space-y-5">
+          <div className="p-5 bg-surface-soft border border-hairline rounded-2xl text-xs text-on-surface-variant space-y-1">
+            <span className="font-bold text-primary font-mono uppercase tracking-wider block">Manual Bank & Telebirr Payout Protocol:</span>
             <p>
               Ethio-Lingo platform currently processes withdrawals manually. Admins must inspect the bank details provided below, execute the money transfer via bank app / Telebirr, and update the status to <strong>Approved</strong>, <strong>Declined</strong>, or <strong>Refunded</strong>.
             </p>
           </div>
 
-          <div className="overflow-x-auto rounded-2xl border border-hairline bg-canvas">
+          <div className="overflow-x-auto rounded-2xl border border-hairline/60 bg-surface-lowest shadow-sm">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-surface-card border-b border-hairline text-[11px] font-semibold text-on-surface-variant uppercase tracking-wider">
-                  <th className="py-3.5 px-4">Request ID & Learner</th>
-                  <th className="py-3.5 px-4">Level Completed</th>
-                  <th className="py-3.5 px-4">Amount</th>
-                  <th className="py-3.5 px-4">Banking Information</th>
-                  <th className="py-3.5 px-4">Status</th>
-                  <th className="py-3.5 px-4 text-right">Admin Payout Action</th>
+                <tr className="font-mono text-[10px] uppercase tracking-widest text-text-muted">
+                  <th className="py-3.5 px-4 font-normal">Request ID & Learner</th>
+                  <th className="py-3.5 px-4 font-normal">Level Completed</th>
+                  <th className="py-3.5 px-4 font-normal">Amount</th>
+                  <th className="py-3.5 px-4 font-normal">Banking Information</th>
+                  <th className="py-3.5 px-4 font-normal">Status</th>
+                  <th className="py-3.5 px-4 text-right font-normal">Admin Payout Action</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-hairline text-xs font-mono">
+              <tbody className="text-xs font-mono">
                 {allWithdrawals.map((req) => (
-                  <tr key={req.id} className="hover:bg-surface-soft transition-colors">
+                  <tr key={req.id} className="border-t border-hairline/50 hover:bg-surface-soft transition-colors">
                     <td className="py-3.5 px-4">
-                      <span className="text-primary-coral font-bold block text-[10px]">{req.id}</span>
-                      <span className="font-sans font-bold text-on-surface">{req.userName}</span>
+                      <span className="text-primary font-bold block text-[10px]">{req.id}</span>
+                      <span className="font-sans font-semibold text-on-surface">{req.userName}</span>
                       <span className="text-text-muted font-mono block text-[10px]">{req.userEmail}</span>
                     </td>
                     <td className="py-3.5 px-4">
-                      <span className="px-2.5 py-0.5 bg-surface-card text-on-surface rounded-lg text-[10px] font-semibold">
+                      <span className="font-mono text-[9px] px-2 py-0.5 rounded uppercase tracking-wider bg-surface-container text-on-surface-variant">
                         {req.levelCompleted}
                       </span>
                     </td>
-                    <td className="py-3.5 px-4 font-bold text-on-surface">{formatETB(req.amount)}</td>
+                    <td className="py-3.5 px-4 font-semibold text-on-surface tabular-nums">{formatETB(req.amount)}</td>
                     <td className="py-3.5 px-4 font-sans text-on-surface-variant">
                       <div><strong>Bank:</strong> {req.bankName}</div>
                       <div><strong>Acc:</strong> {req.accountNumber}</div>
@@ -292,14 +290,14 @@ const AdminLearnersPage = () => {
                     </td>
                     <td className="py-3.5 px-4">
                       <span
-                        className={`px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase ${
+                        className={`font-mono text-[9px] px-2 py-0.5 rounded uppercase tracking-wider ${
                           req.status === 'approved'
-                            ? 'bg-green-500/20 text-success-green'
+                            ? 'bg-success-green/10 text-success-green'
                             : req.status === 'declined'
-                              ? 'bg-red-500/20 text-destructive-red'
+                              ? 'bg-destructive-red/10 text-destructive-red'
                               : req.status === 'refunded'
-                                ? 'bg-blue-500/20 text-blue-400'
-                                : 'bg-amber-500/20 text-warning-amber'
+                                ? 'bg-primary/10 text-primary'
+                                : 'bg-warning-amber/10 text-warning-amber'
                         }`}
                       >
                         {req.status}
@@ -311,13 +309,13 @@ const AdminLearnersPage = () => {
                           <>
                             <button
                               onClick={() => setWithdrawalActionModal({ id: req.id, status: 'approved', request: req })}
-                              className="px-3 py-1.5 bg-success-green hover:bg-green-600 text-white font-semibold rounded-xl text-[10px] focus-ring btn-interactive cursor-pointer"
+                              className="rounded-full bg-success-green text-white font-semibold text-[10px] uppercase tracking-wider px-3.5 py-1.5 transition-all hover:opacity-90 focus-ring btn-interactive cursor-pointer"
                             >
                               Approve Payout
                             </button>
                             <button
                               onClick={() => setWithdrawalActionModal({ id: req.id, status: 'declined', request: req })}
-                              className="px-3 py-1.5 bg-destructive-red hover:bg-red-700 text-white font-semibold rounded-xl text-[10px] focus-ring btn-interactive cursor-pointer"
+                              className="rounded-full bg-destructive-red text-white font-semibold text-[10px] uppercase tracking-wider px-3.5 py-1.5 transition-all hover:opacity-90 focus-ring btn-interactive cursor-pointer"
                             >
                               Decline
                             </button>
@@ -326,7 +324,7 @@ const AdminLearnersPage = () => {
                           <div className="flex items-center gap-1">
                             <button
                               onClick={() => setWithdrawalActionModal({ id: req.id, status: 'refunded', request: req })}
-                              className="px-3 py-1.5 bg-surface-card hover:bg-surface-high text-on-surface font-semibold rounded-xl text-[10px] focus-ring cursor-pointer"
+                              className="rounded-full bg-surface-container hover:bg-surface-container-high text-on-surface font-semibold text-[10px] uppercase tracking-wider px-3.5 py-1.5 transition-all focus-ring cursor-pointer"
                             >
                               Mark Refunded
                             </button>
@@ -348,26 +346,26 @@ const AdminLearnersPage = () => {
           role="dialog"
           aria-modal="true"
           aria-labelledby="confirm-withdrawal-title"
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fade-in"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/60 backdrop-blur-sm animate-fade-in"
         >
-          <div className="bg-canvas border border-hairline rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl transition-colors duration-250">
-            <div className="flex items-center gap-3 border-b border-hairline pb-3">
-              <div className="w-10 h-10 bg-primary-coral text-white rounded-xl flex items-center justify-center font-bold">
+          <div className="bg-surface-lowest border border-hairline rounded-2xl max-w-md w-full p-8 space-y-4 shadow-2xl transition-colors duration-250">
+            <div className="flex items-center gap-3 border-b border-hairline/50 pb-4">
+              <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold">
                 W
               </div>
               <div>
-                <h3 id="confirm-withdrawal-title" className="font-serif font-bold text-base text-on-surface capitalize">
+                <h3 id="confirm-withdrawal-title" className="font-cormorant text-2xl font-normal text-on-surface capitalize">
                   Confirm Withdrawal Action: {withdrawalActionModal.status}
                 </h3>
-                <p className="text-xs text-text-muted">Escrow Payout Control</p>
+                <p className="text-xs text-text-muted font-mono">Escrow Payout Control</p>
               </div>
             </div>
 
             <p className="text-xs text-on-surface-variant">
-              Are you sure you want to mark withdrawal request <strong className="font-mono text-primary-coral">{withdrawalActionModal.request.id}</strong> for <strong>{withdrawalActionModal.request.userName}</strong> as <strong className="uppercase font-mono">{withdrawalActionModal.status}</strong>?
+              Are you sure you want to mark withdrawal request <strong className="font-mono text-primary">{withdrawalActionModal.request.id}</strong> for <strong>{withdrawalActionModal.request.userName}</strong> as <strong className="uppercase font-mono">{withdrawalActionModal.status}</strong>?
             </p>
 
-            <div className="p-3 bg-surface-soft border border-hairline rounded-xl font-mono text-xs space-y-1 text-on-surface">
+            <div className="p-3.5 bg-surface-low border border-hairline rounded-xl font-mono text-xs space-y-1 text-on-surface">
               <div>Payout Amount: <strong>{formatETB(withdrawalActionModal.request.amount)}</strong></div>
               <div>Bank: <strong>{withdrawalActionModal.request.bankName}</strong></div>
               <div>Account Number: <strong>{withdrawalActionModal.request.accountNumber}</strong></div>
@@ -376,16 +374,16 @@ const AdminLearnersPage = () => {
               )}
             </div>
 
-            <div className="flex justify-end gap-2 pt-2 border-t border-hairline">
+            <div className="flex justify-end gap-2 pt-4 border-t border-hairline/50">
               <button
                 onClick={() => setWithdrawalActionModal(null)}
-                className="px-4 py-2 border border-hairline text-xs font-semibold rounded-xl text-on-surface-variant hover:bg-surface-card focus-ring"
+                className="rounded-full bg-surface-container text-on-surface border border-hairline text-xs font-semibold px-5 py-2.5 hover:bg-surface-container-high focus-ring cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 onClick={handleConfirmUpdateWithdrawalStatus}
-                className="px-5 py-2 bg-primary-coral hover:bg-primary-hover text-white text-xs font-semibold rounded-xl shadow-xs focus-ring btn-interactive cursor-pointer"
+                className="rounded-full bg-primary hover:bg-primary-container text-on-primary text-xs font-semibold px-5 py-2.5 shadow-sm focus-ring btn-interactive cursor-pointer"
               >
                 Confirm {withdrawalActionModal.status}
               </button>

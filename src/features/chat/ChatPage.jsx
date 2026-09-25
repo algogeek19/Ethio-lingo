@@ -35,12 +35,12 @@ const Avatar = ({ name, image, online, size = 'md' }) => {
       {image ? (
         <img src={image} alt={name} className={`${s.wrapper} rounded-full object-cover border border-hairline shadow-xs`} />
       ) : (
-        <div className={`${s.wrapper} rounded-full bg-gradient-to-br from-primary-coral to-amber-500 text-white flex items-center justify-center font-bold ${s.text} shadow-inner`}>
+        <div className={`${s.wrapper} rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold ${s.text} shadow-inner`}>
           {(name || '?')[0].toUpperCase()}
         </div>
       )}
       {online && (
-        <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-emerald-500 border-2 border-surface-lowest" />
+        <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-success-green border-2 border-surface-lowest" />
       )}
     </div>
   );
@@ -79,31 +79,31 @@ const MessageRow = ({ message, isMine, showHeader, peer, onReport }) => {
           <div className="flex items-center gap-1.5 pl-1">
             <span className="text-[10px] font-mono text-on-surface-variant font-bold">{peer?.name}</span>
             {peer?.level && (
-              <span className="px-1.5 py-0.5 bg-surface-card border border-hairline rounded text-[9px] font-mono font-bold uppercase text-primary-coral">
+              <span className="px-2 py-0.5 bg-primary/10 border border-primary/20 rounded-full text-[9px] font-mono font-bold uppercase text-primary">
                 {peer.level}
               </span>
             )}
           </div>
         )}
 
-        <div className={`px-4 py-2.5 text-sm leading-relaxed break-words whitespace-pre-wrap shadow-xs ${
+        <div className={`px-4 py-2.5 text-sm leading-relaxed break-words whitespace-pre-wrap shadow-sm ${
           isMine
-            ? 'bg-gradient-to-br from-primary-coral to-primary-hover text-white rounded-2xl rounded-br-md'
-            : 'bg-surface-card border border-hairline text-on-surface rounded-2xl rounded-bl-md'
+            ? 'bg-primary text-on-primary rounded-2xl rounded-br-md'
+            : 'bg-surface-low text-on-surface rounded-2xl rounded-bl-md'
         }`}>
           {message.content}
         </div>
 
         {/* Timestamp + hover actions */}
         <div className={`flex items-center gap-2 px-1 transition-opacity ${isMine ? 'justify-end' : 'justify-start'} md:opacity-70 md:group-hover:opacity-100`}>
-          <span className={`inline-flex items-center gap-1 text-[9px] font-mono ${isMine ? 'text-on-surface-variant' : 'text-on-surface-variant'}`}>
+          <span className="inline-flex items-center gap-1 text-[9px] font-mono text-on-surface-variant">
             {formatClock(message.createdAt)}
             {isMine && <ReadTicks />}
           </span>
           <button
             onClick={handleCopy}
             title="Copy message"
-            className="flex items-center gap-1 text-[9px] font-mono text-on-surface-variant hover:text-primary-coral cursor-pointer focus-ring rounded px-0.5 transition-colors"
+            className="flex items-center gap-1 text-[9px] font-mono text-on-surface-variant hover:text-primary cursor-pointer focus-ring rounded px-0.5 transition-colors"
           >
             {copied ? <span className="text-success-green font-bold">✓</span> : <Copy size={10} />}
           </button>
@@ -111,7 +111,7 @@ const MessageRow = ({ message, isMine, showHeader, peer, onReport }) => {
             <button
               onClick={() => onReport(message)}
               title="Report this message"
-              className="flex items-center gap-1 text-[9px] font-mono text-on-surface-variant hover:text-destructive-red cursor-pointer focus-ring rounded px-0.5 transition-colors"
+              className="flex items-center gap-1 text-[9px] font-mono text-on-surface-variant hover:text-error cursor-pointer focus-ring rounded px-0.5 transition-colors"
             >
               <Flag size={10} /> Report
             </button>
@@ -282,9 +282,9 @@ const ChatPage = () => {
   );
 
   return (
-    <div className="max-w-6xl mx-auto py-8 px-4 space-y-5">
+    <div className="max-w-6xl mx-auto py-10 px-4 sm:px-6 space-y-6">
       {notice && (
-        <div className="p-3.5 bg-green-500/15 border border-green-500/30 rounded-xl text-xs text-green-700 dark:text-green-300 font-mono flex items-center justify-between gap-3">
+        <div className="p-3.5 bg-success-green/10 border border-success-green/30 rounded-xl text-xs text-success-green font-mono flex items-center justify-between gap-3">
           <span>{notice}</span>
           <button onClick={() => setNotice('')} className="p-1 hover:opacity-70 cursor-pointer" aria-label="Dismiss">
             <X size={14} />
@@ -292,7 +292,7 @@ const ChatPage = () => {
         </div>
       )}
       {error && (
-        <div className="p-3.5 bg-red-500/10 border border-red-500/30 rounded-xl text-xs text-red-600 dark:text-red-300 font-mono flex items-center justify-between gap-3">
+        <div className="p-3.5 bg-error/10 border border-error/30 rounded-xl text-xs text-error font-mono flex items-center justify-between gap-3">
           <span>{error}</span>
           <button onClick={() => setError('')} className="p-1 hover:opacity-70 cursor-pointer" aria-label="Dismiss">
             <X size={14} />
@@ -301,54 +301,54 @@ const ChatPage = () => {
       )}
 
       {isBannedUser && (
-        <div className="p-4 bg-red-500/10 border-2 border-red-500/40 rounded-2xl text-sm text-center font-mono text-red-600 dark:text-red-300 flex items-center justify-center gap-2">
+        <div className="p-4 bg-error/10 border border-error/40 rounded-2xl text-sm text-center font-mono text-error flex items-center justify-center gap-2">
           <ShieldAlert size={18} />
           <span>Your account is banned from messaging due to a moderation decision.</span>
         </div>
       )}
 
       {/* Messenger Header */}
-      <div className="relative overflow-hidden bg-surface-dark text-white rounded-2xl p-5 sm:p-6 shadow-xl border border-stone-800 flex flex-wrap items-center justify-between gap-4">
-        <div className="absolute -top-16 -right-16 w-56 h-56 rounded-full bg-primary-coral/15 blur-3xl pointer-events-none" />
-        <div className="relative">
-          <span className="text-xs font-mono text-warning-amber uppercase tracking-wider font-bold flex items-center gap-1.5">
-            <MessageCircle size={14} /> Messenger
+      <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-5 border-b border-hairline/50 pb-6">
+        <div>
+          <span className="font-mono text-[10px] uppercase tracking-widest text-primary font-semibold flex items-center gap-1.5">
+            <MessageCircle size={14} /> Cohort Messenger · Level {peersData?.level || 'Learners'}
           </span>
-          <h1 className="font-serif font-bold text-2xl sm:text-3xl text-white mt-1">Chat with Level {peersData?.level || 'Learners'}</h1>
-          <p className="text-xs text-stone-400 font-mono mt-0.5">
+          <h1 className="font-cormorant text-4xl md:text-5xl font-normal text-on-surface mt-1">Chat with Your Cohort</h1>
+          <p className="text-xs text-on-surface-variant mt-2 max-w-2xl leading-relaxed">
             Direct messages with learners at your level. Report abusive or spam messages to moderators.
           </p>
         </div>
         {dailyTopic && (
-          <div className="relative flex flex-col items-end gap-1.5 max-w-xs text-right rounded-2xl bg-stone-900/70 border border-stone-800 px-4 py-3">
-            <span className="px-2.5 py-0.5 bg-warning-amber text-stone-900 text-[10px] font-mono font-bold rounded-lg flex items-center gap-1.5 uppercase tracking-wider">
+          <div className="flex flex-col items-end gap-1.5 max-w-xs text-right rounded-2xl bg-surface-lowest border border-hairline/60 shadow-sm px-4 py-3 shrink-0">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 bg-warning-amber/15 text-warning-amber rounded-full text-[10px] font-mono font-bold uppercase tracking-wider">
               <Megaphone size={12} /> Today's Topic
             </span>
-            <p className="text-sm font-semibold text-warning-amber leading-snug">{dailyTopic.name}</p>
-            <span className="text-[10px] text-stone-500 font-mono">{dailyTopic.date}</span>
+            <p className="font-cormorant text-lg font-medium text-on-surface leading-snug">{dailyTopic.name}</p>
+            <span className="text-[10px] font-mono text-on-surface-variant">{dailyTopic.date}</span>
           </div>
         )}
       </div>
 
       {/* Messenger Shell */}
-      <div className="grid grid-cols-1 md:grid-cols-3 bg-surface-lowest border border-hairline rounded-2xl overflow-hidden shadow-lg h-[680px]">
+      <div className="grid grid-cols-1 md:grid-cols-[320px_1fr] bg-surface-lowest border border-hairline/60 rounded-2xl overflow-hidden shadow-lg h-[680px]">
         {/* Contact Sidebar (WhatsApp / Telegram style) */}
-        <aside className={`md:col-span-1 border-r border-hairline flex flex-col bg-surface-card/40 ${activePeerId && chat ? 'hidden md:flex' : 'flex'}`}>
-          <div className="p-3.5 border-b border-hairline space-y-3">
+        <aside className={`md:col-span-1 border-r border-hairline/50 flex flex-col bg-surface-low ${activePeerId && chat ? 'hidden md:flex' : 'flex'}`}>
+          <div className="p-4 border-b border-hairline/50 space-y-3">
+            <span className="font-cormorant text-2xl font-medium text-on-surface block">Cohort Messenger</span>
             <div className="relative">
-              <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant" />
+              <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-on-surface-variant" />
               <input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search contacts..."
-                className="w-full pl-9 pr-8 py-2.5 bg-surface-lowest border border-hairline rounded-xl text-sm text-on-surface focus-ring placeholder:text-on-surface-variant/70"
+                className="w-full pl-9 pr-8 py-2.5 bg-surface-container/60 rounded-full border border-hairline/50 text-sm text-on-surface focus-ring placeholder:text-on-surface-variant/70"
               />
-              <button onClick={loadPeers} className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-on-surface-variant hover:text-primary-coral rounded-lg cursor-pointer" aria-label="Refresh contacts">
+              <button onClick={loadPeers} className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-on-surface-variant hover:text-primary rounded-full cursor-pointer" aria-label="Refresh contacts">
                 <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
               </button>
             </div>
-            <div className="flex items-center justify-between px-1">
-              <span className="text-[11px] font-mono font-bold text-on-surface-variant uppercase flex items-center gap-1.5">
+            <div className="flex items-center justify-between px-2">
+              <span className="text-[10px] font-mono text-on-surface-variant uppercase tracking-wider flex items-center gap-1.5">
                 <Users size={12} /> {filteredPeers.length} Learner{filteredPeers.length === 1 ? '' : 's'} at your level
               </span>
             </div>
@@ -374,14 +374,14 @@ const ChatPage = () => {
                   <button
                     key={peer.id}
                     onClick={() => setActivePeerId(peer.id)}
-                    className={`w-full flex items-center gap-3 px-3.5 py-3 text-left transition-all cursor-pointer focus-ring border-b border-hairline/60 ${
-                      isActive ? 'bg-primary-coral/10 border-l-[3px] border-l-primary-coral' : 'hover:bg-surface-high/60'
+                    className={`w-full flex items-center gap-3 px-3.5 py-3 text-left transition-all cursor-pointer focus-ring border-b border-hairline/40 ${
+                      isActive ? 'bg-primary/10 border-l-[3px] border-l-primary' : 'hover:bg-surface-container'
                     }`}
                   >
                     <Avatar name={peer.name} image={peer.image} online={!!lastMsg} />
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center justify-between gap-2">
-                        <span className={`text-sm font-semibold truncate ${isActive ? 'text-primary-coral' : 'text-on-surface'}`}>
+                        <span className={`text-sm font-semibold truncate ${isActive ? 'text-primary' : 'text-on-surface'}`}>
                           {peer.name}
                         </span>
                         {lastMsg && (
@@ -391,7 +391,7 @@ const ChatPage = () => {
                         )}
                       </div>
                       <div className="flex items-center justify-between gap-2 mt-0.5">
-                        <span className={`text-xs truncate ${isActive ? 'text-primary-coral/90' : 'text-on-surface-variant'}`}>
+                        <span className={`text-xs truncate ${isActive ? 'text-primary/80' : 'text-on-surface-variant'}`}>
                           {preview}
                         </span>
                       </div>
@@ -404,40 +404,40 @@ const ChatPage = () => {
         </aside>
 
         {/* Conversation Pane */}
-        <section className={`md:col-span-2 flex flex-col overflow-hidden ${activePeerId && chat ? 'flex' : 'hidden md:flex'}`}>
+        <section className={`md:col-span-1 flex flex-col overflow-hidden ${activePeerId && chat ? 'flex' : 'hidden md:flex'}`}>
           {/* Mobile back button */}
           <div className="md:hidden flex items-center gap-2 px-3 pt-3">
             <button
               onClick={() => setChat(null)}
-              className="flex items-center gap-1 text-xs font-mono text-on-surface-variant hover:text-primary-coral cursor-pointer"
+              className="flex items-center gap-1 text-xs font-mono text-on-surface-variant hover:text-primary cursor-pointer"
             >
               <ChevronLeft size={15} /> Contacts
             </button>
           </div>
 
           {/* Conversation Header */}
-          <div className="px-5 py-3 border-b border-hairline flex items-center justify-between gap-3 bg-surface-card/50">
+          <div className="px-5 py-3 border-b border-hairline/50 flex items-center justify-between gap-3 bg-surface-low/60">
             {activePeer && (
               <div className="flex items-center gap-3 min-w-0">
                 <Avatar name={activePeer.name} image={activePeer.image} online size="md" />
                 <div className="min-w-0">
-                  <h2 className="font-serif font-bold text-base text-on-surface truncate flex items-center gap-2">
+                  <h2 className="font-cormorant text-xl font-medium text-on-surface truncate flex items-center gap-2">
                     {activePeer.name}
                     {activePeer.level && (
-                      <span className="px-1.5 py-0.5 bg-primary-coral/10 border border-primary-coral/30 rounded-md text-[9px] font-mono font-bold uppercase text-primary-coral">
+                      <span className="px-2 py-0.5 bg-primary/10 border border-primary/20 rounded-full text-[9px] font-mono font-bold uppercase text-primary">
                         {activePeer.level}
                       </span>
                     )}
                   </h2>
-                  <p className="text-[10px] font-mono text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block animate-pulse" />
+                  <p className="text-[10px] font-mono text-success-green font-semibold flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-success-green inline-block animate-pulse" />
                     Active now
                   </p>
                 </div>
               </div>
             )}
             {dailyTopic && (
-              <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-warning-amber/10 border border-warning-amber/30 rounded-xl text-[10px] font-mono text-warning-amber font-bold">
+              <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-warning-amber/10 border border-warning-amber/30 rounded-full text-[10px] font-mono text-warning-amber font-bold">
                 <Megaphone size={12} />
                 <span className="max-w-[180px] truncate">{dailyTopic.name}</span>
               </div>
@@ -447,12 +447,12 @@ const ChatPage = () => {
           {/* Empty conversation state */}
           {!activePeer ? (
             <div className="grow flex flex-col items-center justify-center text-center space-y-3 bg-surface-lowest">
-              <div className="w-16 h-16 rounded-2xl bg-primary-coral/10 text-primary-coral flex items-center justify-center">
+              <div className="w-16 h-16 rounded-full bg-primary/10 text-primary flex items-center justify-center">
                 <MessageCircle size={30} />
               </div>
               <p className="text-sm font-mono text-on-surface-variant font-semibold">Select a contact to start chatting</p>
               <p className="text-xs text-on-surface-variant/70 max-w-xs">
-                Discuss today's topic: <strong className="text-primary-coral">{dailyTopic?.name || 'Daily Topic'}</strong>
+                Discuss today's topic: <strong className="text-primary">{dailyTopic?.name || 'Daily Topic'}</strong>
               </p>
             </div>
           ) : (
@@ -466,12 +466,12 @@ const ChatPage = () => {
                 <div className="space-y-2.5">
                   {chat && chat.messages.length === 0 ? (
                     <div className="h-full min-h-[280px] flex flex-col items-center justify-center text-center space-y-2">
-                      <div className="w-14 h-14 rounded-2xl bg-surface-card border border-hairline text-on-surface-variant/60 flex items-center justify-center">
+                      <div className="w-14 h-14 rounded-full bg-surface-container text-on-surface-variant/60 flex items-center justify-center">
                         <MessageCircle size={26} />
                       </div>
                       <p className="text-xs font-mono text-on-surface-variant font-semibold">No messages yet.</p>
                       <p className="text-[11px] text-on-surface-variant">
-                        Greet <strong className="text-primary-coral">{activePeer.name}</strong> and discuss today's topic!
+                        Greet <strong className="text-primary">{activePeer.name}</strong> and discuss today's topic!
                       </p>
                     </div>
                   ) : (
@@ -505,7 +505,7 @@ const ChatPage = () => {
                       animate={{ opacity: 1, scale: 1, y: 0 }}
                       exit={{ opacity: 0, scale: 0.8, y: 8 }}
                       onClick={scrollToLatest}
-                      className="absolute bottom-4 right-4 z-10 w-10 h-10 rounded-full bg-primary-coral hover:bg-primary-hover text-white shadow-lg border border-white/20 flex items-center justify-center cursor-pointer focus-ring"
+                      className="absolute bottom-4 right-4 z-10 w-10 h-10 rounded-full bg-primary hover:bg-primary-container text-on-primary shadow-lg flex items-center justify-center cursor-pointer focus-ring"
                       aria-label="Scroll to latest messages"
                     >
                       <ArrowDown size={17} />
@@ -515,7 +515,7 @@ const ChatPage = () => {
               </div>
 
               {/* Composer */}
-              <form onSubmit={handleSend} className="border-t border-hairline px-4 py-3 bg-surface-card/60 space-y-2">
+              <form onSubmit={handleSend} className="border-t border-hairline/50 px-4 py-3 bg-surface-low/60 space-y-2">
                 <AnimatePresence>
                   {showEmoji && (
                     <motion.div
@@ -534,10 +534,10 @@ const ChatPage = () => {
                     onClick={() => setShowEmoji((v) => !v)}
                     aria-label="Toggle emoji picker"
                     title="Emoji"
-                    className={`shrink-0 w-10 h-10 rounded-xl border flex items-center justify-center transition-all cursor-pointer focus-ring ${
+                    className={`shrink-0 w-10 h-10 rounded-full border flex items-center justify-center transition-all cursor-pointer focus-ring ${
                       showEmoji
-                        ? 'bg-primary-coral/10 border-primary-coral/40 text-primary-coral'
-                        : 'bg-surface-lowest border-hairline text-on-surface-variant hover:text-primary-coral hover:border-primary-coral/40'
+                        ? 'bg-primary/10 border-primary/40 text-primary'
+                        : 'bg-surface-low border-hairline text-on-surface-variant hover:text-primary hover:border-primary/40'
                     }`}
                   >
                     <Smile size={18} />
@@ -552,7 +552,7 @@ const ChatPage = () => {
                       maxLength={1000}
                       disabled={isBannedUser || sending}
                       placeholder={isBannedUser ? 'Messaging revoked' : `Message ${activePeer.name}...`}
-                      className="w-full resize-none px-4 py-2.5 pr-14 bg-surface-lowest border border-hairline rounded-xl text-sm text-on-surface focus-ring disabled:opacity-50 leading-relaxed max-h-32 overflow-y-auto"
+                      className="w-full resize-none px-4 py-2.5 pr-14 bg-surface-low rounded-full border border-hairline/50 text-sm text-on-surface focus-ring disabled:opacity-50 leading-relaxed max-h-32 overflow-y-auto"
                     />
                     <span className="absolute bottom-2 right-3 text-[9px] font-mono text-on-surface-variant/50 pointer-events-none select-none">
                       {draft.length}/1000
@@ -562,7 +562,7 @@ const ChatPage = () => {
                     type="submit"
                     whileTap={!draft.trim() || sending ? {} : { scale: 0.92 }}
                     disabled={!draft.trim() || sending || isBannedUser}
-                    className="shrink-0 px-4 h-10 bg-primary-coral hover:bg-primary-hover disabled:opacity-40 text-white rounded-xl text-xs font-bold flex items-center gap-2 transition-all cursor-pointer btn-interactive focus-ring"
+                    className="shrink-0 px-5 h-10 bg-primary hover:bg-primary-container disabled:opacity-40 text-on-primary rounded-full text-xs tracking-wider uppercase font-semibold flex items-center gap-2 transition-all cursor-pointer btn-interactive focus-ring"
                   >
                     {sending ? <RefreshCw size={14} className="animate-spin" /> : <Send size={14} />}
                     <span className="hidden sm:inline">Send</span>
@@ -581,7 +581,7 @@ const ChatPage = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
+            className="fixed inset-0 z-50 bg-stone-900/60 backdrop-blur-sm flex items-center justify-center p-4"
             onClick={() => setReportTarget(null)}
           >
             <motion.div
@@ -589,21 +589,21 @@ const ChatPage = () => {
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.95, y: 10 }}
               onClick={(e) => e.stopPropagation()}
-              className="max-w-md w-full bg-surface-lowest border border-hairline rounded-2xl p-6 shadow-2xl space-y-4"
+              className="max-w-md w-full bg-surface-lowest border border-hairline rounded-2xl p-8 shadow-2xl space-y-4"
             >
               <div className="flex items-start justify-between gap-3">
-                <div className="space-y-0.5">
-                  <span className="px-2.5 py-0.5 bg-destructive-red/15 text-destructive-red font-mono text-[10px] font-bold rounded uppercase">
+                <div className="space-y-1">
+                  <span className="inline-block px-2.5 py-0.5 bg-error/10 text-error font-mono text-[10px] font-bold rounded-full uppercase tracking-wider">
                     Report Message
                   </span>
-                  <h3 className="font-serif font-bold text-lg text-on-surface">Why are you reporting this?</h3>
+                  <h3 className="font-cormorant text-2xl font-normal text-on-surface">Why are you reporting this?</h3>
                 </div>
-                <button onClick={() => setReportTarget(null)} className="p-1.5 text-on-surface-variant hover:text-on-surface rounded-lg cursor-pointer" aria-label="Close">
+                <button onClick={() => setReportTarget(null)} className="p-1.5 text-on-surface-variant hover:text-on-surface rounded-full cursor-pointer" aria-label="Close">
                   <X size={16} />
                 </button>
               </div>
 
-              <blockquote className="p-3 bg-surface-card border border-hairline rounded-xl text-xs text-on-surface-variant italic">
+              <blockquote className="p-3 bg-surface-low border border-hairline rounded-xl text-xs text-on-surface-variant italic">
                 "{reportTarget.content}"
               </blockquote>
 
@@ -615,8 +615,8 @@ const ChatPage = () => {
                     onClick={() => setReportReason(r)}
                     className={`w-full text-left px-3.5 py-2.5 rounded-xl border text-xs transition-all cursor-pointer focus-ring ${
                       reportReason === r
-                        ? 'bg-primary-coral text-white border-primary-coral font-semibold'
-                        : 'bg-surface-lowest text-on-surface border-hairline hover:border-primary-coral'
+                        ? 'bg-primary text-on-primary border-primary font-semibold'
+                        : 'bg-surface-low text-on-surface border-hairline hover:border-primary'
                     }`}
                   >
                     {r}
@@ -627,7 +627,7 @@ const ChatPage = () => {
               <button
                 onClick={handleReport}
                 disabled={!reportReason || reporting}
-                className="w-full py-3 bg-destructive-red hover:bg-red-600 disabled:opacity-40 text-white font-bold rounded-xl text-xs transition-all flex items-center justify-center gap-2 cursor-pointer btn-interactive focus-ring"
+                className="w-full py-3 bg-error hover:opacity-90 disabled:opacity-40 text-white font-bold rounded-full text-xs tracking-wider uppercase transition-all flex items-center justify-center gap-2 cursor-pointer btn-interactive focus-ring"
               >
                 {reporting ? <RefreshCw size={14} className="animate-spin" /> : <Flag size={14} />}
                 Submit Report to Moderators

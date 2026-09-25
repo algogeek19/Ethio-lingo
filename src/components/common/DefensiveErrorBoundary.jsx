@@ -111,12 +111,12 @@ export class DefensiveErrorBoundary extends Component {
       return (
         <div className="min-h-screen bg-canvas text-on-surface flex items-center justify-center p-6 font-sans">
           <div className="max-w-md w-full bg-surface-lowest border border-hairline rounded-2xl p-6 sm:p-8 shadow-xl text-center space-y-5">
-            <div className="w-14 h-14 bg-red-500/10 text-red-500 rounded-2xl flex items-center justify-center mx-auto border border-red-500/20 shadow-inner">
-              <AlertTriangle size={28} />
+            <div className="w-14 h-14 bg-error/10 text-destructive-red rounded-full flex items-center justify-center mx-auto border border-error/25 shadow-inner">
+              <AlertTriangle size={26} />
             </div>
 
             <div className="space-y-2">
-              <h2 className="font-serif font-bold text-xl text-on-surface">
+              <h2 className="font-cormorant text-2xl font-medium text-on-surface">
                 Application Recovered
               </h2>
               <p className="text-xs text-on-surface-variant leading-relaxed">
@@ -132,7 +132,7 @@ export class DefensiveErrorBoundary extends Component {
 
             <button
               onClick={this.handleReload}
-              className="w-full py-3 px-4 bg-primary-coral hover:bg-primary-hover text-white font-bold text-xs rounded-xl shadow-md transition-all flex items-center justify-center gap-2 focus-ring btn-interactive cursor-pointer"
+              className="w-full py-3 px-4 rounded-full bg-primary text-on-primary hover:bg-primary-container font-bold text-xs tracking-wider uppercase shadow-md transition-all flex items-center justify-center gap-2 focus-ring btn-interactive cursor-pointer"
             >
               <RefreshCw size={15} />
               <span>Reload Platform</span>

@@ -189,12 +189,10 @@ const AdminPaymentManagement = () => {
   return (
     <div className="space-y-6 transition-colors duration-250">
       {/* Sub-Tab Navigation Header */}
-      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-hairline pb-4">
+      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-hairline/50 pb-6">
         <div>
-          <span className="px-2.5 py-0.5 bg-surface-dark text-warning-amber border border-stone-800 font-mono text-[10px] font-bold rounded uppercase">
-            ADMIN FINANCE CENTER
-          </span>
-          <h2 className="font-serif font-bold text-2xl text-on-surface mt-1">
+          <span className="mono-micro-label text-primary">ADMIN FINANCE CENTER</span>
+          <h2 className="font-cormorant text-3xl md:text-4xl font-normal text-on-surface mt-1">
             Payment Approvals & Bank Accounts Catalog
           </h2>
         </div>
@@ -204,9 +202,9 @@ const AdminPaymentManagement = () => {
           <button
             onClick={() => loadData(false)}
             disabled={isRefreshing}
-            className="px-4 py-2 bg-surface-lowest border border-hairline hover:border-primary-coral text-on-surface font-semibold text-xs rounded-xl transition-all flex items-center gap-2 shadow-xs focus-ring btn-interactive cursor-pointer"
+            className="rounded-full bg-surface-container text-on-surface border border-hairline hover:bg-surface-container-high font-semibold text-xs tracking-wider uppercase px-5 py-2.5 transition-all flex items-center gap-2 focus-ring btn-interactive cursor-pointer"
           >
-            <RefreshCw size={14} className={isRefreshing ? 'animate-spin text-primary-coral' : 'text-primary-coral'} />
+            <RefreshCw size={14} className={isRefreshing ? 'animate-spin text-primary' : 'text-primary'} />
             <span>{isRefreshing ? 'Refreshing...' : 'Refresh Deposit Requests'}</span>
           </button>
         </div>
@@ -215,10 +213,10 @@ const AdminPaymentManagement = () => {
       {/* Styled Feedback Banner */}
       {feedbackMsg && (
         <div
-          className={`p-4 rounded-xl border text-xs font-mono font-bold flex items-center gap-2 animate-fade-in shadow-xs ${
+          className={`p-4 rounded-xl border text-xs font-mono font-semibold flex items-center gap-2 animate-fade-in shadow-sm ${
             feedbackMsg.type === 'error'
-              ? 'bg-red-500/15 border-red-500/30 text-destructive-red'
-              : 'bg-green-500/15 border-green-500/30 text-success-green'
+              ? 'bg-destructive-red/10 border-destructive-red/30 text-destructive-red'
+              : 'bg-success-green/10 border-success-green/30 text-success-green'
           }`}
         >
           {feedbackMsg.type === 'error' ? <AlertCircle size={16} /> : <CheckCircle size={16} />}
@@ -234,7 +232,7 @@ const AdminPaymentManagement = () => {
           onClick={() => setActiveTab('deposits')}
           className={`px-5 py-3 text-sm font-semibold border-b-2 transition-all flex items-center gap-2 focus-ring ${
             activeTab === 'deposits'
-              ? 'border-primary-coral text-primary-coral'
+              ? 'border-primary text-primary'
               : 'border-transparent text-on-surface-variant hover:text-on-surface'
           }`}
         >
@@ -248,7 +246,7 @@ const AdminPaymentManagement = () => {
           onClick={() => setActiveTab('accounts')}
           className={`px-5 py-3 text-sm font-semibold border-b-2 transition-all flex items-center gap-2 focus-ring ${
             activeTab === 'accounts'
-              ? 'border-primary-coral text-primary-coral'
+              ? 'border-primary text-primary'
               : 'border-transparent text-on-surface-variant hover:text-on-surface'
           }`}
         >
@@ -259,19 +257,19 @@ const AdminPaymentManagement = () => {
 
       {/* SUB-TAB 1: DEPOSIT VERIFICATION QUEUE */}
       {activeTab === 'deposits' && (
-        <div className="space-y-4">
+        <div className="space-y-5">
           {/* Filters Bar */}
-          <div className="flex flex-wrap items-center justify-between gap-3 bg-canvas border border-hairline rounded-xl p-4">
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-mono text-on-surface-variant font-bold">Filter Status:</span>
+          <div className="flex flex-wrap items-center justify-between gap-3 bg-surface-lowest border border-hairline/60 rounded-2xl p-4 shadow-sm">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="mono-micro-label text-on-surface-variant">Filter Status:</span>
               {['pending', 'approved', 'declined', 'all'].map((st) => (
                 <button
                   key={st}
                   onClick={() => setDepositFilter(st)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold capitalize transition-all focus-ring ${
+                  className={`rounded-full px-3.5 py-1.5 text-[10px] font-mono font-semibold uppercase tracking-wider transition-all focus-ring cursor-pointer ${
                     depositFilter === st
-                      ? 'bg-surface-dark text-white'
-                      : 'bg-surface-lowest text-on-surface border border-hairline hover:border-primary-coral'
+                      ? 'bg-primary text-on-primary shadow-sm'
+                      : 'bg-surface-container text-on-surface-variant border border-hairline hover:border-primary'
                   }`}
                 >
                   {st}
@@ -282,7 +280,7 @@ const AdminPaymentManagement = () => {
             <button
               onClick={() => loadData(false)}
               disabled={isRefreshing}
-              className="text-xs font-mono text-primary-coral hover:underline flex items-center gap-1 font-bold focus-ring rounded p-1"
+              className="text-xs font-mono text-primary hover:underline flex items-center gap-1 font-bold focus-ring rounded p-1 cursor-pointer"
             >
               <RefreshCw size={12} className={isRefreshing ? 'animate-spin' : ''} />
               <span>Reload Queue</span>
@@ -290,47 +288,47 @@ const AdminPaymentManagement = () => {
           </div>
 
           {/* Deposit Requests Table */}
-          <div className="overflow-x-auto rounded-2xl border border-hairline bg-canvas shadow-xs">
+          <div className="overflow-x-auto rounded-2xl border border-hairline/60 bg-surface-lowest shadow-sm">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-surface-card border-b border-hairline text-[11px] font-semibold text-on-surface-variant uppercase tracking-wider">
-                  <th className="py-3.5 px-4">Learner Name & Email</th>
-                  <th className="py-3.5 px-4">Payment Channel</th>
-                  <th className="py-3.5 px-4">Transaction Ref (TxRef)</th>
-                  <th className="py-3.5 px-4">Amount</th>
-                  <th className="py-3.5 px-4">Receipt Screenshot</th>
-                  <th className="py-3.5 px-4">Status</th>
-                  <th className="py-3.5 px-4 text-right">Actions</th>
+                <tr className="font-mono text-[10px] uppercase tracking-widest text-text-muted">
+                  <th className="py-3.5 px-4 font-normal">Learner Name & Email</th>
+                  <th className="py-3.5 px-4 font-normal">Payment Channel</th>
+                  <th className="py-3.5 px-4 font-normal">Transaction Ref (TxRef)</th>
+                  <th className="py-3.5 px-4 font-normal">Amount</th>
+                  <th className="py-3.5 px-4 font-normal">Receipt Screenshot</th>
+                  <th className="py-3.5 px-4 font-normal">Status</th>
+                  <th className="py-3.5 px-4 text-right font-normal">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-hairline text-xs font-mono">
+              <tbody className="text-xs font-mono">
                 {filteredDeposits.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="py-8 text-center text-text-muted font-sans">
+                    <td colSpan={7} className="py-8 text-center text-text-muted font-sans border-t border-hairline/50">
                       No deposit verification requests found for filter "{depositFilter}".
                     </td>
                   </tr>
                 ) : (
                   filteredDeposits.map((dep) => (
-                    <tr key={dep.id} className="hover:bg-surface-soft transition-colors">
+                    <tr key={dep.id} className="border-t border-hairline/50 hover:bg-surface-soft transition-colors">
                       <td className="py-3.5 px-4 font-sans">
-                        <div className="font-bold text-on-surface">{dep.userName}</div>
+                        <div className="font-semibold text-on-surface">{dep.userName}</div>
                         <div className="text-[11px] text-text-muted font-mono">{dep.userEmail}</div>
                       </td>
                       <td className="py-3.5 px-4 font-sans font-medium text-on-surface">
                         {dep.paymentChannel}
                       </td>
-                      <td className="py-3.5 px-4 text-primary-coral font-bold font-mono">
+                      <td className="py-3.5 px-4 text-primary font-bold font-mono">
                         {dep.transactionRef}
                       </td>
-                      <td className="py-3.5 px-4 font-bold text-on-surface">
+                      <td className="py-3.5 px-4 font-semibold text-on-surface tabular-nums">
                         {formatETB(dep.amount)}
                       </td>
                       <td className="py-3.5 px-4">
                         {dep.receiptUrl ? (
                           <button
                             onClick={() => setSelectedReceiptUrl(dep.receiptUrl)}
-                            className="px-2.5 py-1 bg-surface-soft border border-primary-coral/30 hover:border-primary-coral text-primary-coral text-[11px] font-bold rounded-lg flex items-center gap-1 focus-ring"
+                            className="rounded-full bg-surface-container border border-hairline hover:border-primary text-primary text-[10px] font-bold uppercase tracking-wider px-3 py-1 flex items-center gap-1 focus-ring cursor-pointer"
                           >
                             <Eye size={14} />
                             <span>View Screenshot</span>
@@ -341,12 +339,12 @@ const AdminPaymentManagement = () => {
                       </td>
                       <td className="py-3.5 px-4">
                         <span
-                          className={`px-2.5 py-1 text-[10px] font-bold rounded-lg uppercase ${
+                          className={`font-mono text-[9px] px-2 py-0.5 rounded uppercase tracking-wider ${
                             dep.status === 'pending'
-                              ? 'bg-amber-500/20 text-warning-amber border border-amber-500/30'
+                              ? 'bg-warning-amber/10 text-warning-amber'
                               : dep.status === 'approved'
-                              ? 'bg-green-500/20 text-success-green border border-green-500/30'
-                              : 'bg-red-500/20 text-destructive-red border border-red-500/30'
+                              ? 'bg-success-green/10 text-success-green'
+                              : 'bg-destructive-red/10 text-destructive-red'
                           }`}
                         >
                           {dep.status}
@@ -358,7 +356,7 @@ const AdminPaymentManagement = () => {
                             <button
                               onClick={() => setApproveModalData(dep)}
                               disabled={processingId === dep.id}
-                              className="px-3 py-1.5 bg-success-green hover:bg-green-600 text-white text-xs font-semibold rounded-xl flex items-center gap-1 shadow-xs focus-ring btn-interactive cursor-pointer"
+                              className="rounded-full bg-success-green text-white text-[10px] font-semibold uppercase tracking-wider px-3.5 py-1.5 flex items-center gap-1 shadow-sm transition-all hover:opacity-90 focus-ring btn-interactive cursor-pointer"
                             >
                               <Check size={14} />
                               <span>Approve</span>
@@ -366,7 +364,7 @@ const AdminPaymentManagement = () => {
                             <button
                               onClick={() => setDeclineModalData(dep)}
                               disabled={processingId === dep.id}
-                              className="px-3 py-1.5 bg-destructive-red hover:bg-red-700 text-white text-xs font-semibold rounded-xl flex items-center gap-1 shadow-xs focus-ring btn-interactive cursor-pointer"
+                              className="rounded-full bg-destructive-red text-white text-[10px] font-semibold uppercase tracking-wider px-3.5 py-1.5 flex items-center gap-1 shadow-sm transition-all hover:opacity-90 focus-ring btn-interactive cursor-pointer"
                             >
                               <X size={14} />
                               <span>Decline</span>
@@ -387,13 +385,11 @@ const AdminPaymentManagement = () => {
 
       {/* SUB-TAB 2: PAYMENT ACCOUNTS MANAGEMENT (BANK CRUD) */}
       {activeTab === 'accounts' && (
-        <div className="bg-canvas border border-hairline rounded-2xl p-6 space-y-6">
-          <div className="flex flex-wrap items-center justify-between gap-4 border-b border-hairline pb-4">
+        <div className="bg-surface-lowest border border-hairline/60 rounded-2xl p-6 shadow-sm space-y-6">
+          <div className="flex flex-wrap items-center justify-between gap-4 border-b border-hairline/50 pb-5">
             <div>
-              <span className="text-xs font-mono text-primary-coral font-bold uppercase">
-                PAYMENT ACCOUNTS CONFIGURATION
-              </span>
-              <h3 className="font-serif font-bold text-xl text-on-surface mt-0.5">
+              <span className="mono-micro-label text-primary">PAYMENT ACCOUNTS CONFIGURATION</span>
+              <h3 className="font-cormorant text-2xl font-normal text-on-surface mt-1">
                 Bank & Digital Wallet Accounts Catalog
               </h3>
               <p className="text-xs text-on-surface-variant">
@@ -413,7 +409,7 @@ const AdminPaymentManagement = () => {
                 });
                 setShowAccountForm(!showAccountForm);
               }}
-              className="px-4 py-2 bg-primary-coral text-white font-semibold text-xs rounded-xl hover:bg-primary-hover flex items-center gap-1.5 shadow-xs focus-ring btn-interactive cursor-pointer"
+              className="rounded-full bg-primary text-on-primary font-semibold text-xs tracking-wider uppercase px-5 py-2.5 hover:bg-primary-container flex items-center gap-1.5 shadow-sm focus-ring btn-interactive cursor-pointer"
             >
               <Plus size={16} />
               <span>Add New Bank / Wallet Account</span>
@@ -422,56 +418,56 @@ const AdminPaymentManagement = () => {
 
           {/* Account Form (Add/Edit) */}
           {showAccountForm && (
-            <form onSubmit={handleSaveAccount} className="p-5 bg-surface-lowest border-2 border-primary-coral rounded-2xl space-y-4 animate-fade-in shadow-md">
-              <h4 className="font-serif font-bold text-base text-on-surface">
+            <form onSubmit={handleSaveAccount} className="p-6 bg-surface-lowest border-2 border-primary rounded-2xl space-y-4 animate-fade-in shadow-sm">
+              <h4 className="font-cormorant text-xl font-normal text-on-surface">
                 {editingAccountId ? 'Edit Payment Account' : 'Add New Payment Account'}
               </h4>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-mono font-bold text-on-surface-variant mb-1">Bank / Wallet Name *</label>
+                  <label className="mono-micro-label text-on-surface-variant block mb-1.5">Bank / Wallet Name *</label>
                   <input
                     type="text"
                     placeholder="e.g. Commercial Bank of Ethiopia (CBE) / Telebirr"
                     value={accountFormData.bankName}
                     onChange={(e) => setAccountFormData({ ...accountFormData, bankName: e.target.value })}
-                    className="w-full px-3.5 py-2.5 bg-canvas border border-hairline rounded-xl text-xs text-on-surface focus-ring"
+                    className="w-full px-3.5 py-2.5 bg-surface-low border border-hairline rounded-xl text-xs text-on-surface outline-none focus:border-primary"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-mono font-bold text-on-surface-variant mb-1">Account Holder Name *</label>
+                  <label className="mono-micro-label text-on-surface-variant block mb-1.5">Account Holder Name *</label>
                   <input
                     type="text"
                     placeholder="e.g. Ethio-Lingo Learning Press"
                     value={accountFormData.accountName}
                     onChange={(e) => setAccountFormData({ ...accountFormData, accountName: e.target.value })}
-                    className="w-full px-3.5 py-2.5 bg-canvas border border-hairline rounded-xl text-xs text-on-surface focus-ring"
+                    className="w-full px-3.5 py-2.5 bg-surface-low border border-hairline rounded-xl text-xs text-on-surface outline-none focus:border-primary"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-mono font-bold text-on-surface-variant mb-1">Account Number / Phone Number *</label>
+                  <label className="mono-micro-label text-on-surface-variant block mb-1.5">Account Number / Phone Number *</label>
                   <input
                     type="text"
                     placeholder="e.g. 1000123456789 or 0911223344"
                     value={accountFormData.accountNumber}
                     onChange={(e) => setAccountFormData({ ...accountFormData, accountNumber: e.target.value })}
-                    className="w-full px-3.5 py-2.5 bg-canvas border border-hairline rounded-xl text-xs font-mono text-on-surface focus-ring"
+                    className="w-full px-3.5 py-2.5 bg-surface-low border border-hairline rounded-xl text-xs font-mono text-on-surface outline-none focus:border-primary"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-mono font-bold text-on-surface-variant mb-1">Transfer Instructions (Optional)</label>
+                  <label className="mono-micro-label text-on-surface-variant block mb-1.5">Transfer Instructions (Optional)</label>
                   <input
                     type="text"
                     placeholder="e.g. Use CBE Mobile App or *889# to transfer."
                     value={accountFormData.instructions}
                     onChange={(e) => setAccountFormData({ ...accountFormData, instructions: e.target.value })}
-                    className="w-full px-3.5 py-2.5 bg-canvas border border-hairline rounded-xl text-xs text-on-surface focus-ring"
+                    className="w-full px-3.5 py-2.5 bg-surface-low border border-hairline rounded-xl text-xs text-on-surface outline-none focus:border-primary"
                   />
                 </div>
               </div>
@@ -482,24 +478,24 @@ const AdminPaymentManagement = () => {
                   id="isActive"
                   checked={accountFormData.isActive}
                   onChange={(e) => setAccountFormData({ ...accountFormData, isActive: e.target.checked })}
-                  className="rounded text-primary-coral focus-ring"
+                  className="rounded accent-primary focus-ring"
                 />
-                <label htmlFor="isActive" className="text-xs font-mono text-on-surface font-bold">
+                <label htmlFor="isActive" className="text-xs font-mono text-on-surface font-semibold">
                   Active (Visible to learners in deposit modal)
                 </label>
               </div>
 
-              <div className="flex justify-end gap-2 pt-2 border-t border-hairline">
+              <div className="flex justify-end gap-2 pt-4 border-t border-hairline/50">
                 <button
                   type="button"
                   onClick={() => setShowAccountForm(false)}
-                  className="px-4 py-2 border border-hairline text-xs font-semibold rounded-xl text-on-surface-variant focus-ring"
+                  className="rounded-full bg-surface-container text-on-surface border border-hairline text-xs font-semibold px-5 py-2.5 hover:bg-surface-container-high focus-ring cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-primary-coral text-white text-xs font-semibold rounded-xl hover:bg-primary-hover focus-ring btn-interactive"
+                  className="rounded-full bg-primary text-on-primary text-xs font-semibold px-5 py-2.5 hover:bg-primary-container focus-ring btn-interactive cursor-pointer"
                 >
                   Save Payment Account
                 </button>
@@ -512,26 +508,26 @@ const AdminPaymentManagement = () => {
             {paymentAccounts.map((acc) => (
               <div
                 key={acc.id}
-                className="p-5 bg-surface-lowest border border-hairline rounded-2xl space-y-3 shadow-xs relative"
+                className="p-5 bg-surface-lowest border border-hairline/60 rounded-2xl space-y-3 shadow-sm relative"
               >
-                <div className="flex items-start justify-between">
-                  <div className="space-y-0.5">
-                    <span className="text-[10px] font-mono font-bold px-2 py-0.5 bg-surface-card text-primary-coral rounded uppercase">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="space-y-1">
+                    <span className="font-mono text-[9px] px-2 py-0.5 bg-primary/10 text-primary rounded uppercase tracking-wider">
                       {acc.bankName}
                     </span>
-                    <h4 className="font-serif font-bold text-base text-on-surface">{acc.accountName}</h4>
+                    <h4 className="font-cormorant text-lg font-normal text-on-surface">{acc.accountName}</h4>
                   </div>
 
                   <span
-                    className={`px-2 py-0.5 text-[9px] font-mono font-bold rounded uppercase ${
-                      acc.isActive ? 'bg-green-500/20 text-success-green' : 'bg-surface-card text-text-muted'
+                    className={`font-mono text-[9px] px-2 py-0.5 rounded uppercase tracking-wider ${
+                      acc.isActive ? 'bg-success-green/10 text-success-green' : 'bg-surface-container text-text-muted'
                     }`}
                   >
                     {acc.isActive ? 'Active' : 'Inactive'}
                   </span>
                 </div>
 
-                <div className="p-3 bg-canvas border border-hairline rounded-xl font-mono text-sm font-bold text-on-surface">
+                <div className="p-3 bg-surface-low border border-hairline rounded-xl font-mono text-sm font-semibold text-on-surface">
                   {acc.accountNumber}
                 </div>
 
@@ -539,17 +535,17 @@ const AdminPaymentManagement = () => {
                   <p className="text-xs text-on-surface-variant italic">{acc.instructions}</p>
                 )}
 
-                <div className="flex justify-end gap-2 pt-2 border-t border-hairline">
+                <div className="flex justify-end gap-2 pt-3 border-t border-hairline/50">
                   <button
                     onClick={() => handleEditAccount(acc)}
-                    className="p-1.5 text-on-surface-variant hover:text-primary-coral hover:bg-surface-card rounded-lg transition-colors focus-ring"
+                    className="p-1.5 text-on-surface-variant hover:text-primary hover:bg-surface-container rounded-full transition-colors focus-ring cursor-pointer"
                     title="Edit Account"
                   >
                     <Edit3 size={16} />
                   </button>
                   <button
                     onClick={() => setDeleteAccountModalData(acc)}
-                    className="p-1.5 text-destructive-red hover:bg-red-500/10 rounded-lg transition-colors focus-ring"
+                    className="p-1.5 text-destructive-red hover:bg-destructive-red/10 rounded-full transition-colors focus-ring cursor-pointer"
                     title="Delete Account"
                   >
                     <Trash2 size={16} />
@@ -569,40 +565,40 @@ const AdminPaymentManagement = () => {
           role="dialog"
           aria-modal="true"
           aria-labelledby="approve-deposit-title"
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fade-in"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/60 backdrop-blur-sm animate-fade-in"
         >
-          <div className="bg-canvas border border-hairline rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl relative overflow-hidden transition-colors duration-250">
-            <div className="w-12 h-12 bg-green-500/20 text-success-green rounded-full flex items-center justify-center">
+          <div className="bg-surface-lowest border border-hairline rounded-2xl max-w-md w-full p-8 space-y-4 shadow-2xl relative overflow-hidden transition-colors duration-250">
+            <div className="w-12 h-12 rounded-full bg-success-green/10 text-success-green flex items-center justify-center">
               <ShieldCheck size={24} />
             </div>
 
             <div>
-              <h3 id="approve-deposit-title" className="font-serif font-bold text-lg text-on-surface">Confirm Deposit Approval</h3>
+              <h3 id="approve-deposit-title" className="font-cormorant text-2xl font-normal text-on-surface">Confirm Deposit Approval</h3>
               <p className="text-xs text-on-surface-variant mt-1">
                 Are you sure you want to approve this deposit? The user account will be activated and their escrow vault stake will be credited immediately.
               </p>
             </div>
 
-            <div className="p-3 bg-surface-soft border border-hairline rounded-xl font-mono text-xs space-y-1 text-on-surface">
+            <div className="p-3.5 bg-surface-low border border-hairline rounded-xl font-mono text-xs space-y-1 text-on-surface">
               <div>Learner: <strong>{approveModalData.userName}</strong> ({approveModalData.userEmail})</div>
-              <div>TxRef ID: <strong className="text-primary-coral">{approveModalData.transactionRef}</strong></div>
+              <div>TxRef ID: <strong className="text-primary">{approveModalData.transactionRef}</strong></div>
               <div>Channel: <strong>{approveModalData.paymentChannel}</strong></div>
               <div>Total Deposited: <strong>{formatETB(approveModalData.amount)}</strong></div>
               <div>Net Escrow Credit (0% fee): <strong className="text-success-green">{formatETB(approveModalData.amount)}</strong></div>
             </div>
 
-            <div className="flex justify-end gap-2 pt-2 border-t border-hairline">
+            <div className="flex justify-end gap-2 pt-4 border-t border-hairline/50">
               <button
                 onClick={() => setApproveModalData(null)}
                 disabled={processingId === approveModalData.id}
-                className="px-4 py-2 border border-hairline text-xs font-semibold rounded-xl text-on-surface-variant hover:bg-surface-card focus-ring"
+                className="rounded-full bg-surface-container text-on-surface border border-hairline text-xs font-semibold px-5 py-2.5 hover:bg-surface-container-high focus-ring cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 onClick={handleConfirmApproveDeposit}
                 disabled={processingId === approveModalData.id}
-                className="px-5 py-2 bg-success-green hover:bg-green-600 text-white text-xs font-semibold rounded-xl shadow-xs flex items-center gap-1.5 focus-ring btn-interactive cursor-pointer"
+                className="rounded-full bg-success-green text-white text-xs font-semibold px-5 py-2.5 shadow-sm flex items-center gap-1.5 focus-ring btn-interactive cursor-pointer"
               >
                 {processingId === approveModalData.id ? 'Processing...' : 'Confirm & Approve Payment'}
               </button>
@@ -617,24 +613,24 @@ const AdminPaymentManagement = () => {
           role="dialog"
           aria-modal="true"
           aria-labelledby="decline-deposit-title"
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fade-in"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/60 backdrop-blur-sm animate-fade-in"
         >
-          <div className="bg-canvas border border-hairline rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl transition-colors duration-250">
-            <div className="w-12 h-12 bg-red-500/20 text-destructive-red rounded-full flex items-center justify-center">
+          <div className="bg-surface-lowest border border-hairline rounded-2xl max-w-md w-full p-8 space-y-4 shadow-2xl transition-colors duration-250">
+            <div className="w-12 h-12 rounded-full bg-destructive-red/10 text-destructive-red flex items-center justify-center">
               <XCircle size={24} />
             </div>
 
             <div>
-              <h3 id="decline-deposit-title" className="font-serif font-bold text-lg text-on-surface">Decline Deposit Request</h3>
+              <h3 id="decline-deposit-title" className="font-cormorant text-2xl font-normal text-on-surface">Decline Deposit Request</h3>
               <p className="text-xs text-on-surface-variant mt-1">
                 Learner: <strong>{declineModalData.userName}</strong> ({declineModalData.userEmail})<br />
-                TxRef: <strong className="font-mono text-primary-coral">{declineModalData.transactionRef}</strong>
+                TxRef: <strong className="font-mono text-primary">{declineModalData.transactionRef}</strong>
               </p>
             </div>
 
             <form onSubmit={handleConfirmDeclineDeposit} className="space-y-4">
               <div>
-                <label className="block text-xs font-mono font-bold text-on-surface-variant mb-1">
+                <label className="mono-micro-label text-on-surface-variant block mb-1.5">
                   Reason for Declining
                 </label>
                 <textarea
@@ -642,23 +638,23 @@ const AdminPaymentManagement = () => {
                   value={declineReason}
                   onChange={(e) => setDeclineReason(e.target.value)}
                   placeholder="e.g. Transaction reference ID not found in bank statement or amount mismatch."
-                  className="w-full p-3 bg-surface-lowest border border-hairline rounded-xl text-xs text-on-surface focus-ring"
+                  className="w-full p-3 bg-surface-low border border-hairline rounded-xl text-xs text-on-surface outline-none focus:border-primary"
                   required
                 />
               </div>
 
-              <div className="flex justify-end gap-2 pt-2 border-t border-hairline">
+              <div className="flex justify-end gap-2 pt-4 border-t border-hairline/50">
                 <button
                   type="button"
                   onClick={() => setDeclineModalData(null)}
-                  className="px-4 py-2 border border-hairline text-xs font-semibold rounded-xl text-on-surface-variant hover:bg-surface-card focus-ring"
+                  className="rounded-full bg-surface-container text-on-surface border border-hairline text-xs font-semibold px-5 py-2.5 hover:bg-surface-container-high focus-ring cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={processingId === declineModalData.id}
-                  className="px-5 py-2 bg-destructive-red hover:bg-red-700 text-white text-xs font-semibold rounded-xl shadow-xs focus-ring btn-interactive cursor-pointer"
+                  className="rounded-full bg-destructive-red text-white text-xs font-semibold px-5 py-2.5 shadow-sm focus-ring btn-interactive cursor-pointer"
                 >
                   {processingId === declineModalData.id ? 'Declining...' : 'Confirm Decline'}
                 </button>
@@ -674,30 +670,30 @@ const AdminPaymentManagement = () => {
           role="dialog"
           aria-modal="true"
           aria-labelledby="delete-account-title"
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fade-in"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/60 backdrop-blur-sm animate-fade-in"
         >
-          <div className="bg-canvas border border-hairline rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl transition-colors duration-250">
-            <div className="w-12 h-12 bg-red-500/20 text-destructive-red rounded-full flex items-center justify-center">
+          <div className="bg-surface-lowest border border-hairline rounded-2xl max-w-md w-full p-8 space-y-4 shadow-2xl transition-colors duration-250">
+            <div className="w-12 h-12 rounded-full bg-destructive-red/10 text-destructive-red flex items-center justify-center">
               <Trash2 size={24} />
             </div>
 
             <div>
-              <h3 id="delete-account-title" className="font-serif font-bold text-lg text-on-surface">Delete Payment Account</h3>
+              <h3 id="delete-account-title" className="font-cormorant text-2xl font-normal text-on-surface">Delete Payment Account</h3>
               <p className="text-xs text-on-surface-variant mt-1">
                 Are you sure you want to delete <strong>{deleteAccountModalData.bankName}</strong> ({deleteAccountModalData.accountNumber})? Learners will no longer see this bank account.
               </p>
             </div>
 
-            <div className="flex justify-end gap-2 pt-2 border-t border-hairline">
+            <div className="flex justify-end gap-2 pt-4 border-t border-hairline/50">
               <button
                 onClick={() => setDeleteAccountModalData(null)}
-                className="px-4 py-2 border border-hairline text-xs font-semibold rounded-xl text-on-surface-variant hover:bg-surface-card focus-ring"
+                className="rounded-full bg-surface-container text-on-surface border border-hairline text-xs font-semibold px-5 py-2.5 hover:bg-surface-container-high focus-ring cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 onClick={handleConfirmDeleteAccount}
-                className="px-5 py-2 bg-destructive-red hover:bg-red-700 text-white text-xs font-semibold rounded-xl shadow-xs focus-ring btn-interactive cursor-pointer"
+                className="rounded-full bg-destructive-red text-white text-xs font-semibold px-5 py-2.5 shadow-sm focus-ring btn-interactive cursor-pointer"
               >
                 Confirm Delete
               </button>
@@ -712,12 +708,12 @@ const AdminPaymentManagement = () => {
           role="dialog"
           aria-modal="true"
           aria-labelledby="receipt-lightbox-title"
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-xs animate-fade-in"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/80 backdrop-blur-sm animate-fade-in"
         >
-          <div className="bg-surface-dark border border-stone-700 rounded-2xl max-w-2xl w-full p-4 relative space-y-3">
-            <div className="flex items-center justify-between text-white border-b border-stone-800 pb-2">
-              <span id="receipt-lightbox-title" className="font-mono text-xs font-bold">Uploaded Payment Receipt Screenshot</span>
-              <button onClick={() => setSelectedReceiptUrl(null)} aria-label="Close image" className="p-1 hover:text-red-400 focus-ring rounded">
+          <div className="bg-surface-dark border border-hairline rounded-2xl max-w-2xl w-full p-4 relative space-y-3">
+            <div className="flex items-center justify-between text-on-surface border-b border-hairline pb-2">
+              <span id="receipt-lightbox-title" className="font-mono text-xs font-semibold">Uploaded Payment Receipt Screenshot</span>
+              <button onClick={() => setSelectedReceiptUrl(null)} aria-label="Close image" className="p-1 hover:text-destructive-red focus-ring rounded cursor-pointer">
                 <X size={20} />
               </button>
             </div>
@@ -729,7 +725,7 @@ const AdminPaymentManagement = () => {
                 href={selectedReceiptUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="px-4 py-2 bg-primary-coral hover:bg-primary-hover text-white text-xs font-semibold rounded-xl flex items-center gap-1.5 focus-ring btn-interactive"
+                className="rounded-full bg-primary hover:bg-primary-container text-on-primary text-xs font-semibold px-5 py-2.5 flex items-center gap-1.5 focus-ring btn-interactive"
               >
                 <ExternalLink size={14} />
                 <span>Open Original Image</span>

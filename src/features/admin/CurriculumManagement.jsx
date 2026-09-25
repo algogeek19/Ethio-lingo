@@ -227,19 +227,15 @@ const CurriculumManagement = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 transition-colors duration-250">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 py-10 space-y-10 transition-colors duration-250">
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-hairline pb-6">
+      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-hairline/50 pb-6">
         <div>
-          <div className="flex items-center gap-2">
-            <span className="px-2.5 py-0.5 bg-surface-dark text-warning-amber border border-stone-800 font-mono text-[10px] font-bold rounded uppercase">
-              CURRICULUM MANAGEMENT PORTAL
-            </span>
-          </div>
-          <h1 className="font-serif font-bold text-3xl sm:text-4xl text-on-surface mt-2">
+          <span className="mono-micro-label text-primary">CURRICULUM</span>
+          <h1 className="font-cormorant text-4xl md:text-5xl font-normal text-on-surface mt-2">
             Curriculum Content & Question Bank Manager
           </h1>
-          <p className="text-xs text-on-surface-variant mt-1">
+          <p className="text-xs text-on-surface-variant mt-2">
             Manage daily lesson YouTube videos, reference PDF manuals, listening task URLs, and bulk import diagnostic exam questions across all 6 levels.
           </p>
         </div>
@@ -247,7 +243,7 @@ const CurriculumManagement = () => {
         <div className="flex items-center gap-3">
           <Link
             to="/admin"
-            className="px-4 py-2 bg-surface-card hover:bg-surface-high text-on-surface font-semibold text-xs rounded-xl transition-all focus-ring"
+            className="rounded-full bg-surface-container text-on-surface border border-hairline hover:bg-surface-container-high font-semibold text-xs tracking-wider uppercase px-5 py-2.5 transition-all focus-ring"
           >
             &larr; Back to Dashboard
           </Link>
@@ -256,7 +252,7 @@ const CurriculumManagement = () => {
 
       {/* LEVEL SELECTION PILLS */}
       <div className="space-y-3">
-        <label className="block text-xs font-mono font-bold text-on-surface-variant uppercase tracking-wider">
+        <label className="mono-micro-label text-on-surface-variant block">
           SELECT CURRICULUM LEVEL TO MANAGE (FREE TRIAL + 6 LEVELS)
         </label>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-7 gap-2">
@@ -270,10 +266,10 @@ const CurriculumManagement = () => {
                   setSelectedLevel(lvl);
                   if (lvl === 'Free Trial' && selectedDay > 7) setSelectedDay(1);
                 }}
-                className={`py-3 px-3 rounded-xl border text-xs font-semibold text-center transition-all focus-ring cursor-pointer ${
+                className={`py-3 px-3 rounded-full border text-xs font-semibold text-center transition-all focus-ring cursor-pointer ${
                   isSelected
-                    ? 'bg-primary-coral text-white border-primary-coral shadow-md font-bold'
-                    : 'bg-surface-lowest text-on-surface border-hairline hover:border-primary-coral'
+                    ? 'bg-primary text-on-primary border-primary shadow-sm font-bold'
+                    : 'bg-surface-lowest text-on-surface border-hairline hover:border-primary'
                 }`}
               >
                 <div>{lvl}</div>
@@ -292,7 +288,7 @@ const CurriculumManagement = () => {
           onClick={() => setCmsTab('modules')}
           className={`px-5 py-3 text-sm font-semibold border-b-2 transition-all flex items-center gap-2 focus-ring ${
             cmsTab === 'modules'
-              ? 'border-primary-coral text-primary-coral'
+              ? 'border-primary text-primary'
               : 'border-transparent text-on-surface-variant hover:text-on-surface'
           }`}
         >
@@ -306,7 +302,7 @@ const CurriculumManagement = () => {
           onClick={() => setCmsTab('json')}
           className={`px-5 py-3 text-sm font-semibold border-b-2 transition-all flex items-center gap-2 focus-ring ${
             cmsTab === 'json'
-              ? 'border-primary-coral text-primary-coral'
+              ? 'border-primary text-primary'
               : 'border-transparent text-on-surface-variant hover:text-on-surface'
           }`}
         >
@@ -319,9 +315,9 @@ const CurriculumManagement = () => {
       {cmsTab === 'modules' && (
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           {/* Day 1 to Day 30 Selector Sidebar */}
-          <div className="bg-canvas border border-hairline rounded-2xl p-4 space-y-3 lg:col-span-1 h-fit">
-            <div className="flex items-center justify-between border-b border-hairline pb-2">
-              <span className="text-xs font-mono font-bold text-primary-coral uppercase">SELECT MODULE DAY</span>
+          <div className="bg-surface-lowest border border-hairline/60 rounded-2xl p-5 space-y-3 shadow-sm lg:col-span-1 h-fit">
+            <div className="flex items-center justify-between border-b border-hairline/50 pb-3">
+              <span className="mono-micro-label text-primary">Select Module Day</span>
               <span className="text-[11px] font-mono text-text-muted">{selectedLevel}</span>
             </div>
 
@@ -334,17 +330,17 @@ const CurriculumManagement = () => {
                     key={dayNum}
                     onClick={() => handleSelectDay(dayNum)}
                     title={isPopulated ? `Day ${dayNum} - Added to Database` : `Day ${dayNum} - Draft / Unpopulated`}
-                    className={`p-2 text-xs font-mono font-bold rounded-xl border text-center transition-all focus-ring relative flex flex-col items-center justify-center ${
+                    className={`p-2 text-xs font-mono font-semibold rounded-xl border text-center transition-all focus-ring relative flex flex-col items-center justify-center ${
                       isSelected
-                        ? 'bg-surface-dark text-white border-surface-dark shadow-xs'
+                        ? 'bg-primary text-on-primary border-primary shadow-sm'
                         : isPopulated
-                        ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/40 hover:border-emerald-500'
-                        : 'bg-surface-lowest text-on-surface border-hairline hover:border-primary-coral opacity-80'
+                        ? 'bg-success-green/10 text-success-green border-success-green/40 hover:border-success-green'
+                        : 'bg-surface-lowest text-on-surface border-hairline hover:border-primary opacity-80'
                     }`}
                   >
                     <span>D{dayNum}</span>
                     {isPopulated ? (
-                      <span className="text-[9px] font-sans font-bold text-emerald-600 dark:text-emerald-400 leading-none mt-0.5">
+                      <span className="text-[9px] font-sans font-bold text-success-green leading-none mt-0.5">
                         ✓ Added
                       </span>
                     ) : (
@@ -359,26 +355,26 @@ const CurriculumManagement = () => {
           </div>
 
           {/* Module Content Form for Selected Day */}
-          <div className="bg-canvas border border-hairline rounded-2xl p-6 lg:col-span-3 space-y-6">
-            <div className="flex items-center justify-between border-b border-hairline pb-4">
+          <div className="bg-surface-lowest border border-hairline/60 rounded-2xl p-6 shadow-sm lg:col-span-3 space-y-6">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-hairline/50 pb-4">
               <div>
-                <span className="text-xs font-mono text-primary-coral font-bold uppercase">
+                <span className="mono-micro-label text-primary">
                   EDITING {selectedLevel} • DAY {selectedDay} MODULE
                 </span>
-                <h3 className="font-serif font-bold text-xl text-on-surface mt-0.5">
+                <h3 className="font-cormorant text-2xl font-normal text-on-surface mt-1">
                   Task Videos & Reference Guide Assignment
                 </h3>
               </div>
 
               {saveSuccessMsg && (
-                <span className="px-3 py-1 bg-green-500/20 border border-green-500/40 text-success-green text-xs font-mono font-semibold rounded-lg animate-fade-in">
+                <span className="px-3 py-1 bg-success-green/10 border border-success-green/30 text-success-green text-xs font-mono font-semibold rounded-full animate-fade-in">
                   ✓ {saveSuccessMsg}
                 </span>
               )}
             </div>
 
             {moduleErrorMsg && (
-              <div className="p-4 bg-red-500/15 border border-red-500/30 text-destructive-red text-xs rounded-xl flex items-center gap-2 font-mono animate-fade-in">
+              <div className="p-4 bg-destructive-red/10 border border-destructive-red/30 text-destructive-red text-xs rounded-xl flex items-center gap-2 font-mono animate-fade-in">
                 <AlertCircle size={16} className="shrink-0" />
                 <span>{moduleErrorMsg}</span>
               </div>
@@ -386,67 +382,67 @@ const CurriculumManagement = () => {
 
             <div className="space-y-5">
               {/* Task 1 Section */}
-              <div className="p-4 bg-surface-lowest border border-hairline rounded-xl space-y-4">
-                <span className="text-xs font-mono font-bold text-primary-coral uppercase block">
-                  Task 1: Lesson Video & Reference Book Guide
+              <div className="p-5 bg-surface-lowest border border-hairline/60 rounded-2xl space-y-4">
+                <span className="mono-micro-label text-primary block">
+                  Task 1 — Lesson Video & Reference Book Guide
                 </span>
 
                 <div className="space-y-2">
-                  <label className="block text-xs font-mono text-on-surface-variant font-bold">
+                  <label className="block text-xs font-mono text-on-surface-variant font-semibold">
                     Lesson Title <span className="text-destructive-red">*</span>
                   </label>
                   <input
                     type="text"
                     value={activeDayForm.lessonTitle}
                     onChange={(e) => setActiveDayForm({ ...activeDayForm, lessonTitle: e.target.value })}
-                    className="w-full px-3.5 py-2.5 bg-canvas border border-hairline rounded-xl text-sm text-on-surface focus-ring"
+                    className="w-full px-3.5 py-2.5 bg-surface-low border border-hairline rounded-xl text-sm text-on-surface outline-none focus:border-primary"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <label className="block text-xs font-mono text-on-surface-variant font-bold">
+                  <label className="block text-xs font-mono text-on-surface-variant font-semibold">
                     YouTube Video Embed Link <span className="text-destructive-red">*</span>
                   </label>
                   <input
                     type="url"
                     value={activeDayForm.lessonVideoUrl}
                     onChange={(e) => setActiveDayForm({ ...activeDayForm, lessonVideoUrl: e.target.value })}
-                    className="w-full px-3.5 py-2.5 bg-canvas border border-hairline rounded-xl text-sm font-mono text-on-surface focus-ring"
+                    className="w-full px-3.5 py-2.5 bg-surface-low border border-hairline rounded-xl text-sm font-mono text-on-surface outline-none focus:border-primary"
                   />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2">
                   <div className="space-y-1">
-                    <label className="block text-[11px] font-mono text-on-surface-variant font-bold">
+                    <label className="block text-[11px] font-mono text-on-surface-variant font-semibold">
                       Reference Book Filename <span className="text-destructive-red">*</span>
                     </label>
                     <input
                       type="text"
                       value={activeDayForm.refGuideTitle}
                       onChange={(e) => setActiveDayForm({ ...activeDayForm, refGuideTitle: e.target.value })}
-                      className="w-full px-3 py-2 bg-canvas border border-hairline rounded-xl text-xs font-mono text-on-surface focus-ring"
+                      className="w-full px-3 py-2 bg-surface-low border border-hairline rounded-xl text-xs font-mono text-on-surface outline-none focus:border-primary"
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="block text-[11px] font-mono text-on-surface-variant font-bold">
+                    <label className="block text-[11px] font-mono text-on-surface-variant font-semibold">
                       Reference Guide Description <span className="text-destructive-red">*</span>
                     </label>
                     <input
                       type="text"
                       value={activeDayForm.refGuideDescription}
                       onChange={(e) => setActiveDayForm({ ...activeDayForm, refGuideDescription: e.target.value })}
-                      className="w-full px-3 py-2 bg-canvas border border-hairline rounded-xl text-xs text-on-surface focus-ring"
+                      className="w-full px-3 py-2 bg-surface-low border border-hairline rounded-xl text-xs text-on-surface outline-none focus:border-primary"
                     />
                   </div>
                 </div>
 
                 {/* PDF Storage Upload Box for Task 1 Reference Guide */}
-                <div className="space-y-2 pt-2 border-t border-hairline">
-                  <label className="block text-xs font-mono font-bold text-on-surface-variant">
+                <div className="space-y-2 pt-3 border-t border-hairline/50">
+                  <label className="block text-xs font-mono font-semibold text-on-surface-variant">
                     Upload Reference Book PDF File <span className="text-destructive-red">*</span>
                   </label>
 
-                  <div className="relative border-2 border-dashed border-hairline hover:border-primary-coral bg-canvas rounded-xl p-3.5 transition-colors text-center cursor-pointer">
+                  <div className="relative border-2 border-dashed border-hairline hover:border-primary bg-surface-low rounded-xl p-4 transition-colors text-center cursor-pointer">
                     <input
                       type="file"
                       accept="application/pdf"
@@ -460,7 +456,7 @@ const CurriculumManagement = () => {
                     />
 
                     {selectedModulePdfFile ? (
-                      <div className="flex items-center justify-between text-left text-xs font-mono text-primary-coral">
+                      <div className="flex items-center justify-between text-left text-xs font-mono text-primary">
                         <div className="flex items-center gap-2 truncate">
                           <FileCheck size={18} className="text-success-green shrink-0" />
                           <span className="truncate font-semibold">{selectedModulePdfFile.name}</span>
@@ -474,24 +470,24 @@ const CurriculumManagement = () => {
                             e.stopPropagation();
                             setSelectedModulePdfFile(null);
                           }}
-                          className="text-destructive-red hover:underline text-xs font-sans font-bold px-2 py-0.5 border border-destructive-red/30 rounded"
+                          className="text-destructive-red hover:underline text-xs font-sans font-bold px-2.5 py-0.5 border border-destructive-red/30 rounded-full shrink-0"
                         >
                           Clear
                         </button>
                       </div>
                     ) : activeDayForm.refGuideUrl ? (
-                      <div className="flex items-center justify-between text-left text-xs font-mono text-emerald-600 dark:text-emerald-400">
+                      <div className="flex items-center justify-between text-left text-xs font-mono text-success-green">
                         <div className="flex items-center gap-2 truncate">
-                          <FileCheck size={18} className="text-emerald-500 shrink-0" />
+                          <FileCheck size={18} className="text-success-green shrink-0" />
                           <span className="truncate font-semibold">Uploaded PDF: {activeDayForm.refGuideUrl}</span>
                         </div>
-                        <span className="text-[10px] font-sans font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-300 px-2 py-0.5 rounded uppercase shrink-0">
+                        <span className="text-[10px] font-sans font-bold bg-success-green/10 text-success-green px-2 py-0.5 rounded-full uppercase shrink-0">
                           Click to Replace PDF
                         </span>
                       </div>
                     ) : (
                       <div className="flex flex-col items-center justify-center gap-1 text-on-surface-variant py-1">
-                        <Upload size={20} className="text-primary-coral" />
+                        <Upload size={20} className="text-primary" />
                         <span className="text-xs font-medium">Click or Drag & Drop Task 1 Reference PDF File Here</span>
                         <span className="text-[10px] text-text-muted font-mono">Uploads to Supabase Storage `curriculum-books` bucket</span>
                       </div>
@@ -502,32 +498,32 @@ const CurriculumManagement = () => {
                 </div>
 
               {/* Task 2 Section */}
-              <div className="p-4 bg-surface-lowest border border-hairline rounded-xl space-y-4">
-                <span className="text-xs font-mono font-bold text-primary-coral uppercase block">
-                  Task 2: Listening Skill Videos (2 Options)
+              <div className="p-5 bg-surface-lowest border border-hairline/60 rounded-2xl space-y-4">
+                <span className="mono-micro-label text-primary block">
+                  Task 2 — Listening Skill Videos (2 Options)
                 </span>
 
                 <div className="space-y-2">
-                  <label className="block text-xs font-mono text-on-surface-variant font-bold">
+                  <label className="block text-xs font-mono text-on-surface-variant font-semibold">
                     Option 1: Informative Video YouTube Link <span className="text-destructive-red">*</span>
                   </label>
                   <input
                     type="url"
                     value={activeDayForm.listeningInformativeUrl}
                     onChange={(e) => setActiveDayForm({ ...activeDayForm, listeningInformativeUrl: e.target.value })}
-                    className="w-full px-3.5 py-2.5 bg-canvas border border-hairline rounded-xl text-xs font-mono text-on-surface focus-ring"
+                    className="w-full px-3.5 py-2.5 bg-surface-low border border-hairline rounded-xl text-xs font-mono text-on-surface outline-none focus:border-primary"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <label className="block text-xs font-mono text-on-surface-variant font-bold">
+                  <label className="block text-xs font-mono text-on-surface-variant font-semibold">
                     Option 2: Entertainment Video YouTube Link <span className="text-destructive-red">*</span>
                   </label>
                   <input
                     type="url"
                     value={activeDayForm.listeningEntertainmentUrl}
                     onChange={(e) => setActiveDayForm({ ...activeDayForm, listeningEntertainmentUrl: e.target.value })}
-                    className="w-full px-3.5 py-2.5 bg-canvas border border-hairline rounded-xl text-xs font-mono text-on-surface focus-ring"
+                    className="w-full px-3.5 py-2.5 bg-surface-low border border-hairline rounded-xl text-xs font-mono text-on-surface outline-none focus:border-primary"
                   />
                 </div>
               </div>
@@ -537,7 +533,7 @@ const CurriculumManagement = () => {
               <button
                 onClick={handleSaveDayContent}
                 disabled={isUploadingModulePdf}
-                className="px-6 py-3 bg-primary-coral hover:bg-primary-hover disabled:opacity-50 text-white font-semibold rounded-xl text-sm transition-all flex items-center gap-2 shadow-xs focus-ring btn-interactive cursor-pointer"
+                className="rounded-full bg-primary hover:bg-primary-container disabled:opacity-50 text-on-primary font-semibold text-xs tracking-wider uppercase px-6 py-3 transition-all flex items-center gap-2 shadow-sm focus-ring btn-interactive cursor-pointer"
               >
                 {isUploadingModulePdf ? (
                   <>
@@ -558,12 +554,10 @@ const CurriculumManagement = () => {
 
       {/* SUB-TAB 3: BULK QUESTION JSON IMPORT */}
       {cmsTab === 'json' && (
-        <div className="bg-canvas border border-hairline rounded-2xl p-6 space-y-6">
-          <div className="border-b border-hairline pb-4">
-            <span className="text-xs font-mono text-primary-coral font-bold uppercase">
-              BULK DIAGNOSTIC QUESTION INGESTION
-            </span>
-            <h3 className="font-serif font-bold text-xl text-on-surface mt-0.5">
+        <div className="bg-surface-lowest border border-hairline/60 rounded-2xl p-6 shadow-sm space-y-6">
+          <div className="border-b border-hairline/50 pb-5">
+            <span className="mono-micro-label text-primary">Bulk Diagnostic Question Ingestion</span>
+            <h3 className="font-cormorant text-2xl font-normal text-on-surface mt-1">
               Import Question Bank JSON Array
             </h3>
             <p className="text-xs text-on-surface-variant mt-1">
@@ -572,14 +566,14 @@ const CurriculumManagement = () => {
           </div>
 
           {jsonError && (
-            <div className="p-4 bg-red-500/15 border border-red-500/30 text-destructive-red text-xs rounded-xl flex items-center gap-2 font-mono">
+            <div className="p-4 bg-destructive-red/10 border border-destructive-red/30 text-destructive-red text-xs rounded-xl flex items-center gap-2 font-mono">
               <AlertCircle size={16} className="shrink-0" />
               <span>{jsonError}</span>
             </div>
           )}
 
           {jsonSuccess && (
-            <div className="p-4 bg-green-500/15 border border-green-500/30 text-success-green text-xs rounded-xl flex items-center gap-2 font-mono">
+            <div className="p-4 bg-success-green/10 border border-success-green/30 text-success-green text-xs rounded-xl flex items-center gap-2 font-mono">
               <CheckCircle size={16} className="shrink-0" />
               <span>{jsonSuccess}</span>
             </div>
@@ -590,7 +584,7 @@ const CurriculumManagement = () => {
               <span>JSON Input Buffer</span>
               <button
                 onClick={() => setJsonInput(JSON.stringify(sampleQuestionJsonTemplate, null, 2))}
-                className="text-primary-coral font-bold hover:underline focus-ring rounded p-0.5"
+                className="text-primary font-bold hover:underline focus-ring rounded p-0.5 cursor-pointer"
               >
                 Load Sample JSON Template
               </button>
@@ -601,7 +595,7 @@ const CurriculumManagement = () => {
               value={jsonInput}
               onChange={(e) => setJsonInput(e.target.value)}
               placeholder="Paste JSON array format: [{ question, options: [...], answerIndex, dayNumber, level }, ...]"
-              className="w-full p-4 bg-surface-lowest border border-hairline rounded-2xl font-mono text-xs text-on-surface focus-ring"
+              className="w-full p-4 bg-surface-lowest border border-hairline rounded-2xl font-mono text-xs text-on-surface outline-none focus:border-primary"
             />
           </div>
 
@@ -609,7 +603,7 @@ const CurriculumManagement = () => {
             <button
               onClick={handleJsonImport}
               disabled={!jsonInput.trim()}
-              className="px-6 py-3 bg-primary-coral hover:bg-primary-hover disabled:opacity-50 text-white font-semibold text-xs rounded-xl flex items-center gap-2 shadow-xs focus-ring btn-interactive cursor-pointer"
+              className="rounded-full bg-primary hover:bg-primary-container disabled:opacity-50 text-on-primary font-semibold text-xs tracking-wider uppercase px-6 py-3 flex items-center gap-2 shadow-sm focus-ring btn-interactive cursor-pointer"
             >
               <Upload size={16} />
               <span>Ingest JSON into Question Bank</span>

@@ -95,25 +95,38 @@ const WalletPage = () => {
       className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 transition-colors duration-250"
     >
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-hairline pb-6">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6 border-b border-hairline/50">
         <div>
-          <span className="text-xs font-mono text-primary-coral uppercase tracking-wider font-semibold">
-            Escrow Wallet & Financial Ledger
-          </span>
-          <h1 className="font-serif font-bold text-3xl sm:text-4xl text-on-surface mt-1 tracking-tight">
-            Escrow Staking & Payout Controls
+          <div className="inline-flex items-center gap-2 mb-2 font-mono text-[10px] tracking-[0.2em] text-primary uppercase font-semibold">
+            <span>Financial Vault · Audited Ledger</span>
+          </div>
+          <h1 className="font-cormorant text-4xl md:text-5xl text-on-surface font-normal tracking-tight">
+            Escrow Ledger &amp; Yield Vault
           </h1>
+          <p className="font-sans text-sm text-on-surface-variant mt-1 font-light">
+            Audited non-custodial habit staking platform for Ethiopian educational advancement.
+          </p>
         </div>
 
-        <motion.button
-          whileHover={{ scale: 1.03 }}
-          whileTap={{ scale: 0.97 }}
-          onClick={() => setIsDepositModalOpen(true)}
-          className="px-5 py-2.5 bg-primary-coral hover:bg-primary-hover text-white font-semibold rounded-xl shadow-xs transition-all text-xs flex items-center gap-2 focus-ring btn-interactive cursor-pointer"
-        >
-          <PlusCircle size={16} />
-          <span>Top Up Stake Deposit</span>
-        </motion.button>
+        <div className="flex items-center gap-3">
+          <a
+            href="#wallet-settlement"
+            className="px-5 py-2.5 rounded-full bg-surface-container text-on-surface text-xs tracking-wider uppercase font-medium border border-hairline hover:bg-surface-container-high transition-colors flex items-center gap-2"
+          >
+            <Wallet size={15} />
+            <span>Withdraw Yield</span>
+          </a>
+
+          <motion.button
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.97 }}
+            onClick={() => setIsDepositModalOpen(true)}
+            className="px-5 py-2.5 rounded-full bg-primary text-on-primary text-xs tracking-wider uppercase font-semibold hover:bg-primary-container shadow-sm transition-all flex items-center gap-2 focus-ring btn-interactive cursor-pointer"
+          >
+            <PlusCircle size={16} />
+            <span>+ Deposit Stake</span>
+          </motion.button>
+        </div>
       </div>
 
       {/* Insufficient / Zero Balance Alert */}
@@ -121,17 +134,17 @@ const WalletPage = () => {
         <motion.div
           initial={{ opacity: 0, scale: 0.98 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="p-5 bg-amber-500/15 border-2 border-amber-500/40 rounded-2xl flex flex-wrap items-center justify-between gap-4 shadow-sm"
+          className="p-5 bg-warning-amber/15 border border-warning-amber/40 rounded-2xl flex flex-wrap items-center justify-between gap-4 shadow-sm"
         >
           <div className="flex items-center gap-3.5">
-            <div className="w-10 h-10 rounded-xl bg-amber-500/20 flex items-center justify-center text-amber-700 dark:text-amber-300 shrink-0">
+            <div className="w-10 h-10 rounded-full bg-warning-amber/20 flex items-center justify-center text-warning-amber shrink-0">
               <AlertTriangle size={22} />
             </div>
             <div>
-              <h3 className="font-serif font-bold text-base text-amber-900 dark:text-amber-200">
+              <h3 className="font-cormorant text-xl font-medium text-on-surface">
                 Curriculum Paused — Escrow Stake Balance (0 ETB)
               </h3>
-              <p className="text-xs text-amber-800 dark:text-amber-300/80 mt-0.5">
+              <p className="text-xs text-on-surface-variant mt-0.5 font-mono">
                 Your active stake balance is 0 ETB (withdrawn for payout or un-staked). Submit a deposit verification of 1,000 ETB to reactivate daily curriculum tasks.
               </p>
             </div>
@@ -139,7 +152,7 @@ const WalletPage = () => {
 
           <button
             onClick={() => setIsDepositModalOpen(true)}
-            className="px-4 py-2.5 bg-primary-coral hover:bg-primary-hover text-white font-semibold text-xs rounded-xl transition-all flex items-center gap-2 shadow-xs focus-ring btn-interactive cursor-pointer shrink-0"
+            className="px-4 py-2.5 rounded-full bg-primary text-on-primary text-xs tracking-wider uppercase font-semibold hover:bg-primary-container shadow-sm transition-all flex items-center gap-2 focus-ring btn-interactive cursor-pointer shrink-0"
           >
             <PlusCircle size={16} />
             <span>Top Up 1,000 ETB Stake</span>
@@ -147,77 +160,125 @@ const WalletPage = () => {
         </motion.div>
       )}
 
-      {/* Financial Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Card 1: Total Locked Stake */}
+      {/* 4 Metric Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {/* Card 1: Active Escrow Stake */}
         <motion.div
           whileHover={{ y: -3 }}
-          className="bg-surface-lowest border border-hairline rounded-2xl p-6 space-y-3 shadow-xs"
+          className="bg-surface-container-lowest p-6 rounded-2xl border border-hairline/60 shadow-sm flex flex-col justify-between"
         >
-          <div className="flex items-center justify-between text-xs text-on-surface-variant font-mono">
-            <span className="font-bold uppercase">Active Locked Escrow</span>
-            <ShieldCheck size={20} className="text-primary-coral" />
+          <div className="flex items-center justify-between w-full">
+            <span className="font-mono text-[10px] text-text-muted uppercase tracking-widest">
+              Active Escrow Stake
+            </span>
+            <ShieldCheck size={16} className="text-primary/70 shrink-0" />
           </div>
-          <div className="font-mono text-3xl sm:text-4xl font-bold text-on-surface tracking-tight">
-            {formatETB(wallet.stakedAmount)}
+          <div className="my-4">
+            <span className="font-cormorant text-4xl text-primary font-normal tabular-nums">
+              {formatETB(wallet.stakedAmount)}
+            </span>
+            <span className="block font-sans text-xs text-text-muted mt-1">
+              Protected escrow vault. Reaches 100% payout upon completing Day 30 + Exam.
+            </span>
           </div>
-          <p className="text-xs text-text-muted leading-relaxed">
-            Protected escrow vault. Reaches 100% payout upon completing Day 30 + Exam.
-          </p>
+          <span className="font-mono text-[9px] text-primary font-bold tracking-wider uppercase">
+            Status: Locked in Protocol
+          </span>
         </motion.div>
 
-        {/* Card 2: Cumulative Penalties */}
+        {/* Card 2: Cohort Yield Earned */}
         <motion.div
           whileHover={{ y: -3 }}
-          className="bg-surface-lowest border border-hairline rounded-2xl p-6 space-y-3 shadow-xs"
+          className="bg-surface-container-lowest p-6 rounded-2xl border border-hairline/60 shadow-sm flex flex-col justify-between"
         >
-          <div className="flex items-center justify-between text-xs text-on-surface-variant font-mono">
-            <span className="font-bold text-destructive-red uppercase">Slashed Penalties</span>
-            <AlertCircle size={20} className="text-destructive-red" />
+          <div className="flex items-center justify-between w-full">
+            <span className="font-mono text-[10px] text-text-muted uppercase tracking-widest">
+              Cohort Yield Earned
+            </span>
+            <ArrowRight size={16} className="text-tertiary shrink-0" />
           </div>
-          <div className="font-mono text-3xl sm:text-4xl font-bold text-destructive-red tracking-tight">
-            {formatETB(wallet.totalPenalties)}
+          <div className="my-4">
+            <span className="font-cormorant text-4xl text-on-surface font-normal tabular-nums">
+              {formatETB(wallet.yieldBalance ?? 0)}
+            </span>
+            <span className="block font-sans text-xs text-text-muted mt-1">
+              Yield accrued on your active escrow stake, distributed at graduation.
+            </span>
           </div>
-          <p className="text-xs text-text-muted leading-relaxed">
-            Exam fail: -25 ETB • Missed day window: -80 ETB.
-          </p>
+          <span className="font-mono text-[9px] text-tertiary font-bold tracking-wider uppercase">
+            Distributed at Graduation
+          </span>
         </motion.div>
 
-        {/* Card 3: Platform Service Fees */}
+        {/* Card 3: Total Slashed Penalties */}
         <motion.div
           whileHover={{ y: -3 }}
-          className="bg-surface-lowest border border-hairline rounded-2xl p-6 space-y-3 shadow-xs"
+          className="bg-surface-container-lowest p-6 rounded-2xl border border-hairline/60 shadow-sm flex flex-col justify-between"
         >
-          <div className="flex items-center justify-between text-xs text-on-surface-variant font-mono">
-            <span className="font-bold uppercase">Platform Service Fees</span>
-            <Wallet size={20} className="text-primary-coral" />
+          <div className="flex items-center justify-between w-full">
+            <span className="font-mono text-[10px] text-text-muted uppercase tracking-widest">
+              Total Slashed Penalties
+            </span>
+            <AlertCircle size={16} className="text-error shrink-0" />
           </div>
-          <div className="font-mono text-3xl sm:text-4xl font-bold text-on-surface tracking-tight">
-            {formatETB(wallet.totalPlatformFees ?? 0)}
+          <div className="my-4">
+            <span className="font-cormorant text-4xl text-error font-normal tabular-nums">
+              {formatETB(wallet.totalPenalties)}
+            </span>
+            <span className="block font-sans text-xs text-text-muted mt-1">
+              Exam fail: -25 ETB • Missed day window: -80 ETB.
+            </span>
           </div>
-          <p className="text-xs text-text-muted leading-relaxed">
-            0% fee on deposits — full stake is locked in your escrow vault.
-          </p>
+          <span className="font-mono text-[9px] text-error font-bold tracking-wider uppercase">
+            Contract Deduction Applied
+          </span>
+        </motion.div>
+
+        {/* Card 4: Audited Platform Fee */}
+        <motion.div
+          whileHover={{ y: -3 }}
+          className="bg-surface-container-lowest p-6 rounded-2xl border border-hairline/60 shadow-sm flex flex-col justify-between"
+        >
+          <div className="flex items-center justify-between w-full">
+            <span className="font-mono text-[10px] text-text-muted uppercase tracking-widest">
+              Audited Platform Fee
+            </span>
+            <Wallet size={16} className="text-on-surface-variant shrink-0" />
+          </div>
+          <div className="my-4">
+            <span className="font-cormorant text-4xl text-on-surface font-normal tabular-nums">
+              {formatETB(wallet.totalPlatformFees ?? 0)}
+            </span>
+            <span className="block font-sans text-xs text-text-muted mt-1">
+              0% fee on deposits — full stake is locked in your escrow vault.
+            </span>
+          </div>
+          <span className="font-mono text-[9px] text-on-surface-variant font-bold tracking-wider uppercase">
+            Maintenance Expense
+          </span>
         </motion.div>
       </div>
 
       {/* CURRICULUM LEVEL COMPLETION & WITHDRAWAL REQUEST SECTION */}
-      <div className="bg-surface-lowest border-2 border-primary-coral/30 rounded-2xl p-6 shadow-sm space-y-6">
-        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-hairline pb-4">
+      <div
+        id="wallet-settlement"
+        className="bg-surface-container-lowest border border-hairline/60 rounded-2xl p-6 shadow-sm space-y-6"
+      >
+        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-hairline/50 pb-4">
           <div>
-            <span className="text-xs font-mono text-primary-coral uppercase tracking-wider font-semibold">
-              CURRICULUM LEVEL SETTLEMENT & WITHDRAWAL
+            <span className="mono-micro-label text-primary mb-2 inline-block">
+              Curriculum Level Settlement &amp; Withdrawal
             </span>
-            <h2 className="font-serif font-bold text-2xl text-on-surface mt-0.5">
-              Withdrawal & Level Advancement Portal
+            <h2 className="font-cormorant text-3xl md:text-4xl font-normal text-on-surface">
+              Withdrawal &amp; Level Advancement Portal
             </h2>
-            <p className="text-xs text-on-surface-variant mt-1">
+            <p className="text-xs text-on-surface-variant mt-1 font-sans">
               Learners may request withdrawal of their staked money <strong>only after completing Day 30 and passing the Day 30 Exam</strong>.
             </p>
           </div>
 
           <div className="flex items-center gap-2">
-            <span className="px-3 py-1.5 bg-surface-dark text-warning-amber font-mono text-xs font-bold rounded-xl border border-stone-800">
+            <span className="px-3 py-1.5 bg-surface-dark text-warning-amber font-mono text-xs font-bold rounded-full border border-stone-800">
               Current Level: {user.level} (Day {currentModuleDay}/30 {dailyTasks?.exam ? '• Exam Passed ✓' : ''})
             </span>
           </div>
@@ -226,15 +287,15 @@ const WalletPage = () => {
         {isDay30ExamPassed ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Option A: Request Withdrawal Form / Pending Card */}
-            <div className="bg-canvas border border-hairline rounded-xl p-5 space-y-4">
-              <h3 className="font-serif font-bold text-lg text-on-surface flex items-center gap-2">
-                <Send size={18} className="text-primary-coral" />
+            <div className="bg-surface-container-low border border-hairline/60 rounded-2xl p-5 space-y-4">
+              <h3 className="font-cormorant text-2xl font-normal text-on-surface flex items-center gap-2">
+                <Send size={18} className="text-primary" />
                 <span>Request Staked Money Withdrawal</span>
               </h3>
 
               {hasPendingWithdrawal ? (
-                <div className="p-4 bg-amber-500/15 border-2 border-amber-500/30 rounded-xl space-y-3 font-sans">
-                  <div className="flex items-center gap-2 text-warning-amber font-bold text-sm">
+                <div className="p-4 bg-warning-amber/15 border border-warning-amber/30 rounded-2xl space-y-3 font-sans">
+                  <div className="flex items-center gap-2 text-warning-amber font-bold text-sm font-mono">
                     <Clock size={18} className="animate-pulse" />
                     <span>Withdrawal Request Pending Admin Processing</span>
                   </div>
@@ -247,7 +308,7 @@ const WalletPage = () => {
                 </div>
               ) : (
                 <>
-                  <p className="text-xs text-on-surface-variant">
+                  <p className="text-xs text-on-surface-variant font-sans">
                     Submit your Ethiopian bank and Telebirr account details. Platform admins will verify your level completion and transfer <strong>{formatETB(wallet.stakedAmount || 900)}</strong>.
                   </p>
 
@@ -255,8 +316,8 @@ const WalletPage = () => {
                     <div
                       className={`p-3 text-xs rounded-xl font-mono flex items-center gap-2 ${
                         withdrawalMessage.type === 'success'
-                          ? 'bg-green-500/15 border border-green-500/30 text-green-700 dark:text-green-300'
-                          : 'bg-red-500/15 border border-red-500/30 text-red-700 dark:text-red-300'
+                          ? 'bg-success-green/15 border border-success-green/30 text-success-green'
+                          : 'bg-error/15 border border-error/30 text-destructive-red'
                       }`}
                     >
                       {withdrawalMessage.type === 'success' ? <CheckCircle2 size={16} /> : <AlertTriangle size={16} />}
@@ -266,13 +327,13 @@ const WalletPage = () => {
 
                   <form onSubmit={handleWithdrawalSubmit} className="space-y-3">
                     <div>
-                      <label className="block text-[11px] font-mono font-semibold text-on-surface-variant uppercase mb-1">
+                      <label className="block text-[11px] font-mono font-semibold text-on-surface-variant uppercase mb-1 tracking-wider">
                         Bank Name
                       </label>
                       <select
                         value={bankName}
                         onChange={(e) => setBankName(e.target.value)}
-                        className="w-full px-3 py-2 bg-surface-lowest border border-hairline rounded-xl text-xs font-sans text-on-surface focus-ring"
+                        className="w-full bg-surface-container-low text-xs px-3.5 py-2.5 rounded-xl border border-hairline outline-none text-on-surface focus:border-primary transition-colors"
                       >
                         <option value="Commercial Bank of Ethiopia (CBE)">Commercial Bank of Ethiopia (CBE)</option>
                         <option value="Bank of Abyssinia">Bank of Abyssinia</option>
@@ -282,7 +343,7 @@ const WalletPage = () => {
                     </div>
 
                     <div>
-                      <label className="block text-[11px] font-mono font-semibold text-on-surface-variant uppercase mb-1">
+                      <label className="block text-[11px] font-mono font-semibold text-on-surface-variant uppercase mb-1 tracking-wider">
                         Bank Account Number
                       </label>
                       <input
@@ -290,13 +351,13 @@ const WalletPage = () => {
                         placeholder="e.g. 1000123456789"
                         value={accountNumber}
                         onChange={(e) => setAccountNumber(e.target.value)}
-                        className="w-full px-3 py-2 bg-surface-lowest border border-hairline rounded-xl text-xs font-mono text-on-surface focus-ring"
+                        className="w-full bg-surface-container-low text-xs px-3.5 py-2.5 rounded-xl border border-hairline outline-none font-mono text-on-surface focus:border-primary transition-colors"
                         required
                       />
                     </div>
 
                     <div>
-                      <label className="block text-[11px] font-mono font-semibold text-on-surface-variant uppercase mb-1">
+                      <label className="block text-[11px] font-mono font-semibold text-on-surface-variant uppercase mb-1 tracking-wider">
                         Telebirr Mobile Number
                       </label>
                       <input
@@ -304,7 +365,7 @@ const WalletPage = () => {
                         placeholder="e.g. 0911234567"
                         value={telebirrNumber}
                         onChange={(e) => setTelebirrNumber(e.target.value)}
-                        className="w-full px-3 py-2 bg-surface-lowest border border-hairline rounded-xl text-xs font-mono text-on-surface focus-ring"
+                        className="w-full bg-surface-container-low text-xs px-3.5 py-2.5 rounded-xl border border-hairline outline-none font-mono text-on-surface focus:border-primary transition-colors"
                         required
                       />
                     </div>
@@ -312,7 +373,7 @@ const WalletPage = () => {
                     <button
                       type="submit"
                       disabled={wallet.stakedAmount <= 0}
-                      className="w-full py-3 bg-primary-coral hover:bg-primary-hover disabled:opacity-50 text-white font-semibold text-xs rounded-xl transition-all flex items-center justify-center gap-2 shadow-xs focus-ring btn-interactive cursor-pointer"
+                      className="w-full py-3 rounded-full bg-primary text-on-primary text-xs tracking-wider uppercase font-semibold hover:bg-primary-container shadow-sm transition-all flex items-center justify-center gap-2 disabled:opacity-50 focus-ring btn-interactive cursor-pointer"
                     >
                       <Send size={15} />
                       <span>Submit Withdrawal Request ({formatETB(wallet.stakedAmount || 900)})</span>
@@ -323,42 +384,42 @@ const WalletPage = () => {
             </div>
 
             {/* Option B: Continue to Next Level */}
-            <div className="bg-canvas border border-hairline rounded-xl p-5 space-y-4 flex flex-col justify-between">
+            <div className="bg-surface-container-low border border-hairline/60 rounded-2xl p-5 space-y-4 flex flex-col justify-between">
               <div className="space-y-2">
-                <h3 className="font-serif font-bold text-lg text-on-surface flex items-center gap-2">
+                <h3 className="font-cormorant text-2xl font-normal text-on-surface flex items-center gap-2">
                   <ArrowRight size={18} className="text-success-green" />
                   <span>Continue Learning to Next Level</span>
                 </h3>
-                <p className="text-xs text-on-surface-variant">
+                <p className="text-xs text-on-surface-variant font-sans">
                   Keep your remaining <strong>{formatETB(wallet.stakedAmount || 900)}</strong> staked in escrow and automatically advance to the next curriculum level!
                 </p>
-                <div className="p-3 bg-green-500/15 border border-green-500/30 rounded-xl text-xs text-green-700 dark:text-green-300 font-mono">
+                <div className="p-3 bg-success-green/15 border border-success-green/30 rounded-xl text-xs text-success-green font-mono">
                   ✓ Remaining stake will roll over to unlock Day 1 of the next curriculum track!
                 </div>
               </div>
 
               <button
                 onClick={handleAdvanceLevel}
-                className="w-full py-3 bg-surface-dark hover:bg-stone-800 text-white font-bold text-xs rounded-xl transition-all flex items-center justify-center gap-2 shadow-xs focus-ring btn-interactive cursor-pointer"
+                className="w-full py-3 rounded-full bg-surface-dark hover:bg-stone-800 text-stone-100 font-semibold text-xs tracking-wider uppercase transition-all flex items-center justify-center gap-2 shadow-xs focus-ring btn-interactive cursor-pointer"
               >
                 <span>Advance to Next Curriculum Level →</span>
               </button>
             </div>
           </div>
         ) : (
-          <div className="bg-canvas border border-hairline rounded-2xl p-6 space-y-4">
+          <div className="bg-surface-container-low border border-hairline/60 rounded-2xl p-6 space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-4">
               <div className="space-y-1">
-                <h3 className="font-serif font-bold text-lg text-on-surface flex items-center gap-2">
-                  <Send size={18} className="text-primary-coral" />
+                <h3 className="font-cormorant text-2xl font-normal text-on-surface flex items-center gap-2">
+                  <Send size={18} className="text-primary" />
                   <span>Withdraw Staked Money</span>
                 </h3>
-                <p className="text-xs text-on-surface-variant">
+                <p className="text-xs text-on-surface-variant font-sans">
                   Withdrawal requests unlock upon completing all 30 daily modules of <strong>{user.level}</strong> and passing the Day 30 Exam. You are currently on <strong>Day {currentModuleDay} of 30</strong>.
                 </p>
               </div>
 
-              <div className="px-3 py-1.5 bg-surface-dark border border-stone-800 text-stone-300 text-xs font-mono font-semibold rounded-xl flex items-center gap-1.5 shrink-0">
+              <div className="px-3 py-1.5 bg-surface-dark border border-stone-800 text-stone-300 text-xs font-mono font-semibold rounded-full flex items-center gap-1.5 shrink-0">
                 <Lock size={14} className="text-warning-amber" />
                 <span>Locked (Day {currentModuleDay}/30 {currentModuleDay >= 30 ? '• Exam Pending' : ''})</span>
               </div>
@@ -367,7 +428,7 @@ const WalletPage = () => {
             <button
               disabled
               type="button"
-              className="w-full py-3.5 bg-stone-800/80 border border-stone-700 text-stone-400 font-bold text-xs rounded-xl flex items-center justify-center gap-2 cursor-not-allowed opacity-80 shadow-none"
+              className="w-full py-3.5 bg-surface-dark border border-stone-700 text-stone-400 font-semibold text-xs rounded-full flex items-center justify-center gap-2 cursor-not-allowed opacity-80 shadow-none"
             >
               <Lock size={15} className="text-warning-amber" />
               <span>
@@ -381,11 +442,13 @@ const WalletPage = () => {
 
         {/* Existing Withdrawal Requests Status Log */}
         {userWithdrawalRequests.length > 0 && (
-          <div className="space-y-3 border-t border-hairline pt-4">
-            <h4 className="font-serif font-bold text-sm text-on-surface">Your Withdrawal Requests</h4>
+          <div className="space-y-3 border-t border-hairline/50 pt-4">
+            <h4 className="font-cormorant text-xl font-normal text-on-surface">
+              Your Withdrawal Requests
+            </h4>
             <div className="space-y-2">
               {userWithdrawalRequests.map((req) => (
-                <div key={req.id} className="p-3 bg-canvas border border-hairline rounded-xl text-xs flex flex-wrap items-center justify-between gap-3 font-mono">
+                <div key={req.id} className="p-3 bg-surface-container-low border border-hairline/50 rounded-xl text-xs flex flex-wrap items-center justify-between gap-3 font-mono">
                   <div>
                     <span className="font-bold text-on-surface">{req.id}</span> • {req.levelCompleted} Level Completion ({formatETB(req.amount)})
                     <div className="text-[10px] text-text-muted mt-0.5">
@@ -394,14 +457,14 @@ const WalletPage = () => {
                   </div>
 
                   <span
-                    className={`px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase flex items-center gap-1 ${
+                    className={`font-mono text-[9px] px-2 py-0.5 rounded uppercase tracking-wider flex items-center gap-1 ${
                       req.status === 'approved'
-                        ? 'bg-green-500/20 text-success-green'
+                        ? 'bg-success-green/15 text-success-green'
                         : req.status === 'declined'
-                          ? 'bg-red-500/20 text-destructive-red'
+                          ? 'bg-error/15 text-destructive-red'
                           : req.status === 'refunded'
-                            ? 'bg-blue-500/20 text-blue-400'
-                            : 'bg-amber-500/20 text-warning-amber'
+                            ? 'bg-primary/10 text-primary'
+                            : 'bg-warning-amber/15 text-warning-amber'
                     }`}
                   >
                     {req.status === 'approved' && <CheckCircle2 size={12} />}
@@ -418,11 +481,14 @@ const WalletPage = () => {
 
       {/* Itemized Audit Ledger */}
       <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="font-serif font-bold text-2xl text-on-surface">
-            Complete Audit & Penalty Ledger
-          </h2>
-          <span className="text-xs font-mono text-text-muted">Immutable Transaction History</span>
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <span className="mono-micro-label text-primary mb-1 inline-block">Immutable Transaction History</span>
+            <h2 className="font-cormorant text-3xl md:text-4xl font-normal text-on-surface">
+              Complete Audit &amp; Penalty Ledger
+            </h2>
+          </div>
+          <span className="text-[10px] font-mono text-text-muted uppercase tracking-widest">Real-Time Verified Entries</span>
         </div>
 
         <LedgerTable transactions={ledgerTransactions} />
