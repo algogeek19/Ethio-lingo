@@ -69,6 +69,35 @@ export const upsertModule = async (req, res, next) => {
   }
 };
 
+export const getLevelBooks = async (req, res, next) => {
+  try {
+    const { level } = req.query;
+    const books = await curriculumRepository.findBooksByLevel(level || 'Beginner I');
+    return successResponse(res, 'PDF books for level fetched', books);
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const addLevelBook = async (req, res, next) => {
+  try {
+    const book = await curriculumRepository.createLevelBook(req.body);
+    return successResponse(res, 'PDF book added to level catalog', book, 201);
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const deleteLevelBook = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    await curriculumRepository.deleteLevelBook(id);
+    return successResponse(res, 'PDF book deleted from level catalog');
+  } catch (err) {
+    next(err);
+  }
+};
+
 export const getPopulatedModules = async (req, res, next) => {
   try {
     const { level } = req.query;

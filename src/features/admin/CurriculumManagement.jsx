@@ -154,18 +154,27 @@ const CurriculumManagement = () => {
     try {
       let finalRefPdfUrl = refGuideUrl || '';
 
-      // Upload PDF file to Supabase Storage if a new PDF file was selected
+      // Upload PDF via a short-lived signed URL minted server-side with the
+      // service-role key, so the browser never needs Storage write access.
       if (selectedModulePdfFile) {
         setIsUploadingModulePdf(true);
-        const sanitizeName = selectedModulePdfFile.name.replace(/[^a-zA-Z0-9._-]/g, '_');
-        const levelFolder = selectedLevel.toLowerCase().replace(/[^a-z0-9]/g, '_');
-        const filePath = `references/${levelFolder}_day${selectedDay}_${Date.now()}_${sanitizeName}`;
+        const uploadUrlRes = await api.getAdminUploadUrl({
+          fileName: selectedModulePdfFile.name,
+          fileType: selectedModulePdfFile.type,
+          folder: 'references',
+          level: selectedLevel,
+          dayNumber: selectedDay,
+        });
+
+        if (!uploadUrlRes.success || !uploadUrlRes.data) {
+          throw new Error((uploadUrlRes.error && uploadUrlRes.error.message) || 'Failed to authorize PDF upload');
+        }
+
+        const { path, token, publicUrl } = uploadUrlRes.data;
 
         const { error: uploadErr } = await supabase.storage
           .from('curriculum-books')
-          .upload(filePath, selectedModulePdfFile, {
-            cacheControl: '3600',
-            upsert: true,
+          .uploadToSignedUrl(path, token, selectedModulePdfFile, {
             contentType: 'application/pdf',
           });
 
@@ -173,11 +182,7 @@ const CurriculumManagement = () => {
           throw new Error(`Supabase Reference PDF Upload Error: ${uploadErr.message}`);
         }
 
-        const { data: publicUrlData } = supabase.storage
-          .from('curriculum-books')
-          .getPublicUrl(filePath);
-
-        finalRefPdfUrl = publicUrlData.publicUrl;
+        finalRefPdfUrl = publicUrl;
       }
 
       const payload = {

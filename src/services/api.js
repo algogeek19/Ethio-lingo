@@ -380,6 +380,34 @@ export const api = {
       body: JSON.stringify(moduleData),
     }),
 
+  // Level PDF book catalog (daily timed reading choices)
+  getLevelBooks: (level) =>
+    request(`/admin/books?level=${encodeURIComponent(level || 'Beginner I')}`),
+
+  addLevelBook: (bookData) =>
+    request('/admin/books/add', {
+      method: 'POST',
+      body: JSON.stringify(bookData),
+    }),
+
+  deleteLevelBook: (id) =>
+    request(`/admin/books/${id}`, {
+      method: 'DELETE',
+    }),
+
+  // Short-lived signed upload URLs (Supabase Storage; no anon write access needed)
+  getAdminUploadUrl: (payload) =>
+    request('/admin/storage/upload-url', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  getReceiptUploadUrl: (payload) =>
+    request('/deposits/upload-receipt-url', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
   upsertModuleData: (moduleData) =>
     request('/admin/modules/upsert', {
       method: 'POST',

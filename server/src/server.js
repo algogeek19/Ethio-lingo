@@ -9,6 +9,7 @@ import logger from './utils/logger.js';
 import apiRoutes from './routes/index.js';
 import { requestLogger } from './middleware/loggerMiddleware.js';
 import { errorHandler } from './middleware/errorMiddleware.js';
+import { apiRateLimiter } from './middleware/rateLimiterMiddleware.js';
 
 const app = express();
 const __filename = fileURLToPath(import.meta.url);
@@ -56,8 +57,8 @@ app.use(
   })
 );
 
-// API Base Route
-app.use('/api/v1', apiRoutes);
+// API Base Route — general rate limit (300 requests / 15 min per IP)
+app.use('/api/v1', apiRateLimiter, apiRoutes);
 
 // Client SPA Single-Page App Fallback Route (Serves index.html for production non-API routes)
 app.get('*', (req, res, next) => {

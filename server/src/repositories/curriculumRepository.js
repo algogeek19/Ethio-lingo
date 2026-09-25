@@ -1,6 +1,21 @@
 import { prisma } from '../config/database.js';
 import { safeDbQuery } from '../utils/dbHelper.js';
 
+export const findBooksByLevel = async (level) => {
+  return await prisma.levelBook.findMany({
+    where: { level },
+    orderBy: { createdAt: 'asc' },
+  });
+};
+
+export const createLevelBook = async (bookData) => {
+  return await prisma.levelBook.create({ data: bookData });
+};
+
+export const deleteLevelBook = async (id) => {
+  return await prisma.levelBook.delete({ where: { id } });
+};
+
 export const findModuleByLevelAndDay = async (level, dayNumber) => {
   const parsedDay = parseInt(dayNumber, 10);
   const dbModule = await safeDbQuery(

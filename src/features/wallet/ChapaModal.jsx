@@ -80,25 +80,36 @@ const ChapaModal = ({ isOpen, onClose, onDepositSubmitted }) => {
     try {
       let receiptUrl = null;
 
-      // 1. Upload receipt screenshot to Supabase Storage bucket 'payment-receipts' if provided
+      // 1. Upload receipt screenshot via a short-lived signed URL minted
+      //    server-side (service-role key). The browser never writes to Storage
+      //    directly, so public Storage policies can stay locked down.
       if (receiptFile) {
-        const sanitizeName = receiptFile.name.replace(/[^a-zA-Z0-9._-]/g, '_');
-        const filePath = `receipts/${Date.now()}_${sanitizeName}`;
-
-        const { error: uploadErr } = await supabase.storage
-          .from('payment-receipts')
-          .upload(filePath, receiptFile, {
-            cacheControl: '3600',
-            upsert: true,
+        try {
+          const uploadUrlRes = await api.getReceiptUploadUrl({
+            fileName: receiptFile.name,
+            fileType: receiptFile.type,
           });
 
-        if (uploadErr) {
-          console.warn('Receipt upload failed, continuing with TxRef:', uploadErr.message);
-        } else {
-          const { data: publicUrlData } = supabase.storage
+          if (!uploadUrlRes.success || !uploadUrlRes.data) {
+            throw new Error((uploadUrlRes.error && uploadUrlRes.error.message) || 'Failed to authorize receipt upload');
+          }
+
+          const { path, token, publicUrl } = uploadUrlRes.data;
+
+          const { error: uploadErr } = await supabase.storage
             .from('payment-receipts')
-            .getPublicUrl(filePath);
-          receiptUrl = publicUrlData.publicUrl;
+            .uploadToSignedUrl(path, token, receiptFile, {
+              contentType: receiptFile.type || 'image/png',
+            });
+
+          if (uploadErr) {
+            throw new Error(uploadErr.message);
+          }
+
+          receiptUrl = publicUrl;
+        } catch (uploadErr) {
+          // Non-blocking: the deposit is still submitted and can be matched by TxRef.
+          console.warn('Receipt upload failed, continuing with TxRef:', uploadErr.message);
         }
       }
 

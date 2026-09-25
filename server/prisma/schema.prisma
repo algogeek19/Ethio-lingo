@@ -100,6 +100,19 @@ model CurriculumModule {
   @@map("curriculum_module")
 }
 
+// PDF books assigned to a level for the daily timed reading task
+model LevelBook {
+  id        String   @id @default(uuid())
+  level     String   // "Beginner I" .. "Advanced II"
+  title     String
+  author    String
+  category  String
+  url       String
+  createdAt DateTime @default(now())
+
+  @@map("level_book")
+}
+
 model QuestionBank {
   id          String   @id @default(uuid())
   level       String   // "Placement" | "Beginner I" .. "Advanced II"

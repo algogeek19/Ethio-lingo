@@ -1,18 +1,20 @@
 import { Router } from 'express';
 import * as authController from '../controllers/authController.js';
 import { authenticateToken } from '../middleware/authMiddleware.js';
+import { authRateLimiter } from '../middleware/rateLimiterMiddleware.js';
 
 const router = Router();
 
-router.post('/login', authController.login);
-router.post('/signup', authController.signup);
-router.post('/google', authController.googleLogin);
-router.post('/verify-email', authenticateToken, authController.verifyEmail);
-router.post('/verify-email/google', authenticateToken, authController.verifyEmailGoogle);
-router.post('/resend-verification-code', authenticateToken, authController.resendVerificationCode);
+// Credential / verification endpoints are throttled to slow brute-force attempts
+router.post('/login', authRateLimiter, authController.login);
+router.post('/signup', authRateLimiter, authController.signup);
+router.post('/google', authRateLimiter, authController.googleLogin);
+router.post('/verify-email', authenticateToken, authRateLimiter, authController.verifyEmail);
+router.post('/verify-email/google', authenticateToken, authRateLimiter, authController.verifyEmailGoogle);
+router.post('/resend-verification-code', authenticateToken, authRateLimiter, authController.resendVerificationCode);
 router.get('/me', authenticateToken, authController.getMe);
 router.put('/profile', authenticateToken, authController.updateProfile);
-router.put('/change-password', authenticateToken, authController.changePassword);
+router.put('/change-password', authenticateToken, authRateLimiter, authController.changePassword);
 router.get('/placement-quiz/questions', authController.getPlacementQuestions);
 router.post('/placement-quiz', authenticateToken, authController.submitPlacement);
 
