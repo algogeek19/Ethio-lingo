@@ -1,8 +1,21 @@
 import jwt from 'jsonwebtoken';
+import { jwtVerify, createRemoteJWKSet } from 'jose';
 import { ENV } from '../config/env.js';
 import { prisma } from '../config/database.js';
 import { errorResponse } from '../utils/apiResponse.js';
 import { auditUserStreakAndPenalties } from '../services/streakAuditService.js';
+
+let remoteJWKS = null;
+const getJWKS = () => {
+  if (!remoteJWKS && ENV.SUPABASE_JWKS_URL) {
+    try {
+      remoteJWKS = createRemoteJWKSet(new URL(ENV.SUPABASE_JWKS_URL));
+    } catch (e) {
+      console.warn('Failed to initialize Supabase JWKS:', e.message);
+    }
+  }
+  return remoteJWKS;
+};
 
 export const authenticateToken = async (req, res, next) => {
   try {
@@ -17,99 +30,97 @@ export const authenticateToken = async (req, res, next) => {
         const decoded = jwt.verify(token, ENV.JWT_SECRET);
         sessionUser = decoded;
       } catch (jwtErr) {
-        // Fallback: decode Supabase JWT token claims (signed by Supabase Auth)
-        try {
-          const decoded = jwt.decode(token);
-          if (decoded && (decoded.email || decoded.sub)) {
-            sessionUser = {
-              id: decoded.sub || decoded.id,
-              email: decoded.email || decoded.user_metadata?.email,
-              name: decoded.user_metadata?.full_name || decoded.user_metadata?.name || decoded.email?.split('@')[0],
-              role: decoded.user_metadata?.role || 'learner',
-            };
+        // Fallback: cryptographically verify Supabase Auth JWTs via JWKS.
+        // Never use jwt.decode() here — it does not verify the signature, so a
+        // hand-crafted token would otherwise be accepted as a valid session.
+        const jwks = getJWKS();
+        if (jwks) {
+          try {
+            const { payload } = await jwtVerify(token, jwks);
+            if (payload && (payload.email || payload.sub)) {
+              sessionUser = {
+                id: payload.sub,
+                email: payload.email,
+                name: payload.user_metadata?.full_name || payload.user_metadata?.name || payload.email?.split('@')[0],
+              };
+            }
+          } catch (sbErr) {
+            // Signature verification failed — treated as unauthenticated below.
           }
-        } catch (e) {}
+        }
       }
     }
 
-    // Dev / Test header fallbacks
-    if (!sessionUser && req.headers['x-user-id']) {
-      sessionUser = { id: req.headers['x-user-id'] };
-    }
-
-    if (!sessionUser && req.headers['x-user-email']) {
-      sessionUser = { email: req.headers['x-user-email'] };
+    // A valid, cryptographically verified token is mandatory.
+    if (!sessionUser || (!sessionUser.id && !sessionUser.email)) {
+      return errorResponse(res, 'Authentication required. Invalid or missing token.', 401);
     }
 
     // Lookup user in Prisma database by id or email
     let dbUser = null;
-    if (sessionUser && sessionUser.id) {
+    if (sessionUser.id) {
       dbUser = await prisma.user.findUnique({
         where: { id: sessionUser.id },
         include: { wallet: true },
       }).catch(() => null);
     }
 
-    if (!dbUser && sessionUser && sessionUser.email) {
+    if (!dbUser && sessionUser.email) {
       dbUser = await prisma.user.findUnique({
         where: { email: sessionUser.email },
         include: { wallet: true },
       }).catch(() => null);
     }
 
-
-    // If user signed in via Supabase but doesn't have a Prisma DB record yet, auto-create
-    if (!dbUser && sessionUser && sessionUser.email) {
+    // First-time Supabase/Google sign-in: provision strictly as a learner.
+    // Role and level are never read from the token, so a forged or
+    // user-editable claim can never grant admin access.
+    if (!dbUser && sessionUser.email) {
       try {
-        const isLearner = (sessionUser.role || 'learner') === 'learner';
         dbUser = await prisma.user.create({
           data: {
             email: sessionUser.email,
             name: sessionUser.name || sessionUser.email.split('@')[0],
-            role: sessionUser.role || 'learner',
-            level: sessionUser.level || 'Beginner I',
+            role: 'learner',
+            level: 'Beginner I',
             isActive: true,
             status: 'ACTIVE',
-            // Tokens verified via Google / Supabase are already email-verified.
-            emailVerified: sessionUser.emailVerified !== false,
+            // The token itself was cryptographically verified above.
+            emailVerified: true,
             isOnboarded: false,
-            wallet: isLearner
-              ? {
-                  create: {
-                    stakedAmount: 0.0,
-                    availableBalance: 0.0,
-                    totalPenalties: 0.0,
-                    totalPlatformFees: 0.0,
-                    streakCount: 0,
-                    isFreeTrial: true,
-                    freeTrialDaysLeft: 3,
-                  },
-                }
-              : undefined,
+            wallet: {
+              create: {
+                stakedAmount: 0.0,
+                availableBalance: 0.0,
+                totalPenalties: 0.0,
+                totalPlatformFees: 0.0,
+                streakCount: 0,
+                isFreeTrial: true,
+                freeTrialDaysLeft: 3,
+              },
+            },
           },
           include: { wallet: true },
         });
       } catch (createErr) {
-        // Fallback user object
+        dbUser = await prisma.user.findUnique({
+          where: { email: sessionUser.email },
+          include: { wallet: true },
+        }).catch(() => null);
       }
     }
 
-    const user = dbUser || (sessionUser && sessionUser.email ? {
-      id: sessionUser.id || `usr_${Math.floor(1000 + Math.random() * 9000)}`,
-      email: sessionUser.email,
-      name: sessionUser.name || sessionUser.email.split('@')[0],
-      role: sessionUser.role || 'learner',
-      level: sessionUser.level || 'Beginner I',
-      isActive: true,
-      status: 'ACTIVE',
-      emailVerified: true,
-    } : null);
+    // Never synthesise a user from token claims. Identity and role must come
+    // from the database, otherwise a forged claim could escalate privileges.
+    if (!dbUser) {
+      return errorResponse(res, 'User record not found in system.', 401);
+    }
 
-    req.user = user;
+    req.user = dbUser;
 
     // Run On-Demand Catch-Up Audit asynchronously for learners
-    if (user && user.id && user.role === 'learner') {
-      auditUserStreakAndPenalties(user.id).catch(() => null);
+    if (dbUser.role === 'learner') {
+      auditUserStreakAndPenalties(dbUser.id).catch(() => null);
     }
 
     next();
