@@ -38,6 +38,30 @@ export const createAnnouncement = async (req, res, next) => {
   }
 };
 
+// Number of learners who would receive an SMS for a given audience level
+export const getAudienceCount = async (req, res, next) => {
+  try {
+    const { audienceLevel = 'ALL' } = req.query;
+    const result = await announcementService.countAnnouncementAudience(audienceLevel);
+    return successResponse(res, 'Audience count fetched', result);
+  } catch (err) {
+    next(err);
+  }
+};
+
+// Per-recipient SMS delivery log for broadcasts
+export const listSmsLogs = async (req, res, next) => {
+  try {
+    const logs = await announcementService.listSmsLogs({
+      limit: req.query.limit ? Number(req.query.limit) : 100,
+      announcementId: req.query.announcementId || undefined,
+    });
+    return successResponse(res, 'SMS logs fetched', logs);
+  } catch (err) {
+    next(err);
+  }
+};
+
 export const updateAnnouncement = async (req, res, next) => {
   try {
     const announcement = await announcementService.updateAnnouncement(req.params.id, req.body);

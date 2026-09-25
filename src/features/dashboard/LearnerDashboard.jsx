@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
@@ -12,8 +12,6 @@ import {
   Sparkles,
   ArrowRight,
   Lock,
-  Megaphone,
-  X,
   MessageSquare,
 } from "lucide-react";
 import { useStaking } from "../../context/StakingContext";
@@ -75,45 +73,6 @@ const LearnerDashboard = () => {
     navigate('/workspaces');
   };
 
-  const [announcements, setAnnouncements] = useState([]);
-
-  useEffect(() => {
-    let mounted = true;
-    let dismissed = [];
-    try {
-      dismissed = JSON.parse(localStorage.getItem('ethiolingo_dismissed_announcements') || '[]');
-    } catch (e) {
-      dismissed = [];
-    }
-    api.getAnnouncements()
-      .then((res) => {
-        if (mounted && res && res.success && Array.isArray(res.data)) {
-          const ids = new Set(dismissed);
-          setAnnouncements(res.data.filter((a) => !ids.has(a.id)));
-        }
-      })
-      .catch(() => {});
-    return () => {
-      mounted = false;
-    };
-  }, []);
-
-  const dismissAnnouncement = (id) => {
-    setAnnouncements((prev) => prev.filter((a) => a.id !== id));
-    let dismissed = [];
-    try {
-      dismissed = JSON.parse(localStorage.getItem('ethiolingo_dismissed_announcements') || '[]');
-    } catch (e) {
-      dismissed = [];
-    }
-    if (!dismissed.includes(id)) {
-      dismissed.push(id);
-      try {
-        localStorage.setItem('ethiolingo_dismissed_announcements', JSON.stringify(dismissed));
-      } catch (e) {}
-    }
-  };
-
   return (
     <motion.div
       variants={containerVariants}
@@ -121,47 +80,6 @@ const LearnerDashboard = () => {
       animate="visible"
       className="max-w-7xl mx-auto px-6 lg:px-12 py-10 space-y-10 transition-colors duration-250"
     >
-      {/* Announcements */}
-      {announcements.length > 0 && (
-        <motion.div variants={itemVariants} className="space-y-3">
-          {announcements.map((a) => (
-            <motion.div
-              key={a.id}
-              initial={{ opacity: 0, y: -8 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="p-4 sm:p-5 bg-surface-container-lowest border border-primary/20 rounded-2xl flex items-start justify-between gap-4 shadow-sm"
-            >
-              <div className="flex items-start gap-3">
-                <div className="w-9 h-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
-                  <Megaphone size={17} />
-                </div>
-                <div>
-                  {a.title && (
-                    <h3 className="font-cormorant font-medium text-base text-on-surface">{a.title}</h3>
-                  )}
-                  <p className="text-xs text-on-surface-variant mt-0.5 leading-relaxed font-light">
-                    {a.content || a.message || ''}
-                  </p>
-                  {a.createdAt && (
-                    <p className="text-[10px] font-mono text-text-muted mt-1.5 uppercase tracking-wider">
-                      Announcement • {new Date(a.createdAt).toLocaleDateString()}
-                    </p>
-                  )}
-                </div>
-              </div>
-              <button
-                onClick={() => dismissAnnouncement(a.id)}
-                className="p-1.5 text-on-surface-variant hover:text-destructive-red rounded-lg cursor-pointer focus-ring shrink-0"
-                aria-label="Dismiss announcement"
-                title="Dismiss"
-              >
-                <X size={15} />
-              </button>
-            </motion.div>
-          ))}
-        </motion.div>
-      )}
-
       {/* Insufficient / Zero Balance Alert Banner */}
       {isBalanceZero && !isFreeTrialMode && (
         <motion.div

@@ -463,6 +463,17 @@ export const api = {
       method: 'DELETE',
     }),
 
+  // Announcements are delivered via SMS (GeezSMS) — audit + audience tooling
+  getSmsLogs: (params = {}) => {
+    const qs = new URLSearchParams(
+      Object.entries(params).filter(([, v]) => v !== undefined && v !== null && v !== ''),
+    ).toString();
+    return request(`/announcements/sms-logs${qs ? `?${qs}` : ''}`);
+  },
+
+  getAnnouncementAudienceCount: (audienceLevel = 'ALL') =>
+    request(`/announcements/audience-count?audienceLevel=${encodeURIComponent(audienceLevel)}`),
+
   // Feedback API
   submitFeedback: (payload) =>
     request('/feedback/submit', {

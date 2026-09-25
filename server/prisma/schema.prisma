@@ -289,6 +289,22 @@ model Feedback {
   @@map("feedback")
 }
 
+// Per-recipient SMS delivery log for announcement broadcasts (GeezSMS)
+model SmsLog {
+  id              String   @id @default(uuid())
+  announcementId  String?
+  phone           String
+  message         String?
+  status          String   @default("PENDING") // "PENDING" | "SENT" | "FAILED"
+  providerMessage String?
+  error           String?
+  createdAt       DateTime @default(now())
+
+  @@index([announcementId])
+  @@index([createdAt])
+  @@map("sms_log")
+}
+
 // Uploaded files (PDF books, reference guides & payment receipts) stored in Postgres
 model File {
   id        String   @id @default(cuid())

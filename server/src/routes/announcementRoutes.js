@@ -13,6 +13,8 @@ router.get('/', announcementController.listAnnouncements);
 // Admin-only management
 router.use(requireRole('admin'));
 router.get('/all', announcementController.listAllAnnouncements);
+router.get('/audience-count', announcementController.getAudienceCount);
+router.get('/sms-logs', announcementController.listSmsLogs);
 router.post('/', announcementController.createAnnouncement);
 router.patch('/:id', announcementController.updateAnnouncement);
 router.delete('/:id', announcementController.deleteAnnouncement);

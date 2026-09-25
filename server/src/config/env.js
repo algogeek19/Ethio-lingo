@@ -12,6 +12,10 @@ export const ENV = {
   SUPABASE_PUBLISHABLE_KEY: process.env.SUPABASE_PUBLISHABLE_KEY || '',
   SUPABASE_SECRET_KEY: process.env.SUPABASE_SECRET_KEY || '',
   SUPABASE_JWKS_URL: process.env.SUPABASE_JWKS_URL || 'https://ohiwmjqheitytulhfdpo.supabase.co/auth/v1/.well-known/jwks.json',
+  // GeezSMS (announcements are delivered via SMS instead of in-app banners)
+  GEEZSMS_BASE_URL: process.env.GEEZSMS_BASE_URL || 'https://api.geezsms.com/api/v1',
+  GEEZSMS_TOKEN: process.env.GEEZSMS_TOKEN || '',
+  GEEZSMS_SENDER_ID: process.env.GEEZSMS_SENDER_ID || '',
   CORS_ORIGIN: process.env.CORS_ORIGIN
     ? process.env.CORS_ORIGIN.split(',')
     : [
