@@ -7,11 +7,9 @@ import {
   Lock,
   ArrowRight,
   Play,
-  BookOpen,
   Sparkles,
   Flame,
   ShieldAlert,
-  Banknote,
   ChevronRight,
 } from 'lucide-react';
 import HorizontalScrollGallery from './HorizontalScrollGallery';
@@ -113,44 +111,23 @@ const cardVariants = {
   },
 };
 
-const METHOD_STEPS = [
-  {
-    num: '01',
-    tag: 'Diagnostic',
-    title: '10-Question Placement',
-    body: 'Algorithmic grammar assessment benchmarks your exact tier: Beginner I through Advanced II. Zero guesswork.',
-    footLeft: 'Score <8: Beginner I',
-    footRight: 'Score 8–10: Interm. I',
-    accent: false,
-  },
-  {
-    num: '02',
-    tag: 'Task 1 · 20 Min',
-    title: 'Seek-Locked Lecture',
-    body: 'Curated masterclasses with fast-forwarding disabled. Download academic PDF guides to annotate syntactic structures. 100% watch gate.',
-    footLeft: 'Status: 100% Watch Gate',
-    footRight: 'Verified',
-    accent: false,
-  },
-  {
-    num: '03',
-    tag: 'Task 2 · 15 Min',
-    title: 'Dual-Track Listening',
-    body: 'Choose between Informative Academic Discourse or Conversational Entertainment to sharpen dialectical comprehension.',
-    footLeft: 'Amharic context notes',
-    footRight: 'Dual Subtitles',
-    accent: false,
-  },
-  {
-    num: '04',
-    tag: 'Escrow Gate',
-    title: '20-Question Daily Exam',
-    body: 'Achieve ≥75% to defend your stake. Failing deducts ETB 25; an unsubmitted day incurs an automatic ETB 80 forfeit.',
-    footLeft: 'Penalty: ETB 25 Fail',
-    footRight: 'ETB 80 Absent',
-    accent: true,
-  },
-];
+/* Minimal editorial section transition — hairline + mono index that fades in */
+const SectionTransition = ({ index, label }) => (
+  <motion.div
+    initial={{ opacity: 0, y: 12 }}
+    whileInView={{ opacity: 1, y: 0 }}
+    viewport={{ once: true, margin: '-60px' }}
+    transition={{ duration: 0.7, ease: easeEditorial }}
+    className="max-w-7xl mx-auto px-6 lg:px-12 pt-20 lg:pt-24"
+  >
+    <div className="flex items-center gap-5">
+      <span className="font-mono text-[10px] tracking-[0.22em] text-text-muted">{index}</span>
+      <span className="h-px flex-1 bg-gradient-to-r from-hairline/80 to-transparent" />
+      <span className="font-mono text-[9px] tracking-[0.3em] uppercase text-on-surface-variant">{label}</span>
+      <span className="h-px flex-1 bg-gradient-to-l from-hairline/80 to-transparent" />
+    </div>
+  </motion.div>
+);
 
 const TIERS = [
   { level: 'Level I', name: 'Beginner I', desc: 'Phonetics, basic syntax & survival conversational frames.', days: '30 DAYS · 30 EXAMS', entry: true },
@@ -223,7 +200,7 @@ const LandingPage = () => {
               className="font-cormorant text-5xl sm:text-6xl md:text-7xl lg:text-[80px] font-normal leading-[1.05] tracking-tight text-on-surface mb-8 max-w-4xl"
             >
               {t('hero.title', 'Master English Through ')}
-              <span className="calligraphic-italic text-primary">Real Financial</span>
+              <span className="calligraphic-italic text-primary">{t('hero.titleAccent', 'Real Financial')}</span>
               {t('hero.titleCommitment', ' Commitment.')}
             </motion.h1>
 
@@ -275,8 +252,10 @@ const LandingPage = () => {
       </section>
 
       {/* ================================================================ */}
-      {/* PROTOCOL EXPLAINER — REAL VIDEO SHOWCASE                         */}
+      {/* 01 · THE PROTOCOL — REAL VIDEO SHOWCASE                           */}
       {/* ================================================================ */}
+      <SectionTransition index="01" label={t('landing.transitionProtocol', 'The Protocol')} />
+
       <section ref={explainerRef} className="scroll-mt-28 py-20 lg:py-24 px-6 lg:px-12 w-full max-w-7xl mx-auto">
         <motion.div
           variants={sectionVariants}
@@ -401,78 +380,15 @@ const LandingPage = () => {
       </section>
 
       {/* ================================================================ */}
-      {/* METHODOLOGICAL RIGOR — EDITORIAL 4-STEP SEQUENCE                 */}
+      {/* 02 · THE COMPLETE LEARNING & STAKING FLOW (moved up)              */}
       {/* ================================================================ */}
-      <section className="w-full max-w-7xl mx-auto px-6 lg:px-12 pb-20 lg:pb-24 flex flex-col gap-12">
-        <motion.div
-          variants={sectionVariants}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: '-80px' }}
-          className="flex flex-col gap-12"
-        >
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6 border-b border-hairline/40">
-            <div>
-              <motion.div variants={cardVariants} className="inline-flex items-center gap-2 mb-2 font-mono text-[10px] tracking-[0.25em] text-primary uppercase">
-                <span className="w-1.5 h-1.5 rounded-full bg-primary" />
-                <span>{t('method.sectionBadge', 'Methodology')}</span>
-              </motion.div>
-              <motion.h2 variants={cardVariants} className="font-cormorant text-3xl md:text-5xl text-on-surface font-normal">
-                {t('method.title', 'The Daily ')}
-                <span className="calligraphic-italic text-primary">{t('method.titleAccent', 'Academic Escrow')}</span>
-                {t('method.titleEnd', ' Protocol')}
-              </motion.h2>
-            </div>
-            <motion.p variants={cardVariants} className="font-sans text-sm md:text-base text-on-surface-variant max-w-md leading-relaxed font-light">
-              {t('method.description', 'Structured precision designed for Ethiopian scholars, diaspora professionals, and civil servants preparing for global fluency.')}
-            </motion.p>
-          </div>
-
-          {/* 4 Airy Step Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {METHOD_STEPS.map((step, idx) => (
-              <motion.div
-                key={step.num}
-                variants={cardVariants}
-                custom={idx}
-                transition={{ duration: 0.6, ease: easeEditorial, delay: idx * 0.06 }}
-                className={
-                  step.accent
-                    ? 'bg-surface-container-lowest p-8 rounded-2xl border-2 border-primary/50 flex flex-col justify-between shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group'
-                    : 'bg-surface-container-lowest/80 p-8 rounded-2xl border border-hairline/50 flex flex-col justify-between hover:border-primary/40 hover:shadow-lg hover:shadow-stone-900/5 hover:-translate-y-1 transition-all duration-300 group'
-                }
-              >
-                <div>
-                  <div className="flex items-center justify-between mb-6">
-                    <span className={`font-cormorant text-3xl transition-colors ${step.accent ? 'text-primary font-medium' : 'text-stone-300 group-hover:text-primary'}`}>
-                      {step.num}
-                    </span>
-                    <span
-                      className={
-                        step.accent
-                          ? 'font-mono text-[9px] bg-primary text-on-primary px-2 py-0.5 rounded tracking-wider uppercase font-semibold'
-                          : 'font-mono text-[9px] bg-surface-container text-on-surface-variant px-2 py-0.5 rounded tracking-wider uppercase'
-                      }
-                    >
-                      {step.tag}
-                    </span>
-                  </div>
-                  <h3 className="font-cormorant text-2xl text-on-surface font-medium mb-2">{step.title}</h3>
-                  <p className="font-sans text-xs leading-relaxed text-on-surface-variant">{step.body}</p>
-                </div>
-                <div className={`mt-8 pt-4 border-t flex items-center justify-between font-mono text-[10px] ${step.accent ? 'border-primary/15 text-error font-medium' : 'border-hairline/40 text-text-muted'}`}>
-                  <span>{step.footLeft}</span>
-                  <span className={step.accent ? '' : 'text-primary font-semibold'}>{step.footRight}</span>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </motion.div>
-      </section>
+      <HorizontalScrollGallery />
 
       {/* ================================================================ */}
-      {/* PROGRESSION ARCHITECTURE — DARK RICH SECTION                     */}
+      {/* 02 · PROGRESSION ARCHITECTURE — DARK RICH SECTION                 */}
       {/* ================================================================ */}
+      <SectionTransition index="02" label={t('landing.transitionProgression', 'Progression Architecture')} />
+
       <section className="w-full bg-surface-dark text-[#fbf9f5] py-20 lg:py-24 px-6 lg:px-12">
         <motion.div
           variants={sectionVariants}
@@ -529,45 +445,11 @@ const LandingPage = () => {
       </section>
 
       {/* ================================================================ */}
-      {/* QUIET PILLARS                                                      */}
+      {/* 03 · THE STAKING ENGINE                                           */}
       {/* ================================================================ */}
-      <section className="w-full max-w-7xl mx-auto px-6 lg:px-12 py-20">
-        <motion.div
-          variants={sectionVariants}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: '-80px' }}
-          className="flex flex-col md:flex-row items-start justify-between gap-12"
-        >
-          <motion.div variants={cardVariants} className="flex items-start gap-5 max-w-md">
-            <div className="w-11 h-11 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shrink-0">
-              <Banknote size={22} />
-            </div>
-            <div>
-              <h4 className="font-cormorant text-2xl text-on-surface font-medium">{t('pillars.settlementTitle', 'CBE & Telebirr Automated Settlement')}</h4>
-              <p className="font-sans text-xs text-on-surface-variant mt-2 leading-relaxed font-light">
-                {t('pillars.settlementDesc', 'Every deposit is tracked in verified ledger tiers. Yields disperse immediately after 30-day cohort graduation.')}
-              </p>
-            </div>
-          </motion.div>
-          <motion.div variants={cardVariants} className="flex items-start gap-5 max-w-md">
-            <div className="w-11 h-11 rounded-full bg-tertiary-container/15 border border-tertiary-container/25 flex items-center justify-center text-tertiary shrink-0">
-              <BookOpen size={22} />
-            </div>
-            <div>
-              <h4 className="font-cormorant text-2xl text-on-surface font-medium">{t('pillars.amharicTitle', 'Linguistically Calibrated for Amharic Speakers')}</h4>
-              <p className="font-sans text-xs text-on-surface-variant mt-2 leading-relaxed font-light">
-                {t('pillars.amharicDesc', 'Targets common Ge\u2019ez syntax interference, verb conjugation drift, and accent nuances.')}
-              </p>
-            </div>
-          </motion.div>
-        </motion.div>
-      </section>
+      <SectionTransition index="03" label={t('landing.transitionStaking', 'The Staking Engine')} />
 
-      {/* ================================================================ */}
-      {/* ESCROW STAKING & SLASHING MECHANICS                               */}
-      {/* ================================================================ */}
-      <section className="w-full max-w-7xl mx-auto px-6 lg:px-12 pb-20 lg:pb-24 flex flex-col gap-12">
+      <section className="w-full max-w-7xl mx-auto px-6 lg:px-12 py-20 lg:py-24 flex flex-col gap-12">
         <motion.div
           variants={sectionVariants}
           initial="hidden"
@@ -659,13 +541,10 @@ const LandingPage = () => {
       </section>
 
       {/* ================================================================ */}
-      {/* INTERACTIVE PLATFORM JOURNEY — GSAP HORIZONTAL FLOW               */}
+      {/* 04 · FINAL CALL TO ACTION                                         */}
       {/* ================================================================ */}
-      <HorizontalScrollGallery />
+      <SectionTransition index="04" label={t('landing.transitionCta', 'Begin Your Cycle')} />
 
-      {/* ================================================================ */}
-      {/* FINAL CALL TO ACTION                                              */}
-      {/* ================================================================ */}
       <section className="max-w-4xl mx-auto px-6 py-24 text-center">
         <motion.div
           initial={{ opacity: 0, scale: 0.97, y: 20 }}

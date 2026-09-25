@@ -50,14 +50,14 @@ const GALLERY_CARDS = [
   },
   {
     step: "04",
-    title: "Daily Chat & Messenger",
-    subtitle: "TALK TO LEARNERS AT YOUR LEVEL",
+    title: "Scholar-to-Scholar Messenger",
+    subtitle: "ONE-ON-ONE CHAT WITH LEARNERS AT YOUR LEVEL",
     description:
-      "Open the messenger to see learners currently at your level, pick a conversation partner, and chat about today's daily topic. Every message has a report button so issues reach the admin immediately.",
-    badge: "DAILY TOPIC CONVERSATION",
+      "Open the messenger and pick a scholar at your level for a direct one-on-one conversation — no chatrooms, no group feeds. Every message has a report button so issues reach the admin immediately.",
+    badge: "PEER-TO-PEER DIRECT CHAT",
     badgeColor: "bg-primary-coral text-white",
     icon: MessageCircle,
-    stats: "Report button → admin moderation",
+    stats: "Back button returns to peer picker",
   },
   {
     step: "05",

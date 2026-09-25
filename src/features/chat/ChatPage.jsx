@@ -4,7 +4,6 @@ import {
   Send,
   Flag,
   ShieldAlert,
-  Megaphone,
   X,
   RefreshCw,
   Search,
@@ -275,7 +274,6 @@ const ChatPage = () => {
   };
 
   const activePeer = chat?.peer || peers.find((p) => p.id === activePeerId) || null;
-  const dailyTopic = peersData?.dailyTopic || null;
   const isBannedUser = !!authUser?.isBanned;
   const filteredPeers = peers.filter(
     (p) => !query || p.name?.toLowerCase().includes(query.toLowerCase())
@@ -311,22 +309,13 @@ const ChatPage = () => {
       <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-5 border-b border-hairline/50 pb-6">
         <div>
           <span className="font-mono text-[10px] uppercase tracking-widest text-primary font-semibold flex items-center gap-1.5">
-            <MessageCircle size={14} /> Cohort Messenger · Level {peersData?.level || 'Learners'}
+            <MessageCircle size={14} /> Peer Messaging · Level {peersData?.level || 'Learners'}
           </span>
-          <h1 className="font-cormorant text-4xl md:text-5xl font-normal text-on-surface mt-1">Chat with Your Cohort</h1>
+          <h1 className="font-cormorant text-4xl md:text-5xl font-normal text-on-surface mt-1">Chat with Learners at Your Level</h1>
           <p className="text-xs text-on-surface-variant mt-2 max-w-2xl leading-relaxed">
-            Direct messages with learners at your level. Report abusive or spam messages to moderators.
+            One-on-one direct messages with fellow scholars at your level. Report abusive or spam messages to moderators.
           </p>
         </div>
-        {dailyTopic && (
-          <div className="flex flex-col items-end gap-1.5 max-w-xs text-right rounded-2xl bg-surface-lowest border border-hairline/60 shadow-sm px-4 py-3 shrink-0">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 bg-warning-amber/15 text-warning-amber rounded-full text-[10px] font-mono font-bold uppercase tracking-wider">
-              <Megaphone size={12} /> Today's Topic
-            </span>
-            <p className="font-cormorant text-lg font-medium text-on-surface leading-snug">{dailyTopic.name}</p>
-            <span className="text-[10px] font-mono text-on-surface-variant">{dailyTopic.date}</span>
-          </div>
-        )}
       </div>
 
       {/* Messenger Shell */}
@@ -334,13 +323,13 @@ const ChatPage = () => {
         {/* Contact Sidebar (WhatsApp / Telegram style) */}
         <aside className={`md:col-span-1 border-r border-hairline/50 flex flex-col bg-surface-low ${activePeerId && chat ? 'hidden md:flex' : 'flex'}`}>
           <div className="p-4 border-b border-hairline/50 space-y-3">
-            <span className="font-cormorant text-2xl font-medium text-on-surface block">Cohort Messenger</span>
+            <span className="font-cormorant text-2xl font-medium text-on-surface block">Choose a Peer</span>
             <div className="relative">
               <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-on-surface-variant" />
               <input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search contacts..."
+                placeholder="Search peers..."
                 className="w-full pl-9 pr-8 py-2.5 bg-surface-container/60 rounded-full border border-hairline/50 text-sm text-on-surface focus-ring placeholder:text-on-surface-variant/70"
               />
               <button onClick={loadPeers} className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-on-surface-variant hover:text-primary rounded-full cursor-pointer" aria-label="Refresh contacts">
@@ -356,13 +345,13 @@ const ChatPage = () => {
 
           <div className="grow overflow-y-auto">
             {loading && peers.length === 0 ? (
-              <div className="p-6 text-center text-xs text-on-surface-variant animate-skeleton">Loading contacts...</div>
+              <div className="p-6 text-center text-xs text-on-surface-variant animate-skeleton">Loading peers...</div>
             ) : filteredPeers.length === 0 ? (
               <div className="p-6 text-center space-y-2">
                 <MessageCircle size={30} className="text-on-surface-variant/40 mx-auto" />
-                <p className="text-xs font-mono text-on-surface-variant">No other learners at {peersData?.level || 'your level'} yet.</p>
+                <p className="text-xs font-mono text-on-surface-variant">Choose a peer to chat with.</p>
                 <p className="text-[11px] text-on-surface-variant/70">
-                  Check back soon — new learners join daily!
+                  No other learners at {peersData?.level || 'your level'} yet — check back soon!
                 </p>
               </div>
             ) : (
@@ -411,7 +400,7 @@ const ChatPage = () => {
               onClick={() => setChat(null)}
               className="flex items-center gap-1 text-xs font-mono text-on-surface-variant hover:text-primary cursor-pointer"
             >
-              <ChevronLeft size={15} /> Contacts
+              <ChevronLeft size={15} /> Peers
             </button>
           </div>
 
@@ -429,17 +418,10 @@ const ChatPage = () => {
                       </span>
                     )}
                   </h2>
-                  <p className="text-[10px] font-mono text-success-green font-semibold flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-success-green inline-block animate-pulse" />
-                    Active now
+                  <p className="text-[10px] font-mono text-on-surface-variant font-semibold">
+                    Scholar peer · same level
                   </p>
                 </div>
-              </div>
-            )}
-            {dailyTopic && (
-              <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-warning-amber/10 border border-warning-amber/30 rounded-full text-[10px] font-mono text-warning-amber font-bold">
-                <Megaphone size={12} />
-                <span className="max-w-[180px] truncate">{dailyTopic.name}</span>
               </div>
             )}
           </div>
@@ -450,9 +432,9 @@ const ChatPage = () => {
               <div className="w-16 h-16 rounded-full bg-primary/10 text-primary flex items-center justify-center">
                 <MessageCircle size={30} />
               </div>
-              <p className="text-sm font-mono text-on-surface-variant font-semibold">Select a contact to start chatting</p>
+              <p className="text-sm font-mono text-on-surface-variant font-semibold">Choose a peer to chat with</p>
               <p className="text-xs text-on-surface-variant/70 max-w-xs">
-                Discuss today's topic: <strong className="text-primary">{dailyTopic?.name || 'Daily Topic'}</strong>
+                Pick a scholar from the side navigator to start a one-on-one conversation.
               </p>
             </div>
           ) : (
@@ -471,7 +453,7 @@ const ChatPage = () => {
                       </div>
                       <p className="text-xs font-mono text-on-surface-variant font-semibold">No messages yet.</p>
                       <p className="text-[11px] text-on-surface-variant">
-                        Greet <strong className="text-primary">{activePeer.name}</strong> and discuss today's topic!
+                        Greet <strong className="text-primary">{activePeer.name}</strong> and start the conversation!
                       </p>
                     </div>
                   ) : (

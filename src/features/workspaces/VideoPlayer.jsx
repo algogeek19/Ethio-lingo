@@ -604,7 +604,7 @@ INSTRUCTIONS:
                   onClick={() => onNavigate('task3')}
                   className="mt-6 w-full py-3 rounded-full bg-primary text-on-primary text-xs tracking-wider uppercase font-semibold hover:bg-primary-container transition-all shadow-sm"
                 >
-                  Proceed to Daily Chat Room →
+                  Proceed to Task 3: Daily Exam →
                 </button>
               )}
             </div>

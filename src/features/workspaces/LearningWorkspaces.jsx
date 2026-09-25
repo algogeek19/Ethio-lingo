@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Play, CheckCircle, Video, Lock, PlusCircle, MessageCircle } from 'lucide-react';
+import { Play, CheckCircle, Video, Lock, PlusCircle, FileCheck, ArrowRight } from 'lucide-react';
 import VideoPlayer from './VideoPlayer';
-import DailyChatPanel from '../chat/DailyChatPanel';
 import { useStaking } from '../../context/StakingContext';
 import CountdownWidget from '../../components/common/CountdownWidget';
 
 const LearningWorkspaces = () => {
   const { dailyTasks, isBalanceZero, isFreeTrialMode, currentModuleDay, user } = useStaking();
+  const navigate = useNavigate();
   const safeDailyTasks = dailyTasks || { lesson: false, video: false, exam: false };
   const [activeTaskTab, setActiveTaskTab] = useState('task1'); // 'task1' | 'task2' | 'task3'
 
@@ -66,16 +66,16 @@ const LearningWorkspaces = () => {
                   : `Daily Learning Hub (${user?.level || 'Beginner I'})`}
               </h1>
               <p className="text-xs text-on-surface-variant mt-2 max-w-2xl leading-relaxed">
-                Complete Task 1 (Lesson Video) and Task 2 (Listening Practice) to unlock the Daily Exam, and join the Daily Chat Room to practice today's topic with learners at your level.
+                Complete Task 1 (Lesson Video) and Task 2 (Listening Practice) to unlock the Daily Exam, then seal Task 3 with a ≥15/20 pass to protect your stake.
               </p>
             </div>
 
-            {/* Task Navigation Tabs & Daily Chat Room */}
+            {/* Task Navigation Tabs */}
             <div className="flex flex-wrap items-center gap-1 bg-surface-container/60 p-1 rounded-full border border-hairline/40 shadow-sm" role="tablist">
               {[
                 { id: 'task1', label: 'Task 1: Lesson Video', icon: Video, done: safeDailyTasks.lesson },
                 { id: 'task2', label: 'Task 2: Listening Skill', icon: Play, done: safeDailyTasks.video },
-                { id: 'task3', label: 'Daily Chat Room', icon: MessageCircle, done: null },
+                { id: 'task3', label: 'Task 3: Daily Exam', icon: FileCheck, done: safeDailyTasks.exam },
               ].map((tab) => {
                 const isActiveTab = activeTaskTab === tab.id;
                 const Icon = tab.icon;
@@ -125,7 +125,39 @@ const LearningWorkspaces = () => {
                 <VideoPlayer mode="task2" onNavigate={() => setActiveTaskTab('task3')} />
               )}
               {activeTaskTab === 'task3' && (
-                <DailyChatPanel roomLevel={isFreeTrialMode ? 'Free Trial' : user?.level} />
+                <div className="max-w-2xl mx-auto p-8 sm:p-12 bg-surface-lowest border border-hairline/60 rounded-2xl shadow-sm text-center space-y-5 font-sans">
+                  <div className="w-16 h-16 rounded-full bg-primary/10 border border-primary/20 text-primary flex items-center justify-center mx-auto shadow-inner">
+                    <FileCheck size={28} />
+                  </div>
+                  <div className="space-y-2">
+                    <span className="mono-micro-label text-primary block">Escrow Gate · 20 Questions</span>
+                    <h2 className="font-cormorant text-3xl font-normal text-on-surface">
+                      Task 3: The Daily Exam
+                    </h2>
+                    <p className="text-xs text-on-surface-variant max-w-lg mx-auto leading-relaxed">
+                      Unlocks only after Task 1 (Lesson Video) and Task 2 (Listening Practice) are sealed. Score {'≥'}15/20 (75%) to pass, protect your 1,000 ETB stake, and advance your streak.
+                    </p>
+                  </div>
+                  {safeDailyTasks.exam ? (
+                    <div className="inline-flex items-center gap-2 px-6 py-3.5 rounded-full bg-success-green/15 text-success-green text-xs tracking-wider uppercase font-semibold">
+                      <CheckCircle size={16} />
+                      <span>Exam Sealed Today</span>
+                    </div>
+                  ) : (
+                    <Link
+                      to="/exam"
+                      className="inline-flex items-center gap-2 px-8 py-3.5 rounded-full bg-primary text-on-primary text-xs tracking-wider uppercase font-semibold hover:bg-primary-container transition-all shadow-md shadow-primary/20 focus-ring btn-interactive cursor-pointer group"
+                    >
+                      <span>Enter the Exam Room</span>
+                      <ArrowRight size={16} className="transition-transform duration-300 group-hover:translate-x-1" />
+                    </Link>
+                  )}
+                  <p className="text-[11px] font-mono text-on-surface-variant">
+                    {safeDailyTasks.lesson && safeDailyTasks.video
+                      ? 'Prerequisites complete — the exam gate is open.'
+                      : 'Locked until Task 1 and Task 2 are marked Done.'}
+                  </p>
+                </div>
               )}
             </motion.div>
           </AnimatePresence>

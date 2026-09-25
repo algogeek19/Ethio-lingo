@@ -30,8 +30,10 @@
   },
   "hero": {
     "badge": "FINANCIAL ACCOUNTABILITY & HABIT-BUILDING PLATFORM",
-    "title": "Master English Through Real Financial Commitment.",
-    "description": "Ethio-Lingo combines structured English online learning across 6 curriculum levels with a Financial Escrow Staking Engine. Lock your stake, complete 4 daily tasks, pass the 20-question exam, and protect your capital.",
+    "title": "Master English Through ",
+    "titleAccent": "Real Financial",
+    "titleCommitment": " Commitment.",
+    "description": "Ethio-Lingo combines structured English online learning across 6 curriculum levels with a Financial Escrow Staking Engine. Lock your stake, complete 3 daily tasks, pass the 20-question exam, and protect your capital.",
     "stakeBanner": {
       "stakeAmount": "ETB 1,000 Stake",
       "stakeSub": "0% Fee • 1,000 ETB Fully Locked",
@@ -43,7 +45,9 @@
   },
   "videoShowcase": {
     "badge": "PLATFORM WALKTHROUGH",
-    "title": "See How Ethio-Lingo Works in few Minutes",
+    "title": "See How the ",
+    "titleAccent": "Academic Escrow",
+    "titleEnd": " Protocol Works",
     "description": "Watch how our daily 3-task curriculum and financial escrow vault keep you accountable, build unbreakable habits, and help you master English.",
     "duration": "FEW MINUTES WALKTHROUGH",
     "clickToWatch": "Click to Watch Video",
@@ -70,13 +74,16 @@
     "task3Badge": "20 QUESTIONS • PASS ≥ 15/20"
   },
   "levels": {
-    "sectionBadge": "STRUCTURED PROGRESSION TRACK",
-    "title": "6 Levels of Comprehensive Curriculum",
+    "sectionBadge": "Progression Architecture",
+    "title": "Six 30-Day ",
+    "titleAccent": "Cohort Tiers",
     "description": "Each level consists of 30 daily modules. Take the 10-question placement quiz to start in Beginner I or Intermediate I."
   },
   "staking": {
     "sectionBadge": "FINANCIAL ESCROW ENGINE",
-    "title": "How Staking & Protection Work",
+    "title": "How ",
+    "titleAccent": "Staking & Protection",
+    "titleEnd": " Work",
     "description": "Money locked in escrow enforces daily habit building. Pass daily tasks and exams to protect 100% of your staked capital.",
     "depositTitle": "1,000 ETB Initial Deposit",
     "depositDesc": "Deposit 1,000 ETB via Telebirr or Ethiopian Bank Transfer. With a 0% platform fee, your full 1,000 ETB is locked in your escrow vault.",
@@ -89,7 +96,9 @@
     "trialDesc": "Try 3 free preview modules without financial stake or streak penalties. Upgrade anytime to the paid tier!"
   },
   "cta": {
-    "title": "Ready to Build Daily Study Discipline?",
+    "title": "Ready to Build ",
+    "titleAccent": "Daily Study Discipline",
+    "titleEnd": "?",
     "description": "Join Ethio-Lingo, take the 10-question placement test, choose your stake or free trial, and master English step-by-step."
   },
   "footer": {
