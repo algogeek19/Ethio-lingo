@@ -16,20 +16,57 @@ import {
 import { useStaking } from '../../context/StakingContext';
 import { api } from '../../services/api';
 
+/**
+ * Normalise any YouTube link to a bare, embeddable video URL.
+ *
+ * Copying a link from the YouTube app often yields a radio/mix playlist URL
+ * such as:
+ *   .../watch?v=<id>&list=RD<id>&start_radio=1&pp=...
+ * Passing that through to the embed player makes YouTube render
+ * "Configuration error", because mix/radio playlists cannot be embedded.
+ * We therefore keep only the 11-character video id and drop every other
+ * parameter (list, start_radio, pp, index, t, ...).
+ */
+const YOUTUBE_ID = /^[A-Za-z0-9_-]{11}$/;
+
+const extractYouTubeId = (raw) => {
+  const value = String(raw || '').trim();
+  if (!value) return null;
+
+  // Already a bare id
+  if (YOUTUBE_ID.test(value)) return value;
+
+  try {
+    // Absolute URL (handles ?v=, youtu.be, /embed/, /shorts/, /live/)
+    const url = new URL(value);
+    const host = url.hostname.replace(/^www\./, '');
+    if (host === 'youtu.be') {
+      const id = url.pathname.slice(1).split('/')[0];
+      return YOUTUBE_ID.test(id) ? id : null;
+    }
+    if (host.endsWith('youtube.com') || host === 'youtube-nocookie.com') {
+      const v = url.searchParams.get('v');
+      if (v && YOUTUBE_ID.test(v)) return v;
+      const embedMatch = url.pathname.match(/^\/(?:embed|shorts|live|v)\/([^/?#]+)/);
+      if (embedMatch && YOUTUBE_ID.test(embedMatch[1])) return embedMatch[1];
+    }
+    return null;
+  } catch {
+    // Not a parseable absolute URL - fall back to a loose match
+    const loose = value.match(/(?:v=|\/embed\/|youtu\.be\/|\/shorts\/|live\/)([A-Za-z0-9_-]{11})/);
+    return loose && YOUTUBE_ID.test(loose[1]) ? loose[1] : null;
+  }
+};
+
 const getCleanVideoUrl = (rawUrl, defaultUrl = 'https://www.youtube.com/watch?v=dQw4w9WgXcQ') => {
   if (!rawUrl || typeof rawUrl !== 'string' || !rawUrl.trim()) {
     return defaultUrl;
   }
-  let cleaned = rawUrl.trim();
-  if (cleaned.includes('youtu.be/')) {
-    const videoId = cleaned.split('youtu.be/')[1]?.split(/[?#]/)[0];
-    if (videoId) return `https://www.youtube.com/watch?v=${videoId}`;
-  }
-  if (cleaned.includes('youtube.com/embed/')) {
-    const videoId = cleaned.split('youtube.com/embed/')[1]?.split(/[?#]/)[0];
-    if (videoId) return `https://www.youtube.com/watch?v=${videoId}`;
-  }
-  return cleaned;
+  const videoId = extractYouTubeId(rawUrl);
+  if (videoId) return `https://www.youtube.com/watch?v=${videoId}`;
+
+  const defaultId = extractYouTubeId(defaultUrl);
+  return defaultId ? `https://www.youtube.com/watch?v=${defaultId}` : defaultUrl;
 };
 
 const formatTime = (seconds) => {
