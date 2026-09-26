@@ -118,7 +118,7 @@ const VideoPlayer = ({ mode = 'task1', onNavigate }) => {
     },
     entertainment: {
       title: `${user?.level || 'Beginner I'} • Listening Practice (Entertainment: Cultural & Storytelling English)`,
-      url: getCleanVideoUrl(moduleData?.listeningEntertainmentUrl, 'https://www.youtube.com/watch?v=7h4gVd3gN7M'),
+      url: getCleanVideoUrl(moduleData?.listeningEntertainmentUrl, 'https://www.youtube.com/watch?v=hT_nvWreIhg'),
     },
   };
 
