@@ -12,6 +12,8 @@ import {
   Lock,
   Play,
   Pause,
+  AlertTriangle,
+  ExternalLink,
 } from 'lucide-react';
 import { useStaking } from '../../context/StakingContext';
 import { api } from '../../services/api';
@@ -93,6 +95,11 @@ const VideoPlayer = ({ mode = 'task1', onNavigate }) => {
   const [playedFraction, setPlayedFraction] = useState(0);
   const [duration, setDuration] = useState(0);
 
+  // Set when the embed cannot initialise at all (blocked by an adblocker,
+  // a privacy extension, or a network that filters /embed/ requests). Without
+  // this the player just sits at 00:00 / 00:00 with no explanation.
+  const [playerBlocked, setPlayerBlocked] = useState(false);
+
   // Task 2 Category State ('informative' | 'entertainment')
   const [listeningCategory, setListeningCategory] = useState('informative');
 
@@ -123,6 +130,24 @@ const VideoPlayer = ({ mode = 'task1', onNavigate }) => {
         : videoData.entertainment;
 
   const [videoTitle, setVideoTitle] = useState(currentVideo.title);
+
+  // Reset playback metrics when the source changes
+  useEffect(() => {
+    setDuration(0);
+    setPlayedFraction(0);
+    setLastPlayedSeconds(0);
+    setIsPlaying(false);
+    setPlayerBlocked(false);
+  }, [currentVideo.url]);
+
+  // If playback was requested but the embed never reports a duration, the
+  // iframe is being blocked (adblocker / privacy extension / network filter).
+  // Surface a usable fallback instead of a silent 00:00 / 00:00 player.
+  useEffect(() => {
+    if (!isPlaying || duration > 0) return undefined;
+    const timer = setTimeout(() => setPlayerBlocked(true), 8000);
+    return () => clearTimeout(timer);
+  }, [isPlaying, duration]);
 
   useEffect(() => {
     let isMounted = true;
@@ -414,9 +439,13 @@ INSTRUCTIONS:
                   onProgress={handleProgress}
                   onEnded={handleEnded}
                   onStart={() => setIsPlaying(true)}
-                  onDuration={(d) => setDuration(d)}
+                  onDuration={(d) => {
+                    setDuration(d);
+                    if (d > 0) setPlayerBlocked(false);
+                  }}
                   onError={(err) => {
                     console.warn('ReactPlayer playback warning:', err);
+                    setPlayerBlocked(true);
                   }}
                   progressInterval={500}
                   config={{
@@ -433,7 +462,40 @@ INSTRUCTIONS:
               </div>
 
               {/* Full-area play overlay — shown until the video starts */}
-              {!isPlaying && (
+              {/* Blocked-embed fallback: replaces the dead player with a clear
+                  explanation and a direct link that always works. */}
+              {playerBlocked && (
+                <div className="absolute inset-0 z-40 flex flex-col items-center justify-center gap-4 px-6 text-center bg-[#1a1413]/95">
+                  <AlertTriangle size={28} className="text-warning-amber" />
+                  <div className="space-y-1.5">
+                    <p className="font-cormorant text-xl text-stone-100">Video unavailable in this browser</p>
+                    <p className="text-xs text-stone-400 font-light max-w-sm leading-relaxed">
+                      Your browser or network is blocking the embedded YouTube player.
+                      An ad blocker, privacy extension, or a filtered connection is the usual cause.
+                    </p>
+                  </div>
+                  <a
+                    href={currentVideo.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 rounded-full bg-primary hover:bg-primary-container text-on-primary font-semibold text-xs tracking-wider uppercase px-5 py-2.5 transition-all btn-interactive focus-ring"
+                  >
+                    <ExternalLink size={14} /> Open on YouTube
+                  </a>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPlayerBlocked(false);
+                      setIsPlaying(true);
+                    }}
+                    className="text-[10px] font-mono uppercase tracking-wider text-stone-400 hover:text-stone-200 cursor-pointer focus-ring"
+                  >
+                    Try again
+                  </button>
+                </div>
+              )}
+
+              {!isPlaying && !playerBlocked && (
                 <button
                   type="button"
                   onClick={() => setIsPlaying(true)}
