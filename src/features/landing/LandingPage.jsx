@@ -12,11 +12,13 @@ import {
   ShieldAlert,
   ChevronRight,
   ExternalLink,
+  AlertTriangle,
 } from 'lucide-react';
 import HorizontalScrollGallery from './HorizontalScrollGallery';
 import { useRole } from '../../context/RoleContext';
 import { api } from '../../services/api';
-import { extractYouTubeId, getYouTubeEmbedUrl, getYouTubeThumbnail } from '../../utils/youtube';
+import YouTubePlayer from '../../components/common/YouTubePlayer';
+import { extractYouTubeId, getYouTubeThumbnail, describeYouTubeError } from '../../utils/youtube';
 
 /**
  * 💡 CONFIGURE VIA ENVIRONMENT VARIABLE, ADMIN DASHBOARD OR DIRECT FALLBACK:
@@ -150,6 +152,8 @@ const LandingPage = () => {
   const { isAuthenticated, role } = useRole();
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
   const [videoId, setVideoId] = useState(EXPLAINER_YOUTUBE_VIDEO_ID);
+  // Set when the embed itself fails (embedding disabled, private, blocked).
+  const [videoError, setVideoError] = useState('');
   const explainerRef = useRef(null);
 
   useEffect(() => {
@@ -159,9 +163,22 @@ const LandingPage = () => {
         // Ignore anything that is not a usable YouTube id so a malformed
         // admin value can never break the landing page embed.
         const id = extractYouTubeId(res?.data?.videoUrl);
-        if (isMounted && id) setVideoId(id);
+        if (isMounted && id) {
+          setVideoId(id);
+        }
       })
-      .catch(() => {});
+      .catch((err) => {
+        // The admin-configured video is unreachable (a CORS gap between the
+        // static site and the API is the usual cause). The build-time default
+        // is already loaded and valid, so carry on rather than breaking the
+        // page — but record it so the console explains what visitors see.
+        if (isMounted) {
+          console.warn(
+            '[LandingPage] Could not load the admin landing video, using the built-in default:',
+            err?.message || err
+          );
+        }
+      });
     return () => { isMounted = false; };
   }, []);
 
@@ -285,31 +302,88 @@ const LandingPage = () => {
             variants={cardVariants}
             className="relative w-full aspect-video bg-[#1a1413] rounded-2xl overflow-hidden shadow-xl border border-stone-800/60"
           >
-            {isVideoPlaying ? (
+            {isVideoPlaying && !videoError ? (
               <>
-                <iframe
-                  src={getYouTubeEmbedUrl(videoId, {
-                    autoplay: true,
-                    origin: typeof window !== 'undefined' ? window.location.origin : undefined,
-                  })}
-                  title="Ethio-Lingo Protocol Explainer"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                  allowFullScreen
-                  className="absolute inset-0 w-full h-full border-0"
+                {/* Poster stays underneath so the frame is never blank while
+                    the player boots. */}
+                <img
+                  src={thumbnailUrl}
+                  alt=""
+                  aria-hidden="true"
+                  className="absolute inset-0 w-full h-full object-cover"
                 />
-                {/* The IFrame API reports embed problems (error 101/150) as a
-                    code we cannot read from a plain iframe, so offer a manual
-                    check plus a direct link that always works. */}
+                <YouTubePlayer
+                  videoId={videoId}
+                  autoStart
+                  nativeControls
+                  progressInterval={1000}
+                  onError={(code) => {
+                    if (Number(code) === -1) return;
+                    setVideoError(describeYouTubeError(code));
+                  }}
+                  onBlocked={() => {
+                    setVideoError(
+                      'Your browser or network is blocking embedded YouTube playback. An ad blocker or privacy extension is the usual cause.'
+                    );
+                  }}
+                />
+                {/* Top-right so it never sits on top of YouTube's own control
+                    bar, which occupies the bottom of the frame. */}
                 <a
                   href={`https://www.youtube.com/watch?v=${videoId}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="absolute bottom-3 right-3 z-10 inline-flex items-center gap-1.5 rounded-full bg-black/70 px-3 py-1.5 font-mono text-[10px] uppercase tracking-wider text-stone-300 hover:text-stone-100 hover:bg-black/85 transition-colors"
+                  className="absolute top-3 right-3 z-20 inline-flex items-center gap-1.5 rounded-full bg-black/70 px-3 py-1.5 font-mono text-[10px] uppercase tracking-wider text-stone-300 hover:text-stone-100 hover:bg-black/85 transition-colors"
                 >
                   <ExternalLink size={11} />
                   <span>Open on YouTube</span>
                 </a>
               </>
+            ) : videoError ? (
+              /* Embed refused to play. Show the poster with a plain explanation
+                 and a direct link, so visitors never see YouTube's raw
+                 "Video configuration error" text. */
+              <div className="absolute inset-0">
+                <img
+                  src={thumbnailUrl}
+                  alt=""
+                  aria-hidden="true"
+                  className="absolute inset-0 w-full h-full object-cover opacity-25"
+                />
+                <div className="absolute inset-0 bg-[#1a1413]/70" />
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 px-6 text-center">
+                  <AlertTriangle size={26} className="text-warning-amber" />
+                  <div className="space-y-1.5">
+                    <p className="font-cormorant text-xl text-stone-100">
+                      This video can&apos;t be played here
+                    </p>
+                    <p className="text-xs text-stone-400 font-light max-w-sm leading-relaxed">
+                      {videoError}
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap items-center justify-center gap-3">
+                    <a
+                      href={`https://www.youtube.com/watch?v=${videoId}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 rounded-full bg-primary hover:bg-primary-container text-on-primary font-semibold text-xs tracking-wider uppercase px-5 py-2.5 transition-all btn-interactive focus-ring"
+                    >
+                      <ExternalLink size={14} />
+                      <span>Watch on YouTube</span>
+                    </a>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setVideoError('');
+                        setIsVideoPlaying(false);
+                      }}
+                      className="text-[10px] font-mono uppercase tracking-wider text-stone-400 hover:text-stone-200 cursor-pointer focus-ring"
+                    >
+                      Back
+                    </button>
+                  </div>
+                </div>
+              </div>
             ) : (
               <div
                 onClick={() => setIsVideoPlaying(true)}

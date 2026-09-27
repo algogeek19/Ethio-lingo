@@ -19,7 +19,24 @@ const __dirname = path.dirname(__filename);
 app.use(helmet({
   contentSecurityPolicy: false, // Avoid CSP blocking embedded YouTube & PDF viewers in production
 }));
-app.use(cors({ origin: ENV.CORS_ORIGIN, credentials: true }));
+// CORS for the credentialed API. An unlisted origin is refused *and logged*:
+// the `cors` package otherwise drops the response silently, which looks like a
+// network failure in the browser and leaves the frontend on stale fallbacks.
+const allowedOrigins = new Set(ENV.CORS_ORIGIN);
+app.use(
+  cors({
+    origin(origin, callback) {
+      // Same-origin and non-browser callers (curl, health checks, mobile
+      // shells) send no Origin header and are allowed through.
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.has(origin)) return callback(null, true);
+
+      logger.warn(`CORS: refused origin "${origin}" (add it to CORS_ORIGIN)`);
+      return callback(null, false);
+    },
+    credentials: true,
+  })
+);
 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));

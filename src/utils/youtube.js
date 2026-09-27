@@ -91,35 +91,6 @@ export const getYouTubeWatchUrl = (input, fallbackId = 'dQw4w9WgXcQ') => {
   return `https://www.youtube.com/watch?v=${id}`;
 };
 
-/**
- * Build an embeddable `/embed/` URL that only contains safe player vars.
- * Playlist/radio params are deliberately excluded — mix playlists are the
- * reason YouTube renders "Configuration error" inside an iframe.
- * @param {unknown} input video id or any YouTube link
- * @param {{ autoplay?: boolean, origin?: string, muted?: boolean }} [options]
- */
-export const getYouTubeEmbedUrl = (input, options = {}) => {
-  const { autoplay = false, origin = '', muted = false } = options;
-  const id = extractYouTubeId(input);
-  if (!id) return null;
-
-  const params = new URLSearchParams({
-    enablejsapi: '1',
-    rel: '0',
-    playsinline: '1',
-    modestbranding: '1',
-    iv_load_policy: '3',
-  });
-  if (autoplay) {
-    params.set('autoplay', '1');
-    // Autoplay without user interaction is only honoured when muted.
-    if (muted) params.set('mute', '1');
-  }
-  if (origin) params.set('origin', origin);
-
-  return `https://www.youtube-nocookie.com/embed/${id}?${params.toString()}`;
-};
-
 /** Thumbnail URL for a video id, used by click-to-play posters. */
 export const getYouTubeThumbnail = (input) => {
   const id = extractYouTubeId(input);

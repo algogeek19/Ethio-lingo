@@ -70,6 +70,14 @@ const YouTubePlayer = forwardRef(function YouTubePlayer(
     playing = false,
     muted = false,
     loop = false,
+    // Start as soon as the player is ready. Needed when playback is kicked
+    // off by a click: the user-gesture token does not survive the async
+    // iframe mount, so relying on a later playVideo() call gets muted by
+    // Chrome's autoplay policy.
+    autoStart = false,
+    // Let YouTube draw its own control bar. Used by the landing explainer,
+    // which has no custom chrome, so a visitor still gets pause and seek.
+    nativeControls = false,
     progressInterval = 500,
     onReady,
     onProgress,
@@ -91,8 +99,8 @@ const YouTubePlayer = forwardRef(function YouTubePlayer(
   const handlers = useRef({});
   handlers.current = { onProgress, onEnded, onError, onStateChange, onReady, onBlocked };
 
-  const optionsRef = useRef({ muted, loop });
-  optionsRef.current = { muted, loop };
+  const optionsRef = useRef({ muted, loop, autoStart, nativeControls });
+  optionsRef.current = { muted, loop, autoStart, nativeControls };
 
   // ---- Create / destroy the player when the video changes ----------------
   useEffect(() => {
@@ -112,13 +120,17 @@ const YouTubePlayer = forwardRef(function YouTubePlayer(
           videoId,
           host: 'https://www.youtube-nocookie.com',
           playerVars: {
-            autoplay: 0,
-            controls: 0,
-            disablekb: 1,
+            autoplay: optionsRef.current.autoStart ? 1 : 0,
+            mute: optionsRef.current.muted ? 1 : 0,
+            controls: optionsRef.current.nativeControls ? 1 : 0,
+            // The task player enforces its own seek lock in React, so the
+            // native keyboard shortcuts must stay off. The landing explainer
+            // hands control back to YouTube entirely.
+            disablekb: optionsRef.current.nativeControls ? 0 : 1,
             modestbranding: 1,
             playsinline: 1,
             rel: 0,
-            fs: 0,
+            fs: optionsRef.current.nativeControls ? 1 : 0,
             iv_load_policy: 3,
           },
           events: {
@@ -128,6 +140,13 @@ const YouTubePlayer = forwardRef(function YouTubePlayer(
               if (optionsRef.current.muted && player.mute) player.mute();
               setIsReady(true);
               handlers.current.onReady?.(player);
+              if (optionsRef.current.autoStart) {
+                try {
+                  player.playVideo();
+                } catch (err) {
+                  console.warn('[YouTubePlayer] autostart failed:', err);
+                }
+              }
             },
             onStateChange: (event) => {
               if (cancelled) return;

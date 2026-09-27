@@ -14,6 +14,8 @@ import {
   Pause,
   AlertTriangle,
   ExternalLink,
+  Maximize,
+  Minimize,
 } from 'lucide-react';
 import { useStaking } from '../../context/StakingContext';
 import { api } from '../../services/api';
@@ -41,10 +43,23 @@ const formatTime = (seconds) => {
 const VideoPlayer = ({ mode = 'task1', onNavigate }) => {
   const { dailyTasks, completeTask, currentModuleDay, user, isFreeTrialMode, workspaceModule } = useStaking();
   const playerRef = useRef(null);
+  const frameRef = useRef(null);
 
   // Playback & Tab Visibility State
   const [isPlaying, setIsPlaying] = useState(false);
   const [isTabActive, setIsTabActive] = useState(true);
+
+  // Auto-hiding chrome. The overlay controls and progress tracker fade out
+  // while the video plays and the pointer is idle, then return on any
+  // pointer movement — the same behaviour YouTube uses.
+  const [showControls, setShowControls] = useState(true);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  // Live mirror of the state the chrome timers depend on. The pointer
+  // handlers are re-created every render, but the idle timer must survive
+  // re-renders, so it lives in a ref rather than component state.
+  const chromeStateRef = useRef({ isPlaying: false, playerBlocked: false });
+  chromeStateRef.current = { isPlaying, playerBlocked };
+  const chromeTimerRef = useRef(null);
 
   // Strict Seeking Lock State (No seeking allowed at all)
   const [lastPlayedSeconds, setLastPlayedSeconds] = useState(0);
@@ -143,6 +158,70 @@ const VideoPlayer = ({ mode = 'task1', onNavigate }) => {
     };
   }, [currentVideo.title, watchUrl]);
 
+  // 1C. AUTO-HIDING CHROME: reveal on pointer activity, retract when idle.
+  // Controls stay pinned whenever the video is paused or the player is in
+  // trouble, so the user is never left without a way to resume.
+  const CHROME_IDLE_MS = 2800;
+
+  const canRetractChrome = () =>
+    chromeStateRef.current.isPlaying && !chromeStateRef.current.playerBlocked;
+
+  const revealChrome = () => {
+    setShowControls(true);
+    if (chromeTimerRef.current) clearTimeout(chromeTimerRef.current);
+    if (canRetractChrome()) {
+      chromeTimerRef.current = setTimeout(() => setShowControls(false), CHROME_IDLE_MS);
+    }
+  };
+
+  // Pointer left the frame: start counting down even without further movement.
+  const scheduleChromeRetract = () => {
+    if (chromeTimerRef.current) clearTimeout(chromeTimerRef.current);
+    if (canRetractChrome()) {
+      chromeTimerRef.current = setTimeout(() => setShowControls(false), CHROME_IDLE_MS);
+    }
+  };
+
+  useEffect(() => {
+    if (chromeTimerRef.current) clearTimeout(chromeTimerRef.current);
+    if (isPlaying && !playerBlocked) {
+      chromeTimerRef.current = setTimeout(() => setShowControls(false), CHROME_IDLE_MS);
+    } else {
+      setShowControls(true);
+    }
+    return () => {
+      if (chromeTimerRef.current) clearTimeout(chromeTimerRef.current);
+    };
+  }, [isPlaying, playerBlocked]);
+
+  // 1D. FULLSCREEN: request on the frame so the YouTube iframe scales with it,
+  // and keep React state in sync with the browser's own escape/tab handling.
+  useEffect(() => {
+    const onChange = () => {
+      setIsFullscreen(document.fullscreenElement === frameRef.current);
+    };
+    document.addEventListener('fullscreenchange', onChange);
+    return () => document.removeEventListener('fullscreenchange', onChange);
+  }, []);
+
+  const toggleFullscreen = async () => {
+    const frame = frameRef.current;
+    if (!frame) return;
+    try {
+      if (document.fullscreenElement === frame) {
+        await document.exitFullscreen();
+      } else if (document.fullscreenElement) {
+        await document.exitFullscreen();
+        await frame.requestFullscreen();
+      } else {
+        await frame.requestFullscreen();
+      }
+    } catch (err) {
+      // iOS Safari only supports fullscreen on the video element itself.
+      console.warn('Fullscreen request failed:', err);
+    }
+  };
+
   // 1. PAGE VISIBILITY API: Auto-pause playback when tab is inactive/hidden
   useEffect(() => {
     const handleVisibilityChange = () => {
@@ -185,6 +264,38 @@ const VideoPlayer = ({ mode = 'task1', onNavigate }) => {
     return () => {
       window.removeEventListener('keydown', handleKeyDown, true);
     };
+  }, []);
+
+  // 1E. PLAYER SHORTCUTS: K toggles playback, F toggles fullscreen. Neither is
+  // a seek key, so both stay available under the lock in 1B.
+  useEffect(() => {
+    const handleShortcut = (e) => {
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      const target = e.target;
+      if (
+        target instanceof HTMLElement &&
+        (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName))
+      ) {
+        return;
+      }
+      if (e.code === 'KeyK') {
+        e.preventDefault();
+        setIsPlaying((prev) => !prev);
+        revealChrome();
+      } else if (e.code === 'KeyF') {
+        e.preventDefault();
+        toggleFullscreen();
+        revealChrome();
+      }
+    };
+
+    window.addEventListener('keydown', handleShortcut);
+    return () => {
+      window.removeEventListener('keydown', handleShortcut);
+    };
+    // revealChrome and toggleFullscreen close over refs, so reading them once
+    // on mount is safe.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // 2. STRICT SEEKING LOCK ENFORCEMENT & TIMER PROGRESS
@@ -413,8 +524,18 @@ INSTRUCTIONS:
       {/* Video frame — seek-locked lecture / listening stream */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         <div className={`${mode === 'task1' ? 'lg:col-span-8' : 'lg:col-span-12'} flex flex-col gap-4`}>
-          <div className="relative group bg-[#1a1413] rounded-2xl overflow-hidden shadow-xl">
-            <div className="relative aspect-video w-full">
+          <div
+            ref={frameRef}
+            onPointerMove={revealChrome}
+            onPointerDown={revealChrome}
+            onPointerLeave={scheduleChromeRetract}
+            className={`relative group bg-[#1a1413] overflow-hidden shadow-xl ${
+              isFullscreen ? '' : 'rounded-2xl'
+            }`}
+          >
+            {/* In fullscreen the fixed 16:9 ratio must be released, otherwise
+                the video letterboxes into a small strip in the middle. */}
+            <div className={`relative w-full ${isFullscreen ? 'h-screen' : 'aspect-video'}`}>
               <div className="absolute inset-0">
                 <YouTubePlayer
                   key={videoId}
@@ -435,7 +556,6 @@ INSTRUCTIONS:
                 />
               </div>
 
-              {/* Full-area play overlay — shown until the video starts */}
               {/* Blocked-embed fallback: replaces the dead player with a clear
                   explanation and a direct link that always works. */}
               {playerBlocked && (
@@ -470,39 +590,78 @@ INSTRUCTIONS:
                 </div>
               )}
 
+              {/* Transparent interaction layer. Pointer events inside a
+                  cross-origin iframe never reach the parent document, so
+                  without this layer the chrome could not detect cursor
+                  activity over the video itself and would retract forever.
+                  It sits below the chrome (z-20+) so the buttons stay
+                  clickable, and mirrors YouTube: click to play/pause. */}
+              {!playerBlocked && (
+                <div
+                  role="presentation"
+                  onClick={() => setIsPlaying((prev) => !prev)}
+                  className={`absolute inset-0 z-10 cursor-pointer ${
+                    isPlaying ? '' : 'bg-black/30 hover:bg-black/20 transition-colors'
+                  }`}
+                />
+              )}
+
+              {/* Archive + seek-lock chips + fullscreen toggle.
+                  Fades out with the rest of the chrome when the pointer idles. */}
+              <div
+                className={`absolute top-0 inset-x-0 z-30 flex items-center justify-between gap-3 p-4 sm:p-5 transition-opacity duration-300 ${
+                  showControls ? 'opacity-100' : 'opacity-0 pointer-events-none'
+                }`}
+              >
+                <span className="font-mono text-[9px] bg-black/60 text-stone-300 px-2.5 py-1 rounded tracking-wider border border-white/10">
+                  ETHIO-LINGO ARCHIVE
+                </span>
+                <div
+                  className={`flex items-center gap-2 ${
+                    showControls ? 'pointer-events-auto' : 'pointer-events-none'
+                  }`}
+                >
+                  <span className="hidden sm:inline-flex items-center gap-1.5 bg-primary/90 text-on-primary px-3 py-1 rounded-full text-[10px] font-mono font-semibold tracking-wider shadow-lg">
+                    <Lock size={12} />
+                    <span>Forward Seek Disabled · 100% Required</span>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setIsPlaying((prev) => !prev)}
+                    aria-label={isPlaying ? 'Pause video' : 'Play video'}
+                    title={isPlaying ? 'Pause (K)' : 'Play (K)'}
+                    className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-black/70 text-stone-200 hover:bg-primary hover:text-on-primary transition-colors cursor-pointer focus-ring"
+                  >
+                    {isPlaying ? <Pause size={15} /> : <Play size={15} className="ml-px" />}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={toggleFullscreen}
+                    aria-label={isFullscreen ? 'Exit full screen' : 'Enter full screen'}
+                    title={isFullscreen ? 'Exit full screen (Esc)' : 'Full screen (F)'}
+                    className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-black/70 text-stone-200 hover:bg-primary hover:text-on-primary transition-colors cursor-pointer focus-ring"
+                  >
+                    {isFullscreen ? <Minimize size={15} /> : <Maximize size={15} />}
+                  </button>
+                </div>
+              </div>
+
+              {/* Center play button + stream title.
+                  Only while paused: once playback starts the top chrome bar
+                  carries the pause button, so the video face stays clear. */}
               {!isPlaying && !playerBlocked && (
+              <div
+                className={`absolute inset-0 z-20 flex flex-col items-center justify-center text-center gap-4 px-4 transition-opacity duration-300 ${
+                  showControls ? 'opacity-100' : 'opacity-0'
+                }`}
+              >
                 <button
                   type="button"
                   onClick={() => setIsPlaying(true)}
                   aria-label="Play video"
-                  className="absolute inset-0 z-10 flex items-center justify-center bg-black/30 hover:bg-black/20 transition-colors cursor-pointer focus-ring"
-                />
-              )}
-
-              {/* Archive + seek-lock chips */}
-              <div className="absolute top-0 inset-x-0 z-30 flex items-center justify-between gap-3 p-4 sm:p-5 pointer-events-none">
-                <span className="font-mono text-[9px] bg-black/60 text-stone-300 px-2.5 py-1 rounded tracking-wider border border-white/10">
-                  ETHIO-LINGO ARCHIVE
-                </span>
-                <span className="inline-flex items-center gap-1.5 bg-primary/90 text-on-primary px-3 py-1 rounded-full text-[10px] font-mono font-semibold tracking-wider shadow-lg">
-                  <Lock size={12} />
-                  <span>Forward Seek Disabled · 100% Required</span>
-                </span>
-              </div>
-
-              {/* Center play/pause + stream title */}
-              <div className="absolute inset-0 z-20 flex flex-col items-center justify-center text-center gap-4 pointer-events-none px-4">
-                <button
-                  type="button"
-                  onClick={() => setIsPlaying((prev) => !prev)}
-                  aria-label={isPlaying ? 'Pause video' : 'Play video'}
-                  className="pointer-events-auto w-16 h-16 md:w-20 md:h-20 rounded-full bg-primary text-on-primary flex items-center justify-center shadow-2xl ring-4 ring-black/20 transition-transform hover:scale-105 focus-ring cursor-pointer"
+                  className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-primary text-on-primary flex items-center justify-center shadow-2xl ring-4 ring-black/20 transition-transform hover:scale-105 focus-ring cursor-pointer"
                 >
-                  {isPlaying ? (
-                    <Pause size={30} />
-                  ) : (
-                    <Play size={30} className="ml-1" />
-                  )}
+                  <Play size={30} className="ml-1" />
                 </button>
                 <div className="max-w-lg">
                   <div className="font-cormorant text-xl md:text-2xl text-stone-100 leading-snug">{videoTitle}</div>
@@ -511,9 +670,15 @@ INSTRUCTIONS:
                   </div>
                 </div>
               </div>
+              )}
 
-              {/* Bottom overlay: progress bar + timing */}
-              <div className="absolute bottom-0 inset-x-0 z-30 p-3.5 pointer-events-none">
+              {/* Bottom overlay: progress bar + timing. Retracts with the rest
+                  of the chrome so the frame is unobstructed while watching. */}
+              <div
+                className={`absolute bottom-0 inset-x-0 z-30 p-3.5 pointer-events-none transition-opacity duration-300 ${
+                  showControls ? 'opacity-100' : 'opacity-0'
+                }`}
+              >
                 <div className="bg-black/60 backdrop-blur-sm border border-white/10 rounded-xl p-3 space-y-2">
                   <div className="relative w-full h-1.5 bg-stone-700/80 rounded-full overflow-hidden">
                     <div
