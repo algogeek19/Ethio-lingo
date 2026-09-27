@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Flag, Copy, Reply, Trash2, Pencil, X } from 'lucide-react';
+import { Flag, Copy, Reply, Trash2, Pencil, X, MoreHorizontal } from 'lucide-react';
 import { useRole } from '../../../context/RoleContext';
 
 const QUICK_REACTIONS = ['👍', '❤️', '😂', '🎉', '😮', '🙏'];
