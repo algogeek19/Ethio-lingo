@@ -58,7 +58,6 @@ const VideoPlayer = ({ mode = 'task1', onNavigate }) => {
   // handlers are re-created every render, but the idle timer must survive
   // re-renders, so it lives in a ref rather than component state.
   const chromeStateRef = useRef({ isPlaying: false, playerBlocked: false });
-  chromeStateRef.current = { isPlaying, playerBlocked };
   const chromeTimerRef = useRef(null);
 
   // Strict Seeking Lock State (No seeking allowed at all)
@@ -77,6 +76,11 @@ const VideoPlayer = ({ mode = 'task1', onNavigate }) => {
   const [playerReady, setPlayerReady] = useState(false);
   // Why playback failed (embedding disabled, private, blocked, ...).
   const [playerError, setPlayerError] = useState('');
+
+  // Mirror the state the chrome timers depend on. This MUST come after the
+  // `playerBlocked` declaration above: reading it any earlier puts the
+  // reference in that binding's temporal dead zone and throws on every render.
+  chromeStateRef.current = { isPlaying, playerBlocked };
 
   // Task 2 Category State ('informative' | 'entertainment')
   const [listeningCategory, setListeningCategory] = useState('informative');
