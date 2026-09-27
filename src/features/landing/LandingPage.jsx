@@ -11,29 +11,29 @@ import {
   Flame,
   ShieldAlert,
   ChevronRight,
+  ExternalLink,
 } from 'lucide-react';
 import HorizontalScrollGallery from './HorizontalScrollGallery';
 import { useRole } from '../../context/RoleContext';
 import { api } from '../../services/api';
+import { extractYouTubeId, getYouTubeEmbedUrl, getYouTubeThumbnail } from '../../utils/youtube';
 
 /**
- * 💡 CONFIGURE VIA ENVIRONMENT VARIABLE OR DIRECT FALLBACK:
- * Set `VITE_LANDING_VIDEO_URL` in your hosting environment variables (e.g. Render / Vercel)
- * to any full YouTube link or 11-character video ID without needing code changes.
+ * 💡 CONFIGURE VIA ENVIRONMENT VARIABLE, ADMIN DASHBOARD OR DIRECT FALLBACK:
+ * - `VITE_LANDING_VIDEO_URL` in your hosting env vars (Render / Vercel)
+ * - the "Landing Page Video" control in the admin dashboard (runtime, no rebuild)
+ * - the constant below
+ *
+ * Any full YouTube link or bare 11-character id is accepted; the value is
+ * always normalised to a bare id so the embed never receives a radio/mix URL
+ * (which YouTube answers with "Configuration error").
  */
-export const EXPLAINER_YOUTUBE_VIDEO_ID =
-  import.meta.env.VITE_LANDING_VIDEO_URL ||
-  import.meta.env.VITE_YOUTUBE_EXPLAINER_URL ||
-  'dQw4w9WgXcQ';
+const DEFAULT_EXPLAINER_VIDEO_ID = 'dQw4w9WgXcQ';
 
-// Helper to extract YouTube video ID from URL or return raw ID
-const getYouTubeVideoId = (input) => {
-  if (!input) return 'dQw4w9WgXcQ';
-  const str = String(input).trim();
-  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
-  const match = str.match(regExp);
-  return match && match[2].length === 11 ? match[2] : str;
-};
+export const EXPLAINER_YOUTUBE_VIDEO_ID =
+  extractYouTubeId(import.meta.env.VITE_LANDING_VIDEO_URL) ||
+  extractYouTubeId(import.meta.env.VITE_YOUTUBE_EXPLAINER_URL) ||
+  DEFAULT_EXPLAINER_VIDEO_ID;
 
 // Smooth exponential ease-out kinetic counter
 const AnimatedCounter = ({ from = 0, to, duration = 1.4, prefix = '', suffix = '' }) => {
@@ -149,22 +149,23 @@ const LandingPage = () => {
   const { t } = useTranslation();
   const { isAuthenticated, role } = useRole();
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
-  const [rawVideoUrl, setRawVideoUrl] = useState(EXPLAINER_YOUTUBE_VIDEO_ID);
+  const [videoId, setVideoId] = useState(EXPLAINER_YOUTUBE_VIDEO_ID);
   const explainerRef = useRef(null);
 
   useEffect(() => {
     let isMounted = true;
     api.getLandingVideoSetting()
       .then((res) => {
-        if (isMounted && res?.data?.videoUrl) {
-          setRawVideoUrl(res.data.videoUrl);
-        }
+        // Ignore anything that is not a usable YouTube id so a malformed
+        // admin value can never break the landing page embed.
+        const id = extractYouTubeId(res?.data?.videoUrl);
+        if (isMounted && id) setVideoId(id);
       })
       .catch(() => {});
     return () => { isMounted = false; };
   }, []);
 
-  const videoId = getYouTubeVideoId(rawVideoUrl);
+  const thumbnailUrl = getYouTubeThumbnail(videoId);
 
   const targetAuthRoute = isAuthenticated
     ? (role === 'admin' ? '/admin' : '/dashboard')
@@ -285,22 +286,40 @@ const LandingPage = () => {
             className="relative w-full aspect-video bg-[#1a1413] rounded-2xl overflow-hidden shadow-xl border border-stone-800/60"
           >
             {isVideoPlaying ? (
-              <iframe
-                src={`https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&playsinline=1&enablejsapi=1&origin=${typeof window !== 'undefined' ? encodeURIComponent(window.location.origin) : ''}`}
-                title="Ethio-Lingo Protocol Explainer"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                allowFullScreen
-                className="absolute inset-0 w-full h-full border-0"
-              />
+              <>
+                <iframe
+                  src={getYouTubeEmbedUrl(videoId, {
+                    autoplay: true,
+                    origin: typeof window !== 'undefined' ? window.location.origin : undefined,
+                  })}
+                  title="Ethio-Lingo Protocol Explainer"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  allowFullScreen
+                  className="absolute inset-0 w-full h-full border-0"
+                />
+                {/* The IFrame API reports embed problems (error 101/150) as a
+                    code we cannot read from a plain iframe, so offer a manual
+                    check plus a direct link that always works. */}
+                <a
+                  href={`https://www.youtube.com/watch?v=${videoId}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="absolute bottom-3 right-3 z-10 inline-flex items-center gap-1.5 rounded-full bg-black/70 px-3 py-1.5 font-mono text-[10px] uppercase tracking-wider text-stone-300 hover:text-stone-100 hover:bg-black/85 transition-colors"
+                >
+                  <ExternalLink size={11} />
+                  <span>Open on YouTube</span>
+                </a>
+              </>
             ) : (
               <div
                 onClick={() => setIsVideoPlaying(true)}
                 className="absolute inset-0 cursor-pointer group flex flex-col justify-between p-6"
               >
                 <img
-                  src={`https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`}
+                  src={thumbnailUrl}
                   alt="Ethio-Lingo Protocol Explainer Video"
                   onError={(e) => {
+                    e.target.onerror = null;
                     e.target.src = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
                   }}
                   className="absolute inset-0 w-full h-full object-cover brightness-[0.45] group-hover:brightness-[0.55] transition duration-700"

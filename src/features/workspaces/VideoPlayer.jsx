@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import ReactPlayer from 'react-player';
+import YouTubePlayer from '../../components/common/YouTubePlayer';
 import {
   Download,
   CheckCircle,
@@ -17,59 +17,19 @@ import {
 } from 'lucide-react';
 import { useStaking } from '../../context/StakingContext';
 import { api } from '../../services/api';
+import {
+  extractYouTubeId,
+  getYouTubeWatchUrl,
+  describeYouTubeError,
+} from '../../utils/youtube';
 
 /**
- * Normalise any YouTube link to a bare, embeddable video URL.
- *
- * Copying a link from the YouTube app often yields a radio/mix playlist URL
- * such as:
- *   .../watch?v=<id>&list=RD<id>&start_radio=1&pp=...
- * Passing that through to the embed player makes YouTube render
- * "Configuration error", because mix/radio playlists cannot be embedded.
- * We therefore keep only the 11-character video id and drop every other
- * parameter (list, start_radio, pp, index, t, ...).
+ * Video sources come straight from the admin curriculum editor, so they can be
+ * any YouTube link shape — including radio/mix URLs (`list=RD...`) that
+ * YouTube refuses to embed ("Configuration error"). `extractYouTubeId` from
+ * `utils/youtube` keeps only the 11-character id and drops every other
+ * parameter, which is the only form that is safe to hand to the player.
  */
-const YOUTUBE_ID = /^[A-Za-z0-9_-]{11}$/;
-
-const extractYouTubeId = (raw) => {
-  const value = String(raw || '').trim();
-  if (!value) return null;
-
-  // Already a bare id
-  if (YOUTUBE_ID.test(value)) return value;
-
-  try {
-    // Absolute URL (handles ?v=, youtu.be, /embed/, /shorts/, /live/)
-    const url = new URL(value);
-    const host = url.hostname.replace(/^www\./, '');
-    if (host === 'youtu.be') {
-      const id = url.pathname.slice(1).split('/')[0];
-      return YOUTUBE_ID.test(id) ? id : null;
-    }
-    if (host.endsWith('youtube.com') || host === 'youtube-nocookie.com') {
-      const v = url.searchParams.get('v');
-      if (v && YOUTUBE_ID.test(v)) return v;
-      const embedMatch = url.pathname.match(/^\/(?:embed|shorts|live|v)\/([^/?#]+)/);
-      if (embedMatch && YOUTUBE_ID.test(embedMatch[1])) return embedMatch[1];
-    }
-    return null;
-  } catch {
-    // Not a parseable absolute URL - fall back to a loose match
-    const loose = value.match(/(?:v=|\/embed\/|youtu\.be\/|\/shorts\/|live\/)([A-Za-z0-9_-]{11})/);
-    return loose && YOUTUBE_ID.test(loose[1]) ? loose[1] : null;
-  }
-};
-
-const getCleanVideoUrl = (rawUrl, defaultUrl = 'https://www.youtube.com/watch?v=dQw4w9WgXcQ') => {
-  if (!rawUrl || typeof rawUrl !== 'string' || !rawUrl.trim()) {
-    return defaultUrl;
-  }
-  const videoId = extractYouTubeId(rawUrl);
-  if (videoId) return `https://www.youtube.com/watch?v=${videoId}`;
-
-  const defaultId = extractYouTubeId(defaultUrl);
-  return defaultId ? `https://www.youtube.com/watch?v=${defaultId}` : defaultUrl;
-};
 
 const formatTime = (seconds) => {
   if (!seconds || !isFinite(seconds) || seconds < 0) return '00:00';
@@ -99,6 +59,9 @@ const VideoPlayer = ({ mode = 'task1', onNavigate }) => {
   // a privacy extension, or a network that filters /embed/ requests). Without
   // this the player just sits at 00:00 / 00:00 with no explanation.
   const [playerBlocked, setPlayerBlocked] = useState(false);
+  const [playerReady, setPlayerReady] = useState(false);
+  // Why playback failed (embedding disabled, private, blocked, ...).
+  const [playerError, setPlayerError] = useState('');
 
   // Task 2 Category State ('informative' | 'entertainment')
   const [listeningCategory, setListeningCategory] = useState('informative');
@@ -109,16 +72,16 @@ const VideoPlayer = ({ mode = 'task1', onNavigate }) => {
   const videoData = {
     task1: {
       title: moduleData?.title || `${user?.level || 'Beginner I'} • Day ${currentModuleDay} Daily English Lesson`,
-      url: getCleanVideoUrl(moduleData?.lessonVideoUrl, 'https://www.youtube.com/watch?v=dQw4w9WgXcQ'),
+      videoId: extractYouTubeId(moduleData?.lessonVideoUrl) || 'dQw4w9WgXcQ',
       referenceFile: moduleData?.refGuideTitle || `Birrend_${user?.level?.replace(/\s+/g, '_')}_Day${currentModuleDay}_Reference_Guide.pdf`,
     },
     informative: {
       title: `${user?.level || 'Beginner I'} • Listening Practice (Informative: Academic & Global English)`,
-      url: getCleanVideoUrl(moduleData?.listeningInformativeUrl, 'https://www.youtube.com/watch?v=hT_nvWreIhg'),
+      videoId: extractYouTubeId(moduleData?.listeningInformativeUrl) || 'eIho2S0ZahI',
     },
     entertainment: {
       title: `${user?.level || 'Beginner I'} • Listening Practice (Entertainment: Cultural & Storytelling English)`,
-      url: getCleanVideoUrl(moduleData?.listeningEntertainmentUrl, 'https://www.youtube.com/watch?v=hT_nvWreIhg'),
+      videoId: extractYouTubeId(moduleData?.listeningEntertainmentUrl) || 'H14bBuluwB8',
     },
   };
 
@@ -129,6 +92,9 @@ const VideoPlayer = ({ mode = 'task1', onNavigate }) => {
         ? videoData.informative
         : videoData.entertainment;
 
+  const videoId = currentVideo.videoId;
+  const watchUrl = getYouTubeWatchUrl(videoId);
+
   const [videoTitle, setVideoTitle] = useState(currentVideo.title);
 
   // Reset playback metrics when the source changes
@@ -138,16 +104,18 @@ const VideoPlayer = ({ mode = 'task1', onNavigate }) => {
     setLastPlayedSeconds(0);
     setIsPlaying(false);
     setPlayerBlocked(false);
-  }, [currentVideo.url]);
+    setPlayerReady(false);
+    setPlayerError('');
+  }, [videoId]);
 
   // If playback was requested but the embed never reports a duration, the
   // iframe is being blocked (adblocker / privacy extension / network filter).
   // Surface a usable fallback instead of a silent 00:00 / 00:00 player.
   useEffect(() => {
-    if (!isPlaying || duration > 0) return undefined;
+    if (!isPlaying || duration > 0 || playerReady) return undefined;
     const timer = setTimeout(() => setPlayerBlocked(true), 8000);
     return () => clearTimeout(timer);
-  }, [isPlaying, duration]);
+  }, [isPlaying, duration, playerReady]);
 
   useEffect(() => {
     let isMounted = true;
@@ -156,7 +124,7 @@ const VideoPlayer = ({ mode = 'task1', onNavigate }) => {
     const loadVideoTitle = async () => {
       try {
         const response = await fetch(
-          `https://noembed.com/embed?url=${encodeURIComponent(currentVideo.url)}`
+          `https://noembed.com/embed?url=${encodeURIComponent(watchUrl)}`
         );
         if (!response.ok) return;
 
@@ -173,14 +141,7 @@ const VideoPlayer = ({ mode = 'task1', onNavigate }) => {
     return () => {
       isMounted = false;
     };
-  }, [currentVideo.title, currentVideo.url]);
-
-  // Reset playback metrics whenever the active stream changes
-  useEffect(() => {
-    setLastPlayedSeconds(0);
-    setPlayedFraction(0);
-    setDuration(0);
-  }, [currentVideo.url]);
+  }, [currentVideo.title, watchUrl]);
 
   // 1. PAGE VISIBILITY API: Auto-pause playback when tab is inactive/hidden
   useEffect(() => {
@@ -227,26 +188,50 @@ const VideoPlayer = ({ mode = 'task1', onNavigate }) => {
   }, []);
 
   // 2. STRICT SEEKING LOCK ENFORCEMENT & TIMER PROGRESS
-  const handleProgress = (state) => {
-    const playedSecs = state.playedSeconds;
-    setPlayedFraction(state.played);
+  const lastPlayedRef = useRef(0);
 
-    if (playedSecs > lastPlayedSeconds + 1.2) {
+  const handleProgress = ({ playedSeconds, played, duration: total }) => {
+    setPlayedFraction(played);
+
+    // Metadata arriving means the embed is alive and the clock is running.
+    if (total > 0) {
+      setDuration(total);
+      setPlayerBlocked(false);
+    }
+
+    const previous = lastPlayedRef.current;
+
+    // A jump larger than the poll interval allows means the viewer seeked
+    // (or used keyboard shortcuts inside the iframe). Snap them back.
+    if (playedSeconds > previous + 2) {
       setSeekWarning(true);
-      if (playerRef.current) {
-        try {
-          playerRef.current.seekTo(lastPlayedSeconds, 'seconds');
-        } catch (seekErr) {
-          console.warn('Seek lock fallback:', seekErr);
-        }
-      }
+      playerRef.current?.seekTo(previous, true);
       setTimeout(() => setSeekWarning(false), 3000);
       return;
     }
 
-    if (playedSecs > lastPlayedSeconds) {
-      setLastPlayedSeconds(playedSecs);
+    if (playedSeconds > previous) {
+      lastPlayedRef.current = playedSeconds;
+      setLastPlayedSeconds(playedSeconds);
     }
+  };
+
+  // 3. PLAYER LIFECYCLE — reset the seek-lock anchor and report errors
+  const handlePlayerReady = () => {
+    setPlayerReady(true);
+    setPlayerBlocked(false);
+  };
+
+  const handlePlayerBlocked = (blocked) => {
+    setPlayerBlocked(!!blocked);
+  };
+
+  const handlePlayerError = (code) => {
+    // -1 is our internal "position query failed" signal, not a player fault.
+    if (Number(code) === -1) return;
+    console.warn('YouTube player error:', code, describeYouTubeError(code));
+    setPlayerError(describeYouTubeError(code));
+    setPlayerBlocked(true);
   };
 
   const handleEnded = () => {
@@ -326,6 +311,11 @@ INSTRUCTIONS:
   const taskDone = mode === 'task1' ? !!dailyTasks.lesson : !!dailyTasks.video;
   const verificationPct = Math.round(Math.min(Math.max(playedFraction, 0), 1) * 100);
   const refGuideTitle = moduleData?.refGuideTitle || currentVideo.referenceFile;
+
+  // Keep the seek-lock anchor in sync with the state above.
+  useEffect(() => {
+    lastPlayedRef.current = lastPlayedSeconds;
+  }, [lastPlayedSeconds]);
 
   return (
     <div className="space-y-6 transition-colors duration-250">
@@ -426,37 +416,21 @@ INSTRUCTIONS:
           <div className="relative group bg-[#1a1413] rounded-2xl overflow-hidden shadow-xl">
             <div className="relative aspect-video w-full">
               <div className="absolute inset-0">
-                <ReactPlayer
-                  key={currentVideo.url}
+                <YouTubePlayer
+                  key={videoId}
                   ref={playerRef}
-                  url={currentVideo.url}
-                  width="100%"
-                  height="100%"
+                  videoId={videoId}
                   playing={isPlaying && isTabActive}
-                  controls={false}
-                  onPlay={() => setIsPlaying(true)}
-                  onPause={() => setIsPlaying(false)}
+                  progressInterval={500}
+                  onReady={handlePlayerReady}
                   onProgress={handleProgress}
                   onEnded={handleEnded}
-                  onStart={() => setIsPlaying(true)}
-                  onDuration={(d) => {
-                    setDuration(d);
-                    if (d > 0) setPlayerBlocked(false);
-                  }}
-                  onError={(err) => {
-                    console.warn('ReactPlayer playback warning:', err);
-                    setPlayerBlocked(true);
-                  }}
-                  progressInterval={500}
-                  config={{
-                    youtube: {
-                      playerVars: {
-                        playsinline: 1,
-                        modestbranding: 1,
-                        rel: 0,
-                        origin: typeof window !== 'undefined' ? window.location.origin : 'http://localhost:5173',
-                      },
-                    },
+                  onError={handlePlayerError}
+                  onBlocked={handlePlayerBlocked}
+                  onStateChange={(state) => {
+                    // 1 = PLAYING, 2 = PAUSED
+                    if (state === 1) setIsPlaying(true);
+                    else if (state === 2) setIsPlaying(false);
                   }}
                 />
               </div>
@@ -470,12 +444,12 @@ INSTRUCTIONS:
                   <div className="space-y-1.5">
                     <p className="font-cormorant text-xl text-stone-100">Video unavailable in this browser</p>
                     <p className="text-xs text-stone-400 font-light max-w-sm leading-relaxed">
-                      Your browser or network is blocking the embedded YouTube player.
-                      An ad blocker, privacy extension, or a filtered connection is the usual cause.
+                      {playerError ||
+                        'Your browser or network is blocking the embedded YouTube player. An ad blocker, privacy extension, or a filtered connection is the usual cause.'}
                     </p>
                   </div>
                   <a
-                    href={currentVideo.url}
+                    href={watchUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-2 rounded-full bg-primary hover:bg-primary-container text-on-primary font-semibold text-xs tracking-wider uppercase px-5 py-2.5 transition-all btn-interactive focus-ring"
@@ -486,6 +460,7 @@ INSTRUCTIONS:
                     type="button"
                     onClick={() => {
                       setPlayerBlocked(false);
+                      setPlayerError('');
                       setIsPlaying(true);
                     }}
                     className="text-[10px] font-mono uppercase tracking-wider text-stone-400 hover:text-stone-200 cursor-pointer focus-ring"

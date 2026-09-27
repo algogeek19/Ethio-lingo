@@ -13,6 +13,7 @@ import {
 import { useStaking, CURRICULUM_LEVELS } from '../../context/StakingContext';
 import { api } from '../../services/api';
 import { supabase } from '../../lib/supabaseClient';
+import { extractYouTubeId } from '../../utils/youtube';
 
 const CurriculumManagement = () => {
   const { importQuestionBankJson } = useStaking();
@@ -148,6 +149,22 @@ const CurriculumManagement = () => {
       !listeningEntertainmentUrl.trim()
     ) {
       setModuleErrorMsg(`Please fill in all required task inputs AND upload a Reference PDF File before submitting ${selectedLevel} — Day ${selectedDay} tasks.`);
+      return;
+    }
+
+    // Reject links the task player cannot embed. Radio/mix playlist links are
+    // the common mistake: YouTube answers them with "Configuration error".
+    const invalid = [
+      ['Lesson video', lessonVideoUrl],
+      ['Informative listening video', listeningInformativeUrl],
+      ['Entertainment listening video', listeningEntertainmentUrl],
+    ].find(([, url]) => !extractYouTubeId(url));
+
+    if (invalid) {
+      setModuleErrorMsg(
+        `${invalid[0]}: "${invalid[1].trim()}" is not a valid YouTube link. ` +
+          'Paste the video URL or its 11-character ID. Radio/mix playlist links (list=RD…) cannot be embedded.'
+      );
       return;
     }
 

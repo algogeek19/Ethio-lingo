@@ -123,8 +123,8 @@ async function seedModuleAndQuestions(level, day, topic, videoUrls = {}) {
         lessonVideoUrl: videoUrls.lesson || 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
         refGuideTitle: `${level.replace(/\s+/g, '_')}_Day_${day}_Guide.pdf`,
         refGuideDescription: `Educational reference manual for ${level} Day ${day}: ${topic}.`,
-        listeningInformativeUrl: videoUrls.informative || 'https://www.youtube.com/watch?v=hT_nvWreIhg',
-        listeningEntertainmentUrl: videoUrls.entertainment || 'https://www.youtube.com/watch?v=hT_nvWreIhg',
+        listeningInformativeUrl: videoUrls.informative || 'https://www.youtube.com/watch?v=eIho2S0ZahI',
+        listeningEntertainmentUrl: videoUrls.entertainment || 'https://www.youtube.com/watch?v=H14bBuluwB8',
       },
       create: {
         level,
@@ -133,8 +133,8 @@ async function seedModuleAndQuestions(level, day, topic, videoUrls = {}) {
         lessonVideoUrl: videoUrls.lesson || 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
         refGuideTitle: `${level.replace(/\s+/g, '_')}_Day_${day}_Guide.pdf`,
         refGuideDescription: `Educational reference manual for ${level} Day ${day}: ${topic}.`,
-        listeningInformativeUrl: videoUrls.informative || 'https://www.youtube.com/watch?v=hT_nvWreIhg',
-        listeningEntertainmentUrl: videoUrls.entertainment || 'https://www.youtube.com/watch?v=hT_nvWreIhg',
+        listeningInformativeUrl: videoUrls.informative || 'https://www.youtube.com/watch?v=eIho2S0ZahI',
+        listeningEntertainmentUrl: videoUrls.entertainment || 'https://www.youtube.com/watch?v=H14bBuluwB8',
       },
     })
     .catch(() => {});

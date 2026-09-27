@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Users, TrendingUp, CreditCard, BookOpen, Video, CheckCircle, Save, Target, Activity, Wallet } from 'lucide-react';
 import { formatETB } from '../../utils/formatters';
+import { extractYouTubeId, getYouTubeWatchUrl } from '../../utils/youtube';
 import { useStaking } from '../../context/StakingContext';
 import { api } from '../../services/api';
 import AdminPaymentManagement from './AdminPaymentManagement';
@@ -78,8 +79,23 @@ const AdminDashboard = () => {
     setVideoSaveSuccess(false);
     setVideoSaveError('');
 
+    // Reject anything the landing page iframe cannot embed. Radio/mix
+    // playlist links are the usual mistake: YouTube renders
+    // "Configuration error" for them.
+    const videoId = extractYouTubeId(landingVideoUrl);
+    if (!videoId) {
+      setIsSavingVideo(false);
+      setVideoSaveError(
+        'That is not a valid YouTube link. Paste a full video URL or its 11-character video ID. Radio/mix playlist links (list=RD…) cannot be embedded.'
+      );
+      return;
+    }
+
+    // Store the canonical bare-id URL so nothing downstream has to re-parse it.
+    const canonicalUrl = getYouTubeWatchUrl(videoId);
+
     try {
-      const res = await api.updateLandingVideoSetting(landingVideoUrl.trim());
+      const res = await api.updateLandingVideoSetting(canonicalUrl);
       if (res.success) {
         setVideoSaveSuccess(true);
         setTimeout(() => setVideoSaveSuccess(false), 4000);

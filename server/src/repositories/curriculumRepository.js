@@ -44,8 +44,10 @@ export const findModuleByLevelAndDay = async (level, dayNumber) => {
       ? `Welcome to Day ${parsedDay} of your 7-Day Free Trial! Focus on core grammar patterns and academic listening.`
       : `Comprehensive reference manual covering Day ${parsedDay} grammar structures and academic vocabulary.`,
     refGuideUrl: '',
-    listeningInformativeUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
-    listeningEntertainmentUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3',
+    // Must be embeddable YouTube links: the task player renders them through
+    // the YouTube IFrame API, which cannot play direct MP3 URLs.
+    listeningInformativeUrl: 'https://www.youtube.com/watch?v=eIho2S0ZahI',
+    listeningEntertainmentUrl: 'https://www.youtube.com/watch?v=H14bBuluwB8',
     isPopulated: false,
   };
 };
