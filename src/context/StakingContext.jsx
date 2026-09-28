@@ -1,4 +1,11 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 import { api } from '../services/api';
 import { useRole } from './RoleContext';
 import { storage } from '../services/storage';
@@ -13,6 +20,12 @@ export const CURRICULUM_LEVELS = [
   'Advanced I',
   'Advanced II',
 ];
+
+// localStorage key prefix for the per-user/per-day task completion cache.
+const TASK_MIRROR_KEY = 'birrend_task_mirror';
+
+// How often to re-read task progress from the API while a tab is visible.
+const WORKSPACE_SYNC_INTERVAL_MS = 30000;
 
 export const StakingProvider = ({ children }) => {
   const { authUser, updateUserProfile } = useRole();
@@ -62,7 +75,10 @@ export const StakingProvider = ({ children }) => {
     localStorage.setItem(`birrend_module_day_${userKey}`, currentModuleDay.toString());
   }, [authUser?.id, currentModuleDay]);
 
-  // Daily Tasks Completion State for current day
+  // Daily Tasks Completion State for current day. Seeded and kept in sync with a
+  // per-user/per-module local mirror further down, so a reload shows the last
+  // known state immediately rather than flashing "nothing done" while the API
+  // request is still in flight.
   const [dailyTasks, setDailyTasks] = useState({
     lesson: false,
     video: false,
@@ -138,7 +154,7 @@ export const StakingProvider = ({ children }) => {
           lastSync = now;
           loadWalletData();
           loadWithdrawals();
-          refreshWorkspaceProgress();
+          // Task progress has its own focus/interval sync further down.
         }
       }
     };
@@ -156,15 +172,33 @@ export const StakingProvider = ({ children }) => {
   const [workspaceModule, setWorkspaceModule] = useState(null);
   const [levelBooks, setLevelBooks] = useState([]);
 
-  const refreshWorkspaceProgress = async () => {
-    if (!authUser || authUser.role === 'admin') return;
+  // The level/day the API must be asked about, and the key the local mirror is
+  // stored under, resolved once here so every caller agrees.
+  const syncTarget = useMemo(() => {
+    if (!authUser || authUser.role === 'admin') return null;
+    const level = isFreeTrialMode ? 'Free Trial' : (authUser.level || currentLevel);
+    const day = (isFreeTrialMode || authUser.currentDay === undefined || authUser.currentDay === null)
+      ? currentModuleDay
+      : authUser.currentDay;
+    const key = authUser.id || authUser.email
+      ? `${TASK_MIRROR_KEY}_${authUser.id || authUser.email}_${level}_${day}`
+      : null;
+    return { level, day, key };
+  }, [authUser?.id, authUser?.email, authUser?.level, authUser?.currentDay, authUser?.role, currentLevel, currentModuleDay, isFreeTrialMode]);
+
+  // One shared refresh, driven by whatever the current sync target is. The
+  // function identity changes with the target so effects depending on it
+  // re-run exactly when the module or account changes.
+  const refreshWorkspaceProgress = useCallback(async () => {
+    if (!syncTarget) return;
+    const { level, day, key } = syncTarget;
     try {
-      const activeLevelStr = isFreeTrialMode ? 'Free Trial' : (authUser.level || currentLevel);
-      const targetDay = (isFreeTrialMode || authUser.currentDay === undefined || authUser.currentDay === null)
-        ? currentModuleDay
-        : authUser.currentDay;
-      const res = await api.getDailyWorkspace(activeLevelStr, targetDay);
-      if (res.success && res.data) {
+      // Ask for exactly the level/day the mirror key is built from. Passing
+      // currentLevel here while the key used authUser.level (or vice versa)
+      // wrote the completion flag under one module and read it back under
+      // another, which is exactly "I completed it and it shows as not done".
+      const res = await api.getDailyWorkspace(level, day);
+      if (res?.success && res.data) {
         if (res.data.module) setWorkspaceModule(res.data.module);
         if (res.data.levelBooks) setLevelBooks(res.data.levelBooks);
         if (res.data.progress) {
@@ -174,20 +208,79 @@ export const StakingProvider = ({ children }) => {
             video: !!p.task2ListeningCompleted,
             exam: !!(p.examCompleted && p.examPassed),
           });
+          return;
         }
-      } else {
-        setDailyTasks({ lesson: false, video: false, exam: false });
       }
+      // The API answered but carried no progress for this user/level/day. Clear
+      // the mirror too, otherwise a cached tick from a previous module would
+      // keep showing as complete.
+      if (key) {
+        try {
+          localStorage.removeItem(key);
+        } catch {
+          /* cache is optional */
+        }
+      }
+      setDailyTasks({ lesson: false, video: false, exam: false });
     } catch (err) {
+      // Leave the last known state alone. Wiping it here is what made a brief
+      // network blip look like the learner lost their completed tasks.
       console.error('Error fetching workspace task progress from API:', err);
     }
-  };
+  }, [syncTarget]);
 
-  // Fetch task progress from Express API whenever level or day changes
+  // Fetch task progress from the API whenever the target module or account
+  // changes, and keep it fresh afterwards: a task completed in another tab or
+  // on another device had no path into this one until a full reload, which is
+  // what "the tracker does not update in real time" describes.
   useEffect(() => {
-    if (!authUser || authUser.role === 'admin') return;
+    if (!syncTarget) return undefined;
+
     refreshWorkspaceProgress();
-  }, [authUser?.id, currentLevel, currentModuleDay, isFreeTrialMode]);
+
+    const onVisible = () => {
+      if (!document.hidden) refreshWorkspaceProgress();
+    };
+    const id = setInterval(onVisible, WORKSPACE_SYNC_INTERVAL_MS);
+    window.addEventListener('focus', refreshWorkspaceProgress);
+    document.addEventListener('visibilitychange', onVisible);
+
+    return () => {
+      clearInterval(id);
+      window.removeEventListener('focus', refreshWorkspaceProgress);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
+  }, [syncTarget, refreshWorkspaceProgress]);
+
+  // Seed from (and keep) the local mirror for the current target, so a reload
+  // does not flash a reset tracker. The server response above overwrites it as
+  // soon as it arrives, so this is presentation only.
+  useEffect(() => {
+    if (!syncTarget?.key) {
+      setDailyTasks({ lesson: false, video: false, exam: false });
+      return;
+    }
+    try {
+      const raw = localStorage.getItem(syncTarget.key);
+      const parsed = raw ? JSON.parse(raw) : null;
+      setDailyTasks({
+        lesson: !!parsed?.lesson,
+        video: !!parsed?.video,
+        exam: !!parsed?.exam,
+      });
+    } catch {
+      setDailyTasks({ lesson: false, video: false, exam: false });
+    }
+  }, [syncTarget?.key]);
+
+  useEffect(() => {
+    if (!syncTarget?.key) return;
+    try {
+      localStorage.setItem(syncTarget.key, JSON.stringify(dailyTasks));
+    } catch {
+      /* private browsing / quota — the cache is optional */
+    }
+  }, [syncTarget?.key, dailyTasks]);
 
   // Complete a workspace task (lesson | video | exam)
   const completeTask = async (taskType, extraData = {}) => {
@@ -207,9 +300,16 @@ export const StakingProvider = ({ children }) => {
       [normalizedKey]: true,
     }));
 
+    // Write to the same level/day the read path uses. These two disagreed:
+    // completion was written under currentLevel/currentModuleDay but read back
+    // under authUser.level/authUser.currentDay, so a learner who completed a
+    // task saw it revert on the next load.
+    const { level: writeLevel, day: writeDay } = syncTarget || {
+      level: isFreeTrialMode ? 'Free Trial' : currentLevel,
+      day: currentModuleDay,
+    };
     try {
-      const activeLevelStr = isFreeTrialMode ? 'Free Trial' : currentLevel;
-      await api.completeTask(activeLevelStr, currentModuleDay, taskType, extraData.seconds || 180, extraData);
+      await api.completeTask(writeLevel, writeDay, taskType, extraData.seconds || 180, extraData);
       if (isFreeTrialMode && currentModuleDay >= 7 && (normalizedKey === 'exam' || taskType === 'exam')) {
         setFreeTrialDaysLeft(0);
         await loadWalletData();
@@ -217,7 +317,11 @@ export const StakingProvider = ({ children }) => {
       // Re-sync progress from API
       await refreshWorkspaceProgress();
     } catch (err) {
+      // The optimistic tick above is now a lie: the server rejected or never
+      // received it, so roll it back rather than showing a task as complete
+      // that the next page load will silently un-complete.
       console.error('Failed to update task completion in DB:', err);
+      setDailyTasks((prev) => ({ ...prev, [normalizedKey]: false }));
     }
   };
 

@@ -9,7 +9,7 @@ import {
   AlertCircle,
   BookOpen,
   FileText,
-  Lock,
+  CheckCircle2,
   Play,
   Pause,
   AlertTriangle,
@@ -60,9 +60,9 @@ const VideoPlayer = ({ mode = 'task1', onNavigate }) => {
   const chromeStateRef = useRef({ isPlaying: false, playerBlocked: false });
   const chromeTimerRef = useRef(null);
 
-  // Strict Seeking Lock State (No seeking allowed at all)
+  // Current playback position. Seeking is unrestricted, so this is just
+  // wherever the viewer is in the video.
   const [lastPlayedSeconds, setLastPlayedSeconds] = useState(0);
-  const [seekWarning, setSeekWarning] = useState(false);
   const [downloadSuccess, setDownloadSuccess] = useState(false);
 
   // Playback metrics for the editorial progress bar
@@ -87,20 +87,34 @@ const VideoPlayer = ({ mode = 'task1', onNavigate }) => {
 
   const moduleData = workspaceModule;
 
+  // Fallbacks are real, verified-embeddable lectures, used whenever the module
+  // row has no usable link for that slot (or the module has not loaded yet).
+  // extractYouTubeId returns null for anything unparseable, so a blank or
+  // malformed admin entry falls through here instead of producing a player with
+  // no video.
+  const FALLBACK_VIDEO_IDS = {
+    lesson: 'dQw4w9WgXcQ',
+    informative: 'eIho2S0ZahI',
+    entertainment: 'H14bBuluwB8',
+  };
+
+  const resolveVideoId = (url, fallbackKey) =>
+    extractYouTubeId(url) || FALLBACK_VIDEO_IDS[fallbackKey];
+
   // Dynamic Videos Data from API moduleData
   const videoData = {
     task1: {
       title: moduleData?.title || `${user?.level || 'Beginner I'} • Day ${currentModuleDay} Daily English Lesson`,
-      videoId: extractYouTubeId(moduleData?.lessonVideoUrl) || 'dQw4w9WgXcQ',
+      videoId: resolveVideoId(moduleData?.lessonVideoUrl, 'lesson'),
       referenceFile: moduleData?.refGuideTitle || `Birrend_${user?.level?.replace(/\s+/g, '_')}_Day${currentModuleDay}_Reference_Guide.pdf`,
     },
     informative: {
       title: `${user?.level || 'Beginner I'} • Listening Practice (Informative: Academic & Global English)`,
-      videoId: extractYouTubeId(moduleData?.listeningInformativeUrl) || 'eIho2S0ZahI',
+      videoId: resolveVideoId(moduleData?.listeningInformativeUrl, 'informative'),
     },
     entertainment: {
       title: `${user?.level || 'Beginner I'} • Listening Practice (Entertainment: Cultural & Storytelling English)`,
-      videoId: extractYouTubeId(moduleData?.listeningEntertainmentUrl) || 'H14bBuluwB8',
+      videoId: resolveVideoId(moduleData?.listeningEntertainmentUrl, 'entertainment'),
     },
   };
 
@@ -243,35 +257,7 @@ const VideoPlayer = ({ mode = 'task1', onNavigate }) => {
     };
   }, []);
 
-  // 1B. KEYBOARD SEEKING PROTECTION: Prevent arrow keys, J/L keys, number keys from seeking/fast-forwarding video
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      const forbiddenSeekKeys = [
-        'ArrowRight', 'ArrowLeft', 'ArrowUp', 'ArrowDown',
-        'KeyL', 'KeyJ',
-        'Digit0', 'Digit1', 'Digit2', 'Digit3', 'Digit4',
-        'Digit5', 'Digit6', 'Digit7', 'Digit8', 'Digit9',
-        'Numpad0', 'Numpad1', 'Numpad2', 'Numpad3', 'Numpad4',
-        'Numpad5', 'Numpad6', 'Numpad7', 'Numpad8', 'Numpad9',
-        'PageUp', 'PageDown', 'Home', 'End'
-      ];
-
-      if (forbiddenSeekKeys.includes(e.code) || forbiddenSeekKeys.includes(e.key)) {
-        e.preventDefault();
-        e.stopPropagation();
-        setSeekWarning(true);
-        setTimeout(() => setSeekWarning(false), 3000);
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown, true);
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown, true);
-    };
-  }, []);
-
-  // 1E. PLAYER SHORTCUTS: K toggles playback, F toggles fullscreen. Neither is
-  // a seek key, so both stay available under the lock in 1B.
+  // 1E. PLAYER SHORTCUTS: K toggles playback, F toggles fullscreen.
   useEffect(() => {
     const handleShortcut = (e) => {
       if (e.metaKey || e.ctrlKey || e.altKey) return;
@@ -302,9 +288,7 @@ const VideoPlayer = ({ mode = 'task1', onNavigate }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // 2. STRICT SEEKING LOCK ENFORCEMENT & TIMER PROGRESS
-  const lastPlayedRef = useRef(0);
-
+  // 2. TIMER PROGRESS
   const handleProgress = ({ playedSeconds, played, duration: total }) => {
     setPlayedFraction(played);
 
@@ -314,24 +298,13 @@ const VideoPlayer = ({ mode = 'task1', onNavigate }) => {
       setPlayerBlocked(false);
     }
 
-    const previous = lastPlayedRef.current;
-
-    // A jump larger than the poll interval allows means the viewer seeked
-    // (or used keyboard shortcuts inside the iframe). Snap them back.
-    if (playedSeconds > previous + 2) {
-      setSeekWarning(true);
-      playerRef.current?.seekTo(previous, true);
-      setTimeout(() => setSeekWarning(false), 3000);
-      return;
-    }
-
-    if (playedSeconds > previous) {
-      lastPlayedRef.current = playedSeconds;
-      setLastPlayedSeconds(playedSeconds);
-    }
+    // Seeking is unrestricted, so the reported position is simply wherever the
+    // viewer left off. The timer tracks that position, not accumulated watch
+    // time, so scrubbing backwards also moves the counter backwards.
+    setLastPlayedSeconds(playedSeconds);
   };
 
-  // 3. PLAYER LIFECYCLE — reset the seek-lock anchor and report errors
+  // 3. PLAYER LIFECYCLE — reset playback metrics and report errors
   const handlePlayerReady = () => {
     setPlayerReady(true);
     setPlayerBlocked(false);
@@ -427,11 +400,6 @@ INSTRUCTIONS:
   const verificationPct = Math.round(Math.min(Math.max(playedFraction, 0), 1) * 100);
   const refGuideTitle = moduleData?.refGuideTitle || currentVideo.referenceFile;
 
-  // Keep the seek-lock anchor in sync with the state above.
-  useEffect(() => {
-    lastPlayedRef.current = lastPlayedSeconds;
-  }, [lastPlayedSeconds]);
-
   return (
     <div className="space-y-6 transition-colors duration-250">
       {/* Tab Visibility Active Warning Banner */}
@@ -441,18 +409,6 @@ INSTRUCTIONS:
             <AlertCircle size={16} className="shrink-0" />
             <span>
               <strong>Playback Auto-Paused:</strong> Tab became inactive. Active focus required to validate task time.
-            </span>
-          </div>
-        </div>
-      )}
-
-      {/* Seeking Lock Enforcement Alert */}
-      {seekWarning && (
-        <div className="p-3.5 bg-error/10 border border-error/30 rounded-xl text-xs text-error flex items-center justify-between shadow-xs font-mono">
-          <div className="flex items-center gap-2">
-            <Lock size={16} className="shrink-0" />
-            <span>
-              <strong>Seeking Restricted:</strong> Fast-forwarding is disabled on mandatory task videos. Returning to played timestamp.
             </span>
           </div>
         </div>
@@ -525,7 +481,7 @@ INSTRUCTIONS:
         </div>
       )}
 
-      {/* Video frame — seek-locked lecture / listening stream */}
+      {/* Video frame — lecture / listening stream */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         <div className={`${mode === 'task1' ? 'lg:col-span-8' : 'lg:col-span-12'} flex flex-col gap-4`}>
           <div
@@ -610,7 +566,7 @@ INSTRUCTIONS:
                 />
               )}
 
-              {/* Archive + seek-lock chips + fullscreen toggle.
+              {/* Archive chip + fullscreen toggle.
                   Fades out with the rest of the chrome when the pointer idles. */}
               <div
                 className={`absolute top-0 inset-x-0 z-30 flex items-center justify-between gap-3 p-4 sm:p-5 transition-opacity duration-300 ${
@@ -626,8 +582,8 @@ INSTRUCTIONS:
                   }`}
                 >
                   <span className="hidden sm:inline-flex items-center gap-1.5 bg-primary/90 text-on-primary px-3 py-1 rounded-full text-[10px] font-mono font-semibold tracking-wider shadow-lg">
-                    <Lock size={12} />
-                    <span>Forward Seek Disabled · 100% Required</span>
+                    <CheckCircle2 size={12} />
+                    <span>100% Watched to Complete</span>
                   </span>
                   <button
                     type="button"

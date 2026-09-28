@@ -76,8 +76,16 @@ export const getDailyWorkspaceData = async (userId, level, dayNumber) => {
 };
 
 export const updateTaskCompletion = async (userId, level, dayNumber, taskType, extraData = {}) => {
-  const todayStr = new Date().toISOString().split('T')[0];
   const wallet = await walletRepository.findWalletByUserId(userId);
+  // Must match the date used when *reading* progress in
+  // getDailyWorkspaceData, or a task completed late in the evening is written
+  // under one date and read back under another, so it silently reverts to
+  // "not done" on the next fetch. That read path uses the user's timezone.
+  const dbUser = await safeDbQuery(
+    () => prisma.user.findUnique({ where: { id: userId } }),
+    () => null
+  );
+  const todayStr = getUserTodayStr(dbUser?.timezone);
   const isFreeTrial = wallet ? !!wallet.isFreeTrial : false;
   const activeLevel = isFreeTrial ? 'Free Trial' : (level || 'Beginner I');
   const parsedDay = parseInt(dayNumber, 10);
