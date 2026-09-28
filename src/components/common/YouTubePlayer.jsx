@@ -6,7 +6,23 @@ import React, {
   useState,
 } from 'react';
 
-const API_SRC = 'https://www.youtube.com/iframe_api';
+// The IFrame API script and the `host` player option MUST come from the same
+// origin. The API derives the parent page's target origin from that host when
+// it handshakes over postMessage; if the script was loaded from a different
+// origin than `host`, the handshake throws
+//
+//   Failed to execute 'postMessage' on 'DOMWindow': The target origin provided
+//   ('<host>') does not match the recipient window's origin ('<our page>')
+//
+// and every player command (play/pause/seek) is dropped instead of reaching the
+// embed — the video sits there and never responds to the play button.
+//
+// This must be www.youtube.com, not www.youtube-nocookie.com: the privacy
+// domain does not serve /iframe_api at all (it answers 404), so an API-driven
+// player there can never initialise. One constant feeds both values, so they
+// cannot drift apart again.
+const YT_HOST = 'https://www.youtube.com';
+const API_SRC = `${YT_HOST}/iframe_api`;
 const API_TIMEOUT_MS = 12000;
 
 let apiPromise = null;
@@ -118,7 +134,7 @@ const YouTubePlayer = forwardRef(function YouTubePlayer(
 
         player = new YT.Player(host, {
           videoId,
-          host: 'https://www.youtube-nocookie.com',
+          host: YT_HOST,
           playerVars: {
             autoplay: optionsRef.current.autoStart ? 1 : 0,
             mute: optionsRef.current.muted ? 1 : 0,
