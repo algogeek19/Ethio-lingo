@@ -6,21 +6,18 @@ import React, {
   useState,
 } from 'react';
 
-// The IFrame API script and the `host` player option MUST come from the same
-// origin. The API derives the parent page's target origin from that host when
-// it handshakes over postMessage; if the script was loaded from a different
-// origin than `host`, the handshake throws
+// The IFrame API script and the embed host must agree. The API already
+// defaults the `host` option to this exact origin whenever the target element
+// is not itself an <iframe>, so the option is deliberately not passed here.
+// Overriding it (e.g. to www.youtube-nocookie.com, which does not serve
+// /iframe_api at all) points the embed at an origin the API was never
+// loaded from.
 //
-//   Failed to execute 'postMessage' on 'DOMWindow': The target origin provided
-//   ('<host>') does not match the recipient window's origin ('<our page>')
-//
-// and every player command (play/pause/seek) is dropped instead of reaching the
-// embed — the video sits there and never responds to the play button.
-//
-// This must be www.youtube.com, not www.youtube-nocookie.com: the privacy
-// domain does not serve /iframe_api at all (it answers 404), so an API-driven
-// player there can never initialise. One constant feeds both values, so they
-// cannot drift apart again.
+// Note: "Failed to execute 'postMessage' ... The target origin provided
+// ('https://www.youtube.com') does not match the recipient window's origin"
+// is emitted by YouTube's own embed-side code, not by us. Outbound messages
+// from this file target the origin of the embed's src, so that direction is
+// correct and the message is not actionable.
 const YT_HOST = 'https://www.youtube.com';
 const API_SRC = `${YT_HOST}/iframe_api`;
 const API_TIMEOUT_MS = 12000;
@@ -106,6 +103,8 @@ const YouTubePlayer = forwardRef(function YouTubePlayer(
 ) {
   const hostRef = useRef(null);
   const playerRef = useRef(null);
+  // Whether the current player has already applied its initial play state.
+  const settledRef = useRef(false);
   const [isReady, setIsReady] = useState(false);
   const [blocked, setBlocked] = useState(false);
 
@@ -127,6 +126,9 @@ const YouTubePlayer = forwardRef(function YouTubePlayer(
     const host = hostRef.current;
     setIsReady(false);
     setBlocked(false);
+    // A fresh player has not settled its initial play state yet; see the
+    // `playing` effect below.
+    settledRef.current = false;
 
     loadYouTubeApi()
       .then((YT) => {
@@ -134,10 +136,14 @@ const YouTubePlayer = forwardRef(function YouTubePlayer(
 
         player = new YT.Player(host, {
           videoId,
-          host: YT_HOST,
           playerVars: {
             autoplay: optionsRef.current.autoStart ? 1 : 0,
-            mute: optionsRef.current.muted ? 1 : 0,
+            // Browsers hard-block *unmuted* autoplay, and the user gesture that
+            // mounted this iframe does not survive the async player boot. An
+            // autostarting embed therefore has to begin muted or it silently
+            // refuses to start. With nativeControls the visitor can unmute
+            // using YouTube's own bar.
+            mute: optionsRef.current.muted || optionsRef.current.autoStart ? 1 : 0,
             controls: optionsRef.current.nativeControls ? 1 : 0,
             // The task player enforces its own seek lock in React, so the
             // native keyboard shortcuts must stay off. The landing explainer
@@ -209,9 +215,19 @@ const YouTubePlayer = forwardRef(function YouTubePlayer(
   }, [videoId]);
 
   // ---- Reflect the `playing` prop on the real player ---------------------
+  //
+  // This must NOT act on the render where the player first becomes ready: that
+  // render's play state is decided by `autoStart` inside onReady. Without this
+  // guard the two disagree — a consumer that sets autoStart and leaves `playing`
+  // at its default `false` (the landing explainer) got told to play by onReady
+  // and then immediately paused again, so the video never started.
   useEffect(() => {
     const player = playerRef.current;
     if (!isReady || !player) return;
+    if (!settledRef.current) {
+      settledRef.current = true;
+      return;
+    }
     try {
       if (playing) {
         if (optionsRef.current.loop && player.setLoop) player.setLoop(true);
