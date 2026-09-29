@@ -157,15 +157,29 @@ export const RoleProvider = ({ children }) => {
     }
   };
 
+  // Adopt the user record exactly as the server returned it, without issuing a
+  // further write. Callers that have just saved should use this so the UI mirrors
+  // the database (including any field the server normalised or refused) instead
+  // of a local guess.
+  const applyServerUser = async (serverUser) => {
+    if (!serverUser) return;
+    await saveAuthSession(serverUser);
+  };
+
   // Update Profile
   const updateUserProfile = async (updates) => {
-    if (!authUser) return;
+    if (!authUser) return { success: false };
     const updated = { ...authUser, ...updates };
     saveAuthSession(updated);
     try {
       await api.updateProfile(updates);
+      return { success: true };
     } catch (err) {
+      // Surface the failure instead of only logging it. A local-only update
+      // looks saved but reverts on the next sign-in, because sign-in re-reads
+      // the record from the API and the write never landed.
       console.error('Failed to sync profile update to server:', err);
+      return { success: false, error: err };
     }
   };
 
@@ -203,6 +217,7 @@ export const RoleProvider = ({ children }) => {
         logout,
         refreshUser,
         updateUserProfile,
+        applyServerUser,
       }}
     >
       {children}

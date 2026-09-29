@@ -21,6 +21,22 @@ const getCandidateBaseUrls = () => {
 
 const REQUEST_TIMEOUT_MS = 20000;
 
+/**
+ * Turn a server-returned path into something an <img src> can load.
+ *
+ * The Postgres-backed upload endpoint returns a path relative to the API
+ * ("/api/v1/files/<id>"). Handed straight to the browser it would resolve against
+ * the *frontend* origin and 404, which the admin UI then renders as a missing
+ * receipt. Absolute URLs are passed through untouched.
+ */
+export const resolveApiUrl = (urlOrPath) => {
+  if (!urlOrPath || typeof urlOrPath !== 'string') return urlOrPath;
+  if (/^https?:\/\//i.test(urlOrPath) || urlOrPath.startsWith('data:')) return urlOrPath;
+  const base = getCandidateBaseUrls()[0] || '';
+  if (!base) return urlOrPath;
+  return `${base.replace(/\/+$/, '')}${urlOrPath.startsWith('/') ? urlOrPath : `/${urlOrPath}`}`;
+};
+
 const withTimeout = (promise, ms = REQUEST_TIMEOUT_MS) => {
   let timer;
   const timeout = new Promise((_, reject) => {
@@ -32,12 +48,23 @@ const withTimeout = (promise, ms = REQUEST_TIMEOUT_MS) => {
 const isNetworkLevelError = (err) =>
   !err || !err.status || err instanceof TypeError || /failed to fetch|networkerror|load failed|fetch failed|took too long/i.test(err.message || '');
 
+// Key the session (and therefore the token) is stored under. Must match
+// STORAGE_KEY_AUTH in RoleContext — that is the only place a session is written.
+const AUTH_SESSION_KEY = 'birrend_auth_session';
+
+let unauthorizedHandled = false;
+
 const getAuthToken = async () => {
   try {
-    const savedSession = await storage.getItem('birrend_auth_session');
+    const savedSession = await storage.getItem(AUTH_SESSION_KEY);
     if (savedSession) {
       const parsed = typeof savedSession === 'string' ? JSON.parse(savedSession) : savedSession;
-      return parsed.token || null;
+      if (parsed?.token) {
+        // A token exists again (the user has signed back in), so arm the
+        // unauthorized handling for the next expiry rather than staying latched.
+        unauthorizedHandled = false;
+        return parsed.token;
+      }
     }
   } catch {}
   return null;
@@ -50,6 +77,33 @@ const parseResponseBody = async (response) => {
     return JSON.parse(text);
   } catch {
     return { message: `Unexpected server response (${response.status}).` };
+  }
+};
+
+/**
+ * React to a rejected token: drop it and return the user to the sign-in screen.
+ *
+ * Guarded so the burst of parallel requests a page load fires cannot produce a
+ * redirect storm. Cleared as soon as a valid token is seen again, so a later
+ * expiry is handled normally rather than being permanently suppressed.
+ */
+const handleUnauthorized = () => {
+  if (unauthorizedHandled) return;
+  unauthorizedHandled = true;
+
+  // The token lives inside the session blob, so the whole session is what has to
+  // go — removing a non-existent standalone key would leave the dead token in
+  // place and the app would reload straight back into the same broken state.
+  try {
+    localStorage.removeItem(AUTH_SESSION_KEY);
+  } catch {
+    /* private browsing — the redirect below still helps */
+  }
+  storage.removeItem(AUTH_SESSION_KEY);
+
+  if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/auth')) {
+    const returnTo = encodeURIComponent(window.location.pathname + window.location.search);
+    window.location.replace(`/auth?reason=session-expired&next=${returnTo}`);
   }
 };
 
@@ -79,6 +133,14 @@ const request = async (endpoint, options = {}) => {
         const err = new Error(errorMsg);
         err.status = response.status;
         err.data = data;
+        // A rejected token is not recoverable by retrying. The usual cause is
+        // the server's JWT_SECRET having been rotated, which invalidates every
+        // token minted before it. Without this the session limps along looking
+        // signed in while every write silently fails — task completions are
+        // rejected, so the tracker never ticks and the exam stays locked with
+        // an unrelated-looking error. Clear the dead token and send the user
+        // back to sign in, which mints a fresh one.
+        if (response.status === 401) handleUnauthorized();
         throw err;
       }
 

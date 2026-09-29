@@ -15,7 +15,7 @@ import {
   RefreshCw,
   ShieldCheck,
 } from 'lucide-react';
-import { api } from '../../services/api';
+import { api, resolveApiUrl } from '../../services/api';
 import { formatETB } from '../../utils/formatters';
 
 const AdminPaymentManagement = () => {
@@ -27,6 +27,9 @@ const AdminPaymentManagement = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Modals State
+  // Resolved to an absolute URL on open: receipts stored via the API's own
+  // upload endpoint are saved as API-relative paths, which would resolve against
+  // this app's origin and render as a broken image.
   const [selectedReceiptUrl, setSelectedReceiptUrl] = useState(null);
   const [approveModalData, setApproveModalData] = useState(null);
   const [declineModalData, setDeclineModalData] = useState(null);
@@ -327,7 +330,7 @@ const AdminPaymentManagement = () => {
                       <td className="py-3.5 px-4">
                         {dep.receiptUrl ? (
                           <button
-                            onClick={() => setSelectedReceiptUrl(dep.receiptUrl)}
+                            onClick={() => setSelectedReceiptUrl(resolveApiUrl(dep.receiptUrl))}
                             className="rounded-full bg-surface-container border border-hairline hover:border-primary text-primary text-[10px] font-bold uppercase tracking-wider px-3 py-1 flex items-center gap-1 focus-ring cursor-pointer"
                           >
                             <Eye size={14} />

@@ -39,7 +39,7 @@ const generateDiceBearAvatars = (seedOffset = 0) => {
 
 const ProfilePage = () => {
   const navigate = useNavigate();
-  const { authUser, logout, updateUserProfile } = useRole();
+  const { authUser, logout, applyServerUser } = useRole();
   const { wallet, streak, currentModuleDay } = useStaking();
 
   const activeUser = authUser || {};
@@ -55,6 +55,7 @@ const ProfilePage = () => {
   );
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [saveError, setSaveError] = useState('');
 
   const handleShuffleAvatars = () => {
     const nextOffset = seedOffset + 1;
@@ -68,10 +69,25 @@ const ProfilePage = () => {
     e.preventDefault();
     setIsSaving(true);
     setSaveSuccess(false);
+    setSaveError('');
 
+    // The server call is the only thing that persists this, so it is awaited and
+    // its failure is reported. It used to be called as
+    // `api.updateProfile(...).catch(() => null)`, which threw the rejection away
+    // and then showed "updated successfully" regardless — so an edit that the
+    // server had rejected (a rejected token, a validation error) looked saved,
+    // and reappeared reverted on the next sign-in.
     try {
-      updateUserProfile({ name: editName, image: selectedAvatar, avatar: selectedAvatar });
-      await api.updateProfile(editName, selectedAvatar).catch(() => null);
+      const res = await api.updateProfile(editName, selectedAvatar);
+      if (!res || res.success === false) {
+        throw new Error(res?.error?.message || res?.message || 'The server did not accept the change.');
+      }
+      // Adopt the server's own view of the record rather than the local guess,
+      // so the form cannot display something the database never accepted.
+      if (res.data) {
+        await applyServerUser(res.data);
+        setEditName(res.data.name || editName);
+      }
       setSaveSuccess(true);
       setTimeout(() => {
         setSaveSuccess(false);
@@ -79,6 +95,11 @@ const ProfilePage = () => {
       }, 1200);
     } catch (err) {
       console.error('Error saving profile:', err);
+      setSaveError(
+        err.status === 401
+          ? 'Your session expired, so nothing was saved. Please sign in again and retry.'
+          : err.message || 'Could not save your profile. Please try again.'
+      );
     } finally {
       setIsSaving(false);
     }
@@ -119,7 +140,14 @@ const ProfilePage = () => {
       setConfirmPassword('');
       setTimeout(() => setPassSuccess(''), 5000);
     } catch (err) {
-      setPassError(err.message || 'Failed to update password. Please check your current password.');
+      // A rejected token reaches here as a 401 and the server's own wording —
+      // "Authentication required. Invalid or missing token." — reads like a
+      // password problem when it is not. Say what actually happened.
+      setPassError(
+        err.status === 401
+          ? 'Your session expired, so the password was not changed. Please sign in again and retry.'
+          : err.message || 'Failed to update password. Please check your current password.'
+      );
     } finally {
       setIsChangingPass(false);
     }
@@ -550,10 +578,19 @@ const ProfilePage = () => {
                 </div>
 
                 {/* Save Confirmation Alert */}
-                {saveSuccess && (
+                {saveSuccess && !saveError && (
                   <div className="p-3 bg-success-green/15 border border-success-green/30 text-success-green text-xs font-semibold font-mono rounded-xl flex items-center gap-2">
                     <Check size={16} />
                     <span>Profile and avatar updated successfully!</span>
+                  </div>
+                )}
+
+                {/* Save Failure Alert — a rejected write must never be reported
+                    as a success, or the change silently reverts on next sign-in. */}
+                {saveError && (
+                  <div className="p-3 bg-destructive-red/10 border border-destructive-red/30 text-destructive-red text-xs font-semibold font-mono rounded-xl flex items-start gap-2">
+                    <AlertCircle size={16} className="shrink-0 mt-px" />
+                    <span>{saveError}</span>
                   </div>
                 )}
 

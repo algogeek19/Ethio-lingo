@@ -46,6 +46,11 @@ const DOUBLE_TAP_MS = 300;
 // How long the "-10s"/"+10s" badge stays on screen after a seek.
 const SEEK_FLASH_MS = 650;
 
+// How close to the end counts as finished. Seeking to the exact duration and
+// the progress poll both round, so the playhead can land a fraction of a second
+// short of the last frame.
+const END_OF_VIDEO_TOLERANCE_SECONDS = 1;
+
 const formatTime = (seconds) => {
   if (!seconds || !isFinite(seconds) || seconds < 0) return '00:00';
   const m = Math.floor(seconds / 60);
@@ -77,6 +82,10 @@ const VideoPlayer = ({ mode = 'task1', onNavigate }) => {
   const lastTapRef = useRef(null);
   const pendingTapRef = useRef(null);
   const seekFlashTimerRef = useRef(null);
+
+  // Latches once the task for this video has been written, so the completion is
+  // not sent twice when the end is reported by both a seek and an ENDED event.
+  const completionSentRef = useRef(false);
 
   // Flashes a "-10s"/"+10s" badge over the half of the frame that was tapped.
   const [seekFlash, setSeekFlash] = useState(null);
@@ -160,6 +169,9 @@ const VideoPlayer = ({ mode = 'task1', onNavigate }) => {
     setPlayerBlocked(false);
     setPlayerReady(false);
     setPlayerError('');
+    // A new video has not been completed yet, so release the latch and allow
+    // the completion to be written again for this source.
+    completionSentRef.current = false;
   }, [videoId]);
 
   // If playback was requested but the embed never reports a duration, the
@@ -265,17 +277,22 @@ const VideoPlayer = ({ mode = 'task1', onNavigate }) => {
 
     const total = player.duration || 0;
     const position = player.currentTime || 0;
-    // Clamp at both ends: never before the start, and never past the final
-    // frame, which would fire `onEnded` and complete the task for free.
-    const upperBound = total > 0 ? total - 0.25 : position + delta;
+    // Seeking is allowed all the way to the end on purpose. Reaching the final
+    // frame is what marks the task complete, so clamping just short of it (as
+    // an anti-skip measure used to) left a video that could be scrubbed to the
+    // finish and still sit at "Pending" forever, because the player never
+    // reported the end.
+    const upperBound = total > 0 ? total : position + delta;
     const target = Math.max(0, Math.min(position + delta, upperBound));
 
     revealChrome();
 
     if (Math.abs(target - position) < 0.05) {
       // Already at that end — flash the badge anyway so the tap is
-      // acknowledged instead of looking broken.
+      // acknowledged instead of looking broken. If that end is the finish,
+      // still run the completion check so the tick cannot be missed.
       flashSeekBadge(delta < 0 ? 'back' : 'fwd');
+      checkReachedEnd(position, total);
       return;
     }
 
@@ -284,6 +301,7 @@ const VideoPlayer = ({ mode = 'task1', onNavigate }) => {
     // show the old time until the embed catches up.
     setLastPlayedSeconds(target);
     flashSeekBadge(delta < 0 ? 'back' : 'fwd');
+    checkReachedEnd(target, total);
   };
 
   // The single-tap play/pause is deferred by one double-tap window so that a
@@ -409,6 +427,11 @@ const VideoPlayer = ({ mode = 'task1', onNavigate }) => {
     // viewer left off. The timer tracks that position, not accumulated watch
     // time, so scrubbing backwards also moves the counter backwards.
     setLastPlayedSeconds(playedSeconds);
+
+    // Backstop for the ENDED event: a seek straight onto the final frame does
+    // not always produce one, and without this the task would sit at "Pending"
+    // on a video that is visibly finished.
+    checkReachedEnd(playedSeconds, total);
   };
 
   // 3. PLAYER LIFECYCLE — reset playback metrics and report errors
@@ -429,13 +452,30 @@ const VideoPlayer = ({ mode = 'task1', onNavigate }) => {
     setPlayerBlocked(true);
   };
 
+  // Marking the task complete is driven by "the playhead reached the end",
+  // however that happened: watched through, or seeked to the finish. The embed
+  // only reports the end reliably when playback runs off the end itself, so the
+  // same check also runs on every seek and on every progress poll.
   const handleEnded = () => {
+    // ENDED can arrive more than once (a seek onto the final frame fires it,
+    // and so does resuming after it), and completeTask writes to the API, so
+    // it must not be repeated.
+    if (completionSentRef.current) return;
+    completionSentRef.current = true;
     setIsPlaying(false);
     if (mode === 'task1') {
       completeTask('lesson');
     } else {
       completeTask('video');
     }
+  };
+
+  // True once the playhead is at (or within a fraction of a second of) the very
+  // end of a video whose length is known. The tolerance absorbs the rounding
+  // that `seekTo(duration)` and the progress poll each introduce.
+  const checkReachedEnd = (position, total) => {
+    if (!total || total <= 0) return;
+    if (position >= total - END_OF_VIDEO_TOLERANCE_SECONDS) handleEnded();
   };
 
   const handleDownloadReference = async () => {

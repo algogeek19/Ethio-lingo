@@ -228,7 +228,7 @@ const DailyExamRunner = () => {
             <h2 className="font-cormorant text-3xl font-medium text-on-surface mt-2">
               {authUser?.role === 'admin'
                 ? 'Admin Account Exemption'
-                : 'Complete 3 Workspace Tasks First'}
+                : 'Complete the Workspace Videos First'}
             </h2>
             <p className="text-xs font-mono text-on-surface-variant max-w-lg mx-auto leading-relaxed pt-1">
               {lockError}

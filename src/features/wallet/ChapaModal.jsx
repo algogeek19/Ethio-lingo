@@ -13,7 +13,7 @@ import {
   Loader2,
 } from 'lucide-react';
 import { formatETB } from '../../utils/formatters';
-import { api } from '../../services/api';
+import { api, resolveApiUrl } from '../../services/api';
 import { supabase } from '../../lib/supabaseClient';
 
 const ChapaModal = ({ isOpen, onClose, onDepositSubmitted }) => {
@@ -29,6 +29,9 @@ const ChapaModal = ({ isOpen, onClose, onDepositSubmitted }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [isSubmitted, setIsSubmitted] = useState(false);
+  // Set only when a receipt was selected but could not be attached. Empty means
+  // either no file was chosen or it uploaded fine.
+  const [receiptWarning, setReceiptWarning] = useState('');
 
   // Fetch active bank accounts and existing pending deposit status from API
   useEffect(() => {
@@ -80,9 +83,20 @@ const ChapaModal = ({ isOpen, onClose, onDepositSubmitted }) => {
     try {
       let receiptUrl = null;
 
-      // 1. Upload receipt screenshot via a short-lived signed URL minted
-      //    server-side (service-role key). The browser never writes to Storage
-      //    directly, so public Storage policies can stay locked down.
+      // 1. Upload the receipt screenshot.
+      //
+      //    Preferred path is a short-lived signed URL minted server-side
+      //    (service-role key), so the browser never needs Storage write access.
+      //    That requires SUPABASE_URL and SUPABASE_SECRET_KEY on the API. When
+      //    they are absent the route answers "File storage is not configured on
+      //    this server", and the old code swallowed that in a console.warn and
+      //    submitted the deposit with a null receiptUrl — so the learner's
+      //    screenshot was silently discarded and the admin saw "No Image
+      //    Attached" with no indication anything had gone wrong.
+      //
+      //    Fall back to the API's own Postgres-backed upload endpoint, which
+      //    needs no third-party configuration, and if even that fails tell the
+      //    learner the image did not attach instead of pretending it did.
       if (receiptFile) {
         try {
           const uploadUrlRes = await api.getReceiptUploadUrl({
@@ -107,9 +121,22 @@ const ChapaModal = ({ isOpen, onClose, onDepositSubmitted }) => {
           }
 
           receiptUrl = publicUrl;
-        } catch (uploadErr) {
-          // Non-blocking: the deposit is still submitted and can be matched by TxRef.
-          console.warn('Receipt upload failed, continuing with TxRef:', uploadErr.message);
+        } catch (signedUrlErr) {
+          console.warn('Signed-URL receipt upload unavailable, falling back to server upload:', signedUrlErr.message);
+
+          try {
+            const uploaded = await api.uploadFile(receiptFile);
+            const storedUrl = uploaded?.data?.url;
+            if (!storedUrl) throw new Error('Server upload returned no file URL.');
+            // The endpoint returns a path relative to the API host, which would
+            // not load in the admin's <img> if stored as-is.
+            receiptUrl = resolveApiUrl(storedUrl);
+          } catch (fallbackErr) {
+            console.error('Receipt upload failed on both paths:', fallbackErr);
+            setReceiptWarning(
+              'Your receipt screenshot could not be uploaded, so it will not appear with this deposit. Your reference ID was still submitted — send the screenshot to support if it is needed for approval.'
+            );
+          }
         }
       }
 
@@ -180,10 +207,20 @@ const ChapaModal = ({ isOpen, onClose, onDepositSubmitted }) => {
                   <strong>Admin Verification Notice:</strong> Admin will verify your transaction reference <strong>within 24 hours</strong>.
                 </span>
               </div>
+              {/* The reference ID is what gets matched, so the request is still
+                  valid — but the learner must be told the image is missing rather
+                  than discovering it later as "No Image Attached" on the admin side. */}
+              {receiptWarning && (
+                <div className="p-3 bg-destructive-red/10 border border-destructive-red/30 rounded-xl text-xs text-destructive-red font-mono flex items-start gap-2 text-left">
+                  <AlertCircle size={16} className="shrink-0 mt-px" />
+                  <span>{receiptWarning}</span>
+                </div>
+              )}
             </div>
             <button
               onClick={() => {
                 setIsSubmitted(false);
+                setReceiptWarning('');
                 onClose();
               }}
               className="mt-4 px-6 py-2.5 rounded-full bg-primary text-on-primary text-xs tracking-wider uppercase font-semibold hover:bg-primary-container shadow-sm focus-ring btn-interactive transition-all"
