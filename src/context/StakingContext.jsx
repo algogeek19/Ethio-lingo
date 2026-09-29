@@ -4,6 +4,7 @@ import React, {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 import { api } from '../services/api';
@@ -26,6 +27,10 @@ const TASK_MIRROR_KEY = 'birrend_task_mirror';
 
 // How often to re-read task progress from the API while a tab is visible.
 const WORKSPACE_SYNC_INTERVAL_MS = 30000;
+
+// How long a just-completed task is protected from being un-ticked by a read
+// that was already in flight when the completion was confirmed.
+const COMPLETION_GRACE_MS = 8000;
 
 export const StakingProvider = ({ children }) => {
   const { authUser, updateUserProfile } = useRole();
@@ -84,6 +89,35 @@ export const StakingProvider = ({ children }) => {
     video: false,
     exam: false,
   });
+
+  // Tasks completed in this tab, with the moment they were confirmed. A read
+  // that lands inside this window is not allowed to un-tick them: the write and
+  // the read are two separate requests, so a read dispatched straight after the
+  // write can still observe the pre-write row and snap the badge back to
+  // "Pending" a fraction of a second after the learner finished the video. The
+  // window is short, so it only masks that race and never overrides a genuine
+  // server state later on.
+  const recentCompletionsRef = useRef({});
+  const lastMirroredKeyRef = useRef(null);
+
+  const withCompletionGrace = (serverState) => {
+    const now = Date.now();
+    const recent = recentCompletionsRef.current;
+    const result = { ...serverState };
+
+    for (const task of ['lesson', 'video', 'exam']) {
+      const at = recent[task];
+      if (at) {
+        if (now - at <= COMPLETION_GRACE_MS) {
+          if (!result[task]) result[task] = true;
+        } else {
+          delete recent[task];
+        }
+      }
+    }
+
+    return result;
+  };
 
   // Transactions Ledger State
   const [ledgerTransactions, setLedgerTransactions] = useState([]);
@@ -203,11 +237,11 @@ export const StakingProvider = ({ children }) => {
         if (res.data.levelBooks) setLevelBooks(res.data.levelBooks);
         if (res.data.progress) {
           const p = res.data.progress;
-          setDailyTasks({
+          setDailyTasks(withCompletionGrace({
             lesson: !!p.task1LessonCompleted,
             video: !!p.task2ListeningCompleted,
             exam: !!(p.examCompleted && p.examPassed),
-          });
+          }));
           return;
         }
       }
@@ -221,7 +255,7 @@ export const StakingProvider = ({ children }) => {
           /* cache is optional */
         }
       }
-      setDailyTasks({ lesson: false, video: false, exam: false });
+      setDailyTasks(withCompletionGrace({ lesson: false, video: false, exam: false }));
     } catch (err) {
       // Leave the last known state alone. Wiping it here is what made a brief
       // network blip look like the learner lost their completed tasks.
@@ -275,6 +309,14 @@ export const StakingProvider = ({ children }) => {
 
   useEffect(() => {
     if (!syncTarget?.key) return;
+    // On the first pass for a key, the seed effect above has just queued its
+    // setDailyTasks but this effect still closes over the previous value. Writing
+    // that stale value back would destroy the very mirror we just read, so skip
+    // until the state has actually been seeded from storage.
+    if (lastMirroredKeyRef.current !== syncTarget.key) {
+      lastMirroredKeyRef.current = syncTarget.key;
+      return;
+    }
     try {
       localStorage.setItem(syncTarget.key, JSON.stringify(dailyTasks));
     } catch {
@@ -310,6 +352,9 @@ export const StakingProvider = ({ children }) => {
     };
     try {
       await api.completeTask(writeLevel, writeDay, taskType, extraData.seconds || 180, extraData);
+      // Start the grace window only once the server has confirmed the write,
+      // so the re-sync below cannot un-tick the task it just completed.
+      recentCompletionsRef.current[normalizedKey] = Date.now();
       if (isFreeTrialMode && currentModuleDay >= 7 && (normalizedKey === 'exam' || taskType === 'exam')) {
         setFreeTrialDaysLeft(0);
         await loadWalletData();

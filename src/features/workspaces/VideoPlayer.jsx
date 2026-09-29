@@ -16,6 +16,8 @@ import {
   ExternalLink,
   Maximize,
   Minimize,
+  RotateCcw,
+  RotateCw,
 } from 'lucide-react';
 import { useStaking } from '../../context/StakingContext';
 import { api } from '../../services/api';
@@ -32,6 +34,17 @@ import {
  * `utils/youtube` keeps only the 11-character id and drops every other
  * parameter, which is the only form that is safe to hand to the player.
  */
+
+// How far a single seek control moves the playhead, in seconds.
+const SEEK_STEP_SECONDS = 10;
+
+// Window in which a second tap on the same half of the frame counts as a
+// double-tap. Long enough for a deliberate double-tap, short enough that two
+// unrelated taps do not read as one.
+const DOUBLE_TAP_MS = 300;
+
+// How long the "-10s"/"+10s" badge stays on screen after a seek.
+const SEEK_FLASH_MS = 650;
 
 const formatTime = (seconds) => {
   if (!seconds || !isFinite(seconds) || seconds < 0) return '00:00';
@@ -59,6 +72,14 @@ const VideoPlayer = ({ mode = 'task1', onNavigate }) => {
   // re-renders, so it lives in a ref rather than component state.
   const chromeStateRef = useRef({ isPlaying: false, playerBlocked: false });
   const chromeTimerRef = useRef(null);
+
+  // Tap bookkeeping for the double-tap seek zones.
+  const lastTapRef = useRef(null);
+  const pendingTapRef = useRef(null);
+  const seekFlashTimerRef = useRef(null);
+
+  // Flashes a "-10s"/"+10s" badge over the half of the frame that was tapped.
+  const [seekFlash, setSeekFlash] = useState(null);
 
   // Current playback position. Seeking is unrestricted, so this is just
   // wherever the viewer is in the video.
@@ -222,6 +243,84 @@ const VideoPlayer = ({ mode = 'task1', onNavigate }) => {
     return () => document.removeEventListener('fullscreenchange', onChange);
   }, []);
 
+  // 1F. SEEKING: +/- 10s, driven by the arrow buttons on pointer devices and by
+  // double-tapping the left/right half of the frame on touch screens. The embed
+  // has no native controls of its own here, so without these there is no way to
+  // move around the video at all.
+  // Flashes the seek badge and schedules its removal. Keyed on a fresh id so
+  // two seeks in quick succession restart the timer instead of the first one
+  // clearing the second one's badge early.
+  const flashSeekBadge = (side) => {
+    setSeekFlash({ side, id: Date.now() });
+    if (seekFlashTimerRef.current) clearTimeout(seekFlashTimerRef.current);
+    seekFlashTimerRef.current = setTimeout(() => {
+      seekFlashTimerRef.current = null;
+      setSeekFlash(null);
+    }, SEEK_FLASH_MS);
+  };
+
+  const seekBy = (delta) => {
+    const player = playerRef.current;
+    if (!player) return;
+
+    const total = player.duration || 0;
+    const position = player.currentTime || 0;
+    // Clamp at both ends: never before the start, and never past the final
+    // frame, which would fire `onEnded` and complete the task for free.
+    const upperBound = total > 0 ? total - 0.25 : position + delta;
+    const target = Math.max(0, Math.min(position + delta, upperBound));
+
+    revealChrome();
+
+    if (Math.abs(target - position) < 0.05) {
+      // Already at that end — flash the badge anyway so the tap is
+      // acknowledged instead of looking broken.
+      flashSeekBadge(delta < 0 ? 'back' : 'fwd');
+      return;
+    }
+
+    player.seekTo(target, true);
+    // Move the readout immediately; the next progress poll would otherwise
+    // show the old time until the embed catches up.
+    setLastPlayedSeconds(target);
+    flashSeekBadge(delta < 0 ? 'back' : 'fwd');
+  };
+
+  // The single-tap play/pause is deferred by one double-tap window so that a
+  // double-tap seek does not also flash the player into the opposite state.
+  const handleSurfaceTap = (event) => {
+    const bounds = event.currentTarget.getBoundingClientRect();
+    const side = (event.clientX - bounds.left) / bounds.width < 0.5 ? 'back' : 'fwd';
+    const now = Date.now();
+    const previous = lastTapRef.current;
+
+    if (previous && now - previous.time < DOUBLE_TAP_MS && previous.side === side) {
+      lastTapRef.current = null;
+      if (pendingTapRef.current) {
+        clearTimeout(pendingTapRef.current);
+        pendingTapRef.current = null;
+      }
+      seekBy(side === 'back' ? -SEEK_STEP_SECONDS : SEEK_STEP_SECONDS);
+      return;
+    }
+
+    lastTapRef.current = { time: now, side };
+    if (pendingTapRef.current) clearTimeout(pendingTapRef.current);
+    pendingTapRef.current = setTimeout(() => {
+      pendingTapRef.current = null;
+      setIsPlaying((prev) => !prev);
+    }, DOUBLE_TAP_MS);
+  };
+
+  // A pending single-tap toggle must not fire after the component goes away.
+  useEffect(
+    () => () => {
+      if (pendingTapRef.current) clearTimeout(pendingTapRef.current);
+      if (seekFlashTimerRef.current) clearTimeout(seekFlashTimerRef.current);
+    },
+    []
+  );
+
   const toggleFullscreen = async () => {
     const frame = frameRef.current;
     if (!frame) return;
@@ -257,7 +356,9 @@ const VideoPlayer = ({ mode = 'task1', onNavigate }) => {
     };
   }, []);
 
-  // 1E. PLAYER SHORTCUTS: K toggles playback, F toggles fullscreen.
+  // 1E. PLAYER SHORTCUTS: Left/Right arrows seek +/- 10s, K toggles playback,
+  // F toggles fullscreen. The arrow keys are the desktop equivalent of the
+  // double-tap seek zones used on touch screens.
   useEffect(() => {
     const handleShortcut = (e) => {
       if (e.metaKey || e.ctrlKey || e.altKey) return;
@@ -268,7 +369,13 @@ const VideoPlayer = ({ mode = 'task1', onNavigate }) => {
       ) {
         return;
       }
-      if (e.code === 'KeyK') {
+      if (e.code === 'ArrowLeft') {
+        e.preventDefault();
+        seekBy(-SEEK_STEP_SECONDS);
+      } else if (e.code === 'ArrowRight') {
+        e.preventDefault();
+        seekBy(SEEK_STEP_SECONDS);
+      } else if (e.code === 'KeyK') {
         e.preventDefault();
         setIsPlaying((prev) => !prev);
         revealChrome();
@@ -555,15 +662,36 @@ INSTRUCTIONS:
                   without this layer the chrome could not detect cursor
                   activity over the video itself and would retract forever.
                   It sits below the chrome (z-20+) so the buttons stay
-                  clickable, and mirrors YouTube: click to play/pause. */}
+                  clickable. Single tap mirrors YouTube and toggles playback;
+                  double-tapping either half seeks +/- 10s, which is the only
+                  way to move around the video on a touch screen. */}
               {!playerBlocked && (
                 <div
                   role="presentation"
-                  onClick={() => setIsPlaying((prev) => !prev)}
-                  className={`absolute inset-0 z-10 cursor-pointer ${
+                  onPointerUp={handleSurfaceTap}
+                  onContextMenu={(e) => e.preventDefault()}
+                  className={`absolute inset-0 z-10 cursor-pointer touch-manipulation select-none ${
                     isPlaying ? '' : 'bg-black/30 hover:bg-black/20 transition-colors'
                   }`}
                 />
+              )}
+
+              {/* Double-tap seek badge. Rendered above the interaction layer
+                  but below the chrome, so it reads as feedback from the video
+                  rather than as another control. */}
+              {seekFlash && (
+                <div
+                  key={seekFlash.id}
+                  aria-hidden="true"
+                  className={`absolute inset-y-0 z-20 flex items-center pointer-events-none ${
+                    seekFlash.side === 'back' ? 'left-0 pl-4 sm:pl-8' : 'right-0 pr-4 sm:pr-8'
+                  }`}
+                >
+                  <span className="flex items-center gap-1.5 px-3 py-2 rounded-full bg-black/70 text-stone-100 font-mono text-xs font-semibold tracking-wider border border-white/10 animate-pulse">
+                    {seekFlash.side === 'back' ? <RotateCcw size={14} /> : <RotateCw size={14} />}
+                    {SEEK_STEP_SECONDS}s
+                  </span>
+                </div>
               )}
 
               {/* Archive chip + fullscreen toggle.
@@ -587,12 +715,30 @@ INSTRUCTIONS:
                   </span>
                   <button
                     type="button"
+                    onClick={() => seekBy(-SEEK_STEP_SECONDS)}
+                    aria-label={`Back ${SEEK_STEP_SECONDS} seconds`}
+                    title={`Back ${SEEK_STEP_SECONDS}s`}
+                    className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-black/70 text-stone-200 hover:bg-primary hover:text-on-primary transition-colors cursor-pointer focus-ring"
+                  >
+                    <RotateCcw size={15} />
+                  </button>
+                  <button
+                    type="button"
                     onClick={() => setIsPlaying((prev) => !prev)}
                     aria-label={isPlaying ? 'Pause video' : 'Play video'}
                     title={isPlaying ? 'Pause (K)' : 'Play (K)'}
                     className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-black/70 text-stone-200 hover:bg-primary hover:text-on-primary transition-colors cursor-pointer focus-ring"
                   >
                     {isPlaying ? <Pause size={15} /> : <Play size={15} className="ml-px" />}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => seekBy(SEEK_STEP_SECONDS)}
+                    aria-label={`Forward ${SEEK_STEP_SECONDS} seconds`}
+                    title={`Forward ${SEEK_STEP_SECONDS}s`}
+                    className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-black/70 text-stone-200 hover:bg-primary hover:text-on-primary transition-colors cursor-pointer focus-ring"
+                  >
+                    <RotateCw size={15} />
                   </button>
                   <button
                     type="button"
