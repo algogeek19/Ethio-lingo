@@ -17,6 +17,7 @@ import {
 import { useRole } from "../../context/RoleContext";
 import { useStaking } from "../../context/StakingContext";
 import { useTheme } from "../../context/ThemeContext";
+import { useSiteContent } from "../../context/SiteContentContext";
 import { ChapaModal } from "../../features/wallet";
 
 const initials = (name = "") =>
