@@ -29,6 +29,10 @@ router.post('/books/add', adminController.addLevelBook);
 router.delete('/books/:id', adminController.deleteLevelBook);
 router.get('/settings/landing-video', adminController.getLandingVideoSetting);
 router.post('/settings/landing-video', adminController.updateLandingVideoSetting);
+// Site Content CMS — every learner-facing string, editable from the admin portal.
+router.get('/settings/site-content', adminController.getSiteContent);
+router.put('/settings/site-content', adminController.updateSiteContent);
+router.post('/settings/site-content', adminController.updateSiteContent);
 router.post('/storage/upload-url', storageController.getAdminUploadUrl);
 
 export default router;

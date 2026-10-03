@@ -20,6 +20,7 @@ import {
   RotateCw,
 } from 'lucide-react';
 import { useStaking } from '../../context/StakingContext';
+import { useSiteContent } from '../../context/SiteContentContext';
 import { api } from '../../services/api';
 import {
   extractYouTubeId,
@@ -60,6 +61,9 @@ const formatTime = (seconds) => {
 
 const VideoPlayer = ({ mode = 'task1', onNavigate }) => {
   const { dailyTasks, completeTask, currentModuleDay, user, isFreeTrialMode, workspaceModule } = useStaking();
+  const { c } = useSiteContent();
+  const level = user?.level || 'Beginner I';
+  const day = currentModuleDay;
   const playerRef = useRef(null);
   const frameRef = useRef(null);
 
@@ -128,22 +132,34 @@ const VideoPlayer = ({ mode = 'task1', onNavigate }) => {
     entertainment: 'H14bBuluwB8',
   };
 
+  // Materials assigned to the day just arrived (a new currentDay after the
+  // midnight rollover) — the playhead and the completion latch must both reset,
+  // or the learner would be credited for the previous day's video.
+  const moduleId = moduleData?.id;
+  useEffect(() => {
+    completionSentRef.current = false;
+    setDuration(0);
+    setPlayedFraction(0);
+    setLastPlayedSeconds(0);
+    setIsPlaying(false);
+  }, [moduleId]);
+
   const resolveVideoId = (url, fallbackKey) =>
     extractYouTubeId(url) || FALLBACK_VIDEO_IDS[fallbackKey];
 
   // Dynamic Videos Data from API moduleData
   const videoData = {
     task1: {
-      title: moduleData?.title || `${user?.level || 'Beginner I'} • Day ${currentModuleDay} Daily English Lesson`,
+      title: moduleData?.title || `${level} • Day ${day} Daily English Lesson`,
       videoId: resolveVideoId(moduleData?.lessonVideoUrl, 'lesson'),
-      referenceFile: moduleData?.refGuideTitle || `Birrend_${user?.level?.replace(/\s+/g, '_')}_Day${currentModuleDay}_Reference_Guide.pdf`,
+      referenceFile: moduleData?.refGuideTitle || `Birrend_${level.replace(/\s+/g, '_')}_Day${day}_Reference_Guide.pdf`,
     },
     informative: {
-      title: `${user?.level || 'Beginner I'} • Listening Practice (Informative: Academic & Global English)`,
+      title: `${level} • Listening Practice (Informative: Academic & Global English)`,
       videoId: resolveVideoId(moduleData?.listeningInformativeUrl, 'informative'),
     },
     entertainment: {
-      title: `${user?.level || 'Beginner I'} • Listening Practice (Entertainment: Cultural & Storytelling English)`,
+      title: `${level} • Listening Practice (Entertainment: Cultural & Storytelling English)`,
       videoId: resolveVideoId(moduleData?.listeningEntertainmentUrl, 'entertainment'),
     },
   };
@@ -555,7 +571,7 @@ INSTRUCTIONS:
           <div className="flex items-center gap-2">
             <AlertCircle size={16} className="shrink-0" />
             <span>
-              <strong>Playback Auto-Paused:</strong> Tab became inactive. Active focus required to validate task time.
+              {c('player.autoPaused')}
             </span>
           </div>
         </div>
@@ -566,7 +582,7 @@ INSTRUCTIONS:
         <div className="min-w-0">
           <div className="flex items-center gap-2.5 flex-wrap">
             <span className="px-2.5 py-1 bg-primary/10 text-primary font-mono text-[9px] font-semibold rounded uppercase tracking-wider">
-              {mode === 'task1' ? 'Task 1 · Lesson Lecture' : 'Task 2 · Listening Skill'}
+              {mode === 'task1' ? c('player.task1Badge') : c('player.task2Badge')}
             </span>
             <span className="text-[10px] font-mono text-on-surface-variant uppercase tracking-wider">
               Day {currentModuleDay} • {user?.level || 'Beginner I'}
@@ -580,12 +596,12 @@ INSTRUCTIONS:
           {taskDone ? (
             <span className="px-4 py-2 bg-success-green/10 border border-success-green/25 text-success-green text-[10px] font-bold font-mono rounded-full uppercase tracking-wider flex items-center gap-1.5 shadow-xs">
               <CheckCircle size={14} />
-              <span>Task Completed</span>
+              <span>{c('player.taskCompleted')}</span>
             </span>
           ) : (
             <span className="px-4 py-2 bg-surface-container text-on-surface-variant text-[10px] font-semibold font-mono rounded-full uppercase tracking-wider flex items-center gap-1.5">
               <Clock size={14} className="text-primary" />
-              <span>Watch Full Video to Unlock</span>
+              <span>{c('player.watchToUnlock')}</span>
             </span>
           )}
         </div>
@@ -607,7 +623,7 @@ INSTRUCTIONS:
             }`}
           >
             <Film size={14} />
-            <span>Informative (Academic)</span>
+            <span>{c('player.informativeLabel')}</span>
           </button>
 
           <button
@@ -623,7 +639,7 @@ INSTRUCTIONS:
             }`}
           >
             <Video size={14} />
-            <span>Entertainment (Culture)</span>
+            <span>{c('player.entertainmentLabel')}</span>
           </button>
         </div>
       )}
@@ -669,10 +685,9 @@ INSTRUCTIONS:
                 <div className="absolute inset-0 z-40 flex flex-col items-center justify-center gap-4 px-6 text-center bg-[#1a1413]/95">
                   <AlertTriangle size={28} className="text-warning-amber" />
                   <div className="space-y-1.5">
-                    <p className="font-cormorant text-xl text-stone-100">Video unavailable in this browser</p>
+                    <p className="font-cormorant text-xl text-stone-100">{c('player.blockedTitle')}</p>
                     <p className="text-xs text-stone-400 font-light max-w-sm leading-relaxed">
-                      {playerError ||
-                        'Your browser or network is blocking the embedded YouTube player. An ad blocker, privacy extension, or a filtered connection is the usual cause.'}
+                      {playerError || c('player.blockedBody')}
                     </p>
                   </div>
                   <a
@@ -681,7 +696,7 @@ INSTRUCTIONS:
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-2 rounded-full bg-primary hover:bg-primary-container text-on-primary font-semibold text-xs tracking-wider uppercase px-5 py-2.5 transition-all btn-interactive focus-ring"
                   >
-                    <ExternalLink size={14} /> Open on YouTube
+                    <ExternalLink size={14} /> {c('player.openOnYoutube')}
                   </a>
                   <button
                     type="button"
@@ -692,7 +707,7 @@ INSTRUCTIONS:
                     }}
                     className="text-[10px] font-mono uppercase tracking-wider text-stone-400 hover:text-stone-200 cursor-pointer focus-ring"
                   >
-                    Try again
+                    {c('player.tryAgain')}
                   </button>
                 </div>
               )}
@@ -742,7 +757,7 @@ INSTRUCTIONS:
                 }`}
               >
                 <span className="font-mono text-[9px] bg-black/60 text-stone-300 px-2.5 py-1 rounded tracking-wider border border-white/10">
-                  ETHIO-LINGO ARCHIVE
+                  {c('landing.archiveChip')}
                 </span>
                 <div
                   className={`flex items-center gap-2 ${
@@ -751,7 +766,7 @@ INSTRUCTIONS:
                 >
                   <span className="hidden sm:inline-flex items-center gap-1.5 bg-primary/90 text-on-primary px-3 py-1 rounded-full text-[10px] font-mono font-semibold tracking-wider shadow-lg">
                     <CheckCircle2 size={12} />
-                    <span>100% Watched to Complete</span>
+                    <span>{c('player.watchedToComplete')}</span>
                   </span>
                   <button
                     type="button"
@@ -812,7 +827,7 @@ INSTRUCTIONS:
                 <div className="max-w-lg">
                   <div className="font-cormorant text-xl md:text-2xl text-stone-100 leading-snug">{videoTitle}</div>
                   <div className="font-mono text-[9px] text-stone-400 tracking-widest uppercase mt-1.5">
-                    Day {currentModuleDay} · {user?.level || 'Beginner I'}
+                    Day {day} · {level}
                   </div>
                 </div>
               </div>
@@ -837,7 +852,7 @@ INSTRUCTIONS:
                       {formatTime(lastPlayedSeconds)} / {formatTime(duration)}
                     </span>
                     <span className="text-primary-fixed-dim">
-                      {isPlaying ? 'Now Playing' : 'Paused'} · {taskDone ? 'Task Completed' : `Task Verification ${verificationPct}%`}
+                      {isPlaying ? c('player.nowPlaying') : c('player.paused')} · {taskDone ? c('player.taskCompleted') : c('player.verificationPct', { pct: verificationPct })}
                     </span>
                   </div>
                 </div>
@@ -853,10 +868,10 @@ INSTRUCTIONS:
                   <BookOpen size={18} className="text-primary shrink-0" />
                   <div className="min-w-0">
                     <h3 className="font-cormorant text-xl font-normal text-on-surface">
-                      Companion Study Manual
+                      {c('player.referenceTitle')}
                     </h3>
                     <span className="text-[10px] font-mono text-on-surface-variant uppercase tracking-wider">
-                      Reference Guide · PDF
+                      {c('player.referenceSubtitle')}
                     </span>
                   </div>
                 </div>
@@ -866,14 +881,14 @@ INSTRUCTIONS:
                   className="px-5 py-2.5 bg-primary hover:bg-primary-container text-on-primary font-semibold rounded-full text-xs tracking-wider uppercase transition-all flex items-center gap-2 shadow-sm focus-ring btn-interactive cursor-pointer shrink-0"
                 >
                   <Download size={14} />
-                  <span>Download PDF Reference</span>
+                  <span>{c('player.referenceDownload')}</span>
                 </button>
               </div>
 
               {downloadSuccess && (
                 <div className="p-3 bg-success-green/10 border border-success-green/30 text-success-green text-xs rounded-xl font-mono flex items-center gap-2">
                   <CheckCircle size={14} />
-                  <span>Reference guide downloaded successfully! Save for exam prep.</span>
+                  <span>{c('player.referenceSuccess')}</span>
                 </div>
               )}
 
@@ -893,13 +908,13 @@ INSTRUCTIONS:
                       {refGuideTitle}
                     </span>
                     <span className="text-on-surface-variant text-xs block truncate mt-0.5">
-                      {moduleData?.refGuideDescription || 'PDF Reference Manual • Grammar Rules & Vocabulary Guide'}
+                      {moduleData?.refGuideDescription || c('player.referenceFallbackDesc')}
                     </span>
                   </div>
                 </div>
                 <span className="text-xs font-mono font-bold text-primary flex items-center gap-1 shrink-0 ml-2 group-hover:underline">
                   <Download size={14} />
-                  <span>Download .pdf</span>
+                  <span>{c('player.downloadPdf')}</span>
                 </span>
               </div>
             </div>
@@ -910,13 +925,13 @@ INSTRUCTIONS:
         {mode === 'task1' && (
           <div className="lg:col-span-4 bg-surface-lowest rounded-2xl border border-hairline/60 shadow-sm p-6 flex flex-col justify-between">
             <div>
-              <span className="mono-micro-label text-primary font-semibold">Syllabus Milestones</span>
-              <h4 className="font-cormorant text-2xl font-medium text-on-surface mt-2 mb-4">Module {currentModuleDay} Roadmap</h4>
+              <span className="mono-micro-label text-primary font-semibold">{c('player.syllabusLabel')}</span>
+              <h4 className="font-cormorant text-2xl font-medium text-on-surface mt-2 mb-4">{c('player.syllabusTitle', { day })}</h4>
               <div className="flex flex-col gap-3 font-sans text-xs">
                 {[
-                  { label: '1 · Mandatory Lecture', done: !!dailyTasks.lesson },
-                  { label: '2 · Listening Skill', done: !!dailyTasks.video },
-                  { label: '3 · Daily Exam', done: !!dailyTasks.exam },
+                  { label: c('player.milestone1'), done: !!dailyTasks.lesson },
+                  { label: c('player.milestone2'), done: !!dailyTasks.video },
+                  { label: c('player.milestone3'), done: !!dailyTasks.exam },
                 ].map((item) => (
                   <div key={item.label} className="p-3 bg-surface-low rounded-xl flex items-center justify-between gap-2">
                     <span className="font-medium text-on-surface">{item.label}</span>
@@ -927,7 +942,7 @@ INSTRUCTIONS:
                 ))}
               </div>
               <div className="mt-4 p-3 bg-surface-low rounded-xl">
-                <span className="mono-micro-label text-on-surface-variant">Reference Guide</span>
+                <span className="mono-micro-label text-on-surface-variant">{c('player.referenceGuideLabel')}</span>
                 <p className="text-xs font-medium text-on-surface mt-1.5 truncate" title={refGuideTitle}>
                   {refGuideTitle}
                 </p>
@@ -938,7 +953,7 @@ INSTRUCTIONS:
                 onClick={() => onNavigate('task2')}
                 className="mt-6 w-full py-3 rounded-full bg-primary text-on-primary text-xs tracking-wider uppercase font-semibold hover:bg-primary-container transition-all shadow-sm"
               >
-                Proceed to Task 2 →
+                {c('player.proceedToTask2')}
               </button>
             )}
           </div>
@@ -948,23 +963,23 @@ INSTRUCTIONS:
         {mode === 'task2' && (
           <div className="lg:col-span-12 grid grid-cols-1 lg:grid-cols-12 gap-6">
             <div className="lg:col-span-7 flex flex-col gap-4">
-              <h3 className="font-cormorant text-2xl md:text-3xl font-normal text-on-surface">Task 2 · Listening Lab Track</h3>
+              <h3 className="font-cormorant text-2xl md:text-3xl font-normal text-on-surface">{c('player.listeningTitle')}</h3>
               <div className="bg-surface-lowest rounded-2xl border border-hairline/60 shadow-sm p-6">
                 <span className="mono-micro-label inline-block bg-primary/10 text-primary px-2 py-1 rounded font-semibold">
-                  {listeningCategory === 'informative' ? 'Option A · Informative (Academic)' : 'Option B · Entertainment (Culture)'}
+                  {listeningCategory === 'informative' ? c('player.optionA') : c('player.optionB')}
                 </span>
                 <h4 className="font-cormorant text-2xl font-medium text-on-surface mt-3 leading-snug">{currentVideo.title}</h4>
                 <p className="font-sans text-xs text-on-surface-variant mt-2 leading-relaxed">
-                  Native-cadence audio stream for {listeningCategory === 'informative' ? 'academic & global English' : 'cultural & storytelling English'} listening practice.
+                  {c('player.listeningBlurb')}
                 </p>
               </div>
             </div>
 
             <div className="lg:col-span-5 bg-surface-lowest rounded-2xl border border-hairline/60 shadow-sm p-6 flex flex-col justify-between">
               <div>
-                <span className="mono-micro-label text-primary font-semibold">Audio Stream</span>
+                <span className="mono-micro-label text-primary font-semibold">{c('player.audioStream')}</span>
                 <h4 className="font-cormorant text-2xl font-medium text-on-surface mt-2 mb-6">
-                  {user?.level || 'Beginner I'} · Day {currentModuleDay}
+                  {level} · Day {day}
                 </h4>
                 <div className="flex items-center justify-between h-14 px-4 bg-surface-low rounded-xl">
                   {[10, 18, 8, 22, 13, 26, 9, 20, 14].map((h, i) => (
@@ -976,11 +991,11 @@ INSTRUCTIONS:
                   ))}
                 </div>
                 <div className="mt-3 flex items-center justify-between gap-2">
-                  <span className="text-[10px] font-mono text-on-surface-variant uppercase tracking-wider">Cue · Listening</span>
+                  <span className="text-[10px] font-mono text-on-surface-variant uppercase tracking-wider">{c('player.cueListening')}</span>
                   {taskDone ? (
                     <span className="text-[10px] font-mono text-success-green uppercase tracking-wider font-semibold">Task Completed</span>
                   ) : (
-                    <span className="text-[10px] font-mono text-warning-amber uppercase tracking-wider">Watch Full Track to Unlock</span>
+                    <span className="text-[10px] font-mono text-warning-amber uppercase tracking-wider">{c('player.watchToUnlockTrack')}</span>
                   )}
                 </div>
               </div>
@@ -989,7 +1004,7 @@ INSTRUCTIONS:
                   onClick={() => onNavigate('task3')}
                   className="mt-6 w-full py-3 rounded-full bg-primary text-on-primary text-xs tracking-wider uppercase font-semibold hover:bg-primary-container transition-all shadow-sm"
                 >
-                  Proceed to Task 3: Daily Exam →
+                  {c('player.proceedToTask3')}
                 </button>
               )}
             </div>

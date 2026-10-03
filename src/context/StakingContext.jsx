@@ -220,6 +220,12 @@ export const StakingProvider = ({ children }) => {
     return { level, day, key };
   }, [authUser?.id, authUser?.email, authUser?.level, authUser?.currentDay, authUser?.role, currentLevel, currentModuleDay, isFreeTrialMode]);
 
+  // `updateModuleDay` is re-created on every render, so putting it in the
+  // callback's dependency list would change the callback identity on every
+  // render and make the sync effect below re-fetch forever. A ref keeps the
+  // callback stable while still reaching the latest setter.
+  const updateModuleDayRef = useRef(null);
+
   // One shared refresh, driven by whatever the current sync target is. The
   // function identity changes with the target so effects depending on it
   // re-run exactly when the module or account changes.
@@ -235,6 +241,17 @@ export const StakingProvider = ({ children }) => {
       if (res?.success && res.data) {
         if (res.data.module) setWorkspaceModule(res.data.module);
         if (res.data.levelBooks) setLevelBooks(res.data.levelBooks);
+
+        // The server decides which day is actually unlocked, and now returns it.
+        // Adopting it here is what makes the rollover visible: when midnight
+        // passes the next fetch moves the learner onto the new day's material
+        // instead of replaying yesterday's. Without this the client kept asking
+        // for its own stale day and never left it.
+        const serverDay = res.data.currentDay;
+        if (typeof serverDay === 'number' && serverDay !== syncTarget.day) {
+          if (updateModuleDayRef.current) updateModuleDayRef.current(serverDay);
+        }
+
         if (res.data.progress) {
           const p = res.data.progress;
           setDailyTasks(withCompletionGrace({
@@ -389,6 +406,9 @@ export const StakingProvider = ({ children }) => {
       updateUserProfile({ currentDay: validDay });
     }
   };
+
+  // Keep the stable-callback ref pointed at the current setter.
+  updateModuleDayRef.current = updateModuleDay;
 
   // Advance to Next Module Day (Day N -> Day N+1)
   const advanceToNextDay = async () => {

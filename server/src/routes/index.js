@@ -18,6 +18,7 @@ const router = Router();
 
 // Public System Settings
 router.get('/settings/landing-video', adminController.getLandingVideoSetting);
+router.get('/settings/site-content', adminController.getSiteContent);
 
 router.use('/auth', authRoutes);
 router.use('/staking', stakingRoutes);

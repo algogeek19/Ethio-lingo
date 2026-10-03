@@ -6,6 +6,7 @@ import confetti from 'canvas-confetti';
 import { useStaking, CURRICULUM_LEVELS } from '../../context/StakingContext';
 import { useRole } from '../../context/RoleContext';
 import { api } from '../../services/api';
+import { useSiteContent } from '../../context/SiteContentContext';
 
 const DailyExamRunner = () => {
   const navigate = useNavigate();
@@ -21,6 +22,7 @@ const DailyExamRunner = () => {
     streak,
     refreshWorkspaceProgress,
   } = useStaking();
+  const { c } = useSiteContent();
 
   const currentIdxLevel = CURRICULUM_LEVELS.indexOf(currentLevel || 'Beginner I');
   const nextLevel = (currentIdxLevel !== -1 && currentIdxLevel < CURRICULUM_LEVELS.length - 1)
@@ -50,13 +52,13 @@ const DailyExamRunner = () => {
   // Fetch questions and check if daily exam was already passed in DB
   useEffect(() => {
     if (authUser?.role === 'admin') {
-      setLockError('Admin accounts do not take daily diagnostic exams or maintain escrow stakes.');
+      setLockError(c('exam.adminNotice'));
       setLoading(false);
       return;
     }
 
     if (isBalanceZero && !isFreeTrialMode) {
-      setLockError('Your daily exam is locked because your active escrow stake balance is 0 ETB. Submit a deposit to reactivate exams.');
+      setLockError(c('exam.zeroBalanceLock'));
       setLoading(false);
       return;
     }
@@ -90,7 +92,7 @@ const DailyExamRunner = () => {
           setExamQuestions(response.data);
         }
       } catch (err) {
-        setLockError(err.message || 'Daily exam is locked. Please complete your daily workspace tasks first.');
+        setLockError(err.message || c('exam.lockedNotice'));
       } finally {
         setLoading(false);
       }
@@ -151,15 +153,19 @@ const DailyExamRunner = () => {
         if (res.passed) {
           confetti({ particleCount: 140, spread: 80, origin: { y: 0.6 } });
           setExamAlreadyPassed(true);
+          // The streak was already credited server-side by the exam grading
+          // itself. Calling advanceStreak() here as well double-counted the day
+          // whenever both paths ran.
+          if (advanceStreak) advanceStreak({ silent: true });
         }
         setIsSubmitted(true);
         if (refreshWorkspaceProgress) refreshWorkspaceProgress();
       } else {
-        setSubmitError(response?.message || 'Failed to submit exam. Please try again.');
+        setSubmitError(response?.message || c('exam.submitFailed'));
       }
     } catch (err) {
       console.error('Error submitting exam:', err);
-      setSubmitError(err?.message || 'An error occurred while submitting your exam. Please try again.');
+      setSubmitError(err?.message || c('exam.submitError'));
     } finally {
       setSubmitting(false);
     }
@@ -179,11 +185,6 @@ const DailyExamRunner = () => {
     setCurrentIdx(0);
     setTimerSeconds(20 * 60);
     setScoreResult(null);
-  };
-
-  const handleProceedNextDay = () => {
-    advanceToNextDay();
-    navigate('/workspaces');
   };
 
   const formatTimer = (secs) => {
@@ -223,12 +224,12 @@ const DailyExamRunner = () => {
           </div>
           <div className="space-y-3">
             <span className="inline-block px-3 py-1 bg-warning-amber/15 text-warning-amber font-mono text-[9px] font-bold rounded-full uppercase tracking-[0.2em]">
-              {authUser?.role === 'admin' ? 'Admin Access Notice' : 'Daily Exam Locked'}
+              {authUser?.role === 'admin' ? 'Admin Access Notice' : c('exam.lockedBadge')}
             </span>
             <h2 className="font-cormorant text-3xl font-medium text-on-surface mt-2">
               {authUser?.role === 'admin'
                 ? 'Admin Account Exemption'
-                : 'Complete the Workspace Videos First'}
+                 : c('exam.lockedTitle')}
             </h2>
             <p className="text-xs font-mono text-on-surface-variant max-w-lg mx-auto leading-relaxed pt-1">
               {lockError}
@@ -241,7 +242,7 @@ const DailyExamRunner = () => {
                 onClick={() => navigate('/admin')}
                 className="px-6 py-3 bg-primary text-on-primary font-semibold rounded-full text-xs uppercase tracking-wider transition-all shadow-xs flex items-center gap-2 btn-interactive focus-ring cursor-pointer hover:bg-primary-container"
               >
-                <span>Go to Admin Dashboard</span>
+                <span>{c('exam.goToDashboard')}</span>
                 <ArrowRight size={16} />
               </button>
             ) : isBalanceZero && !isFreeTrialMode ? (
@@ -249,7 +250,7 @@ const DailyExamRunner = () => {
                 onClick={() => navigate('/wallet')}
                 className="px-6 py-3 bg-primary text-on-primary font-semibold rounded-full text-xs uppercase tracking-wider transition-all shadow-xs flex items-center gap-2 btn-interactive focus-ring cursor-pointer hover:bg-primary-container"
               >
-                <span>Top Up Escrow Stake in Vault</span>
+                <span>{c('exam.topUpVault')}</span>
                 <ArrowRight size={16} />
               </button>
             ) : (
@@ -258,14 +259,14 @@ const DailyExamRunner = () => {
                   onClick={() => navigate('/workspaces')}
                   className="px-6 py-3 bg-primary text-on-primary font-semibold rounded-full text-xs uppercase tracking-wider transition-all shadow-xs flex items-center gap-2 btn-interactive focus-ring cursor-pointer hover:bg-primary-container"
                 >
-                  <span>Open Learning Workspaces</span>
+                  <span>{c('exam.openWorkspaces')}</span>
                   <ArrowRight size={16} />
                 </button>
                 <button
                   onClick={() => navigate('/dashboard')}
                   className="px-6 py-3 bg-surface-container text-on-surface font-semibold rounded-full text-xs uppercase tracking-wider border border-hairline transition-all focus-ring cursor-pointer hover:bg-surface-container-high"
                 >
-                  Back to Dashboard
+                  {c('exam.backToDashboard')}
                 </button>
               </>
             )}
@@ -276,7 +277,7 @@ const DailyExamRunner = () => {
   }
 
   const currentQ = examQuestions[currentIdx] || {
-    question: 'Sample Question',
+    question: c('exam.sampleQuestion'),
     options: ['Option A', 'Option B', 'Option C', 'Option D'],
     answerIndex: 0,
   };
@@ -295,23 +296,23 @@ const DailyExamRunner = () => {
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2 mb-1.5">
             <span className="font-mono text-[9px] bg-tertiary-fixed-dim/30 text-tertiary px-2 py-0.5 rounded font-bold uppercase tracking-[0.2em]">
-              Escrow at Stake
+              {c('exam.headerBadge')}
             </span>
             <span className="font-mono text-[10px] text-text-muted uppercase tracking-[0.2em]">
-              · {headerQuestionCount} Questions · {passPercent}% Pass Required
+              {c('exam.headerMeta', { count: headerQuestionCount, pct: passPercent })}
             </span>
           </div>
           <h1 className="font-cormorant text-3xl text-on-surface font-medium leading-tight">
-            Daily Diagnostic Exam ({currentLevel})
+            {c('exam.headerTitle', { level: currentLevel })}
           </h1>
           <p className="font-mono text-[11px] text-on-surface-variant mt-1.5">
-            Module Day {currentModuleDay} — threshold {basePassThreshold}/20 ({passPercent}%) — drops to 10/20 (50%) after 3 attempts
+            {c('exam.headerSubtitle', { day: currentModuleDay, threshold: basePassThreshold, pct: passPercent })}
           </p>
         </div>
 
         <div className="flex items-center gap-8">
           <div className="flex flex-col items-end">
-            <span className="font-mono text-[9px] text-text-muted uppercase tracking-[0.2em]">Penalty for Failure</span>
+            <span className="font-mono text-[9px] text-text-muted uppercase tracking-[0.2em]">{c('exam.penaltyLabel')}</span>
             <span className="font-cormorant text-2xl text-tertiary font-bold tabular-nums">
               -ETB {(scoreResult?.slashedPenalty || 25).toFixed(2)}
             </span>
@@ -320,7 +321,7 @@ const DailyExamRunner = () => {
           <div className="flex flex-col items-end">
             <span className="font-mono text-[9px] text-text-muted uppercase tracking-[0.2em] flex items-center gap-1">
               <Clock size={11} className="text-warning-amber" />
-              <span>Time Remaining</span>
+              <span>{c('exam.timeRemaining')}</span>
             </span>
             <span className="font-mono text-2xl font-bold text-warning-amber tabular-nums leading-tight">
               {formatTimer(timerSeconds)}
@@ -335,11 +336,11 @@ const DailyExamRunner = () => {
           {/* Question Meta Row */}
           <div className="flex items-center justify-between pb-4 border-b border-hairline/60">
             <span className="font-mono text-[11px] text-primary font-bold tracking-widest uppercase">
-              Question {currentIdx + 1} of {examQuestions.length}
+              {c('exam.questionOf', { count: currentIdx + 1, total: examQuestions.length })}
             </span>
             <span className="font-mono text-[10px] text-text-muted">
               {currentQ.id != null && <span className="mr-3">ID: {currentQ.id}</span>}
-              Answered: <strong className="text-on-surface">{Object.keys(selectedAnswers).length}</strong> / {examQuestions.length}
+              {c('exam.answeredOf', { count: Object.keys(selectedAnswers).length, total: examQuestions.length })}
             </span>
           </div>
 
@@ -394,7 +395,7 @@ const DailyExamRunner = () => {
           {selectedAnswers[currentIdx] === undefined && (
             <div className="p-3 bg-warning-amber/10 border border-warning-amber/30 rounded-xl text-xs text-warning-amber font-mono text-center flex items-center justify-center gap-2">
               <span className="w-2 h-2 rounded-full bg-warning-amber animate-ping" />
-              <span>Please select an answer option above to proceed to the next question.</span>
+              <span>{c('exam.selectAnswerWarning')}</span>
             </div>
           )}
 
@@ -405,14 +406,14 @@ const DailyExamRunner = () => {
               disabled={currentIdx === 0}
               className="px-5 py-2.5 border border-hairline/40 rounded-full text-xs font-semibold text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface disabled:opacity-40 disabled:cursor-not-allowed focus-ring cursor-pointer transition-colors"
             >
-              &larr; Previous
+              {c('exam.previous')}
             </button>
 
             {submitError && (
               <div className="p-3 bg-destructive-red/10 border border-destructive-red/30 rounded-xl text-xs text-destructive-red font-mono flex items-center justify-between gap-3">
                 <span>⚠️ {submitError}</span>
                 <button type="button" onClick={() => setSubmitError(null)} className="text-xs underline hover:opacity-80 ml-2 shrink-0 cursor-pointer">
-                  Dismiss
+                  {c('exam.dismiss')}
                 </button>
               </div>
             )}
@@ -431,7 +432,7 @@ const DailyExamRunner = () => {
                     : 'bg-surface-card text-text-muted cursor-not-allowed opacity-60'
                 }`}
               >
-                Next Question →
+                {c('exam.next')}
               </button>
             ) : (
               <button
@@ -448,7 +449,7 @@ const DailyExamRunner = () => {
                 }`}
               >
                 {submitting && <RefreshCw size={14} className="animate-spin" />}
-                {submitting ? 'Grading Assessment...' : 'Submit & Seal Exam'}
+                {submitting ? c('exam.grading') : c('exam.submit')}
               </button>
             )}
           </div>
@@ -476,27 +477,27 @@ const DailyExamRunner = () => {
                 ? 'bg-success-green/15 text-success-green'
                 : 'bg-destructive-red/15 text-destructive-red'
             }`}>
-              {scoreResult.passed ? 'Exam Closed & Record Locked' : 'Assessment Result'}
+              {scoreResult.passed ? c('exam.passedBadge') : c('exam.failedBadge')}
             </span>
             <h2 className="font-cormorant text-3xl font-medium text-on-surface mt-2">
-              {scoreResult.passed ? 'Daily Exam Passed!' : `Exam Failed — ETB ${scoreResult.slashedPenalty || 25} Penalty Slashed`}
+              {scoreResult.passed ? c('exam.passedTitle') : c('exam.failedTitle', { amount: scoreResult.slashedPenalty || 25 })}
             </h2>
             <p className="text-sm text-on-surface-variant">
-              Score achieved: <strong className="font-mono text-lg text-on-surface tabular-nums">{scoreResult.correctCount} / {scoreResult.total}</strong> ({scoreResult.score}%)
+              {c('exam.scoreAchieved')} <strong className="font-mono text-lg text-on-surface tabular-nums">{scoreResult.correctCount} / {scoreResult.total}</strong> ({scoreResult.score}%)
             </p>
             <p className="text-xs font-mono text-on-surface-variant">
-              Passing threshold: <strong className="text-primary">{scoreResult.passThreshold} / {scoreResult.total}</strong>
+              {c('exam.thresholdLine')} <strong className="text-primary">{scoreResult.passThreshold} / {scoreResult.total}</strong>
               {scoreResult.adaptiveThresholdActive && (
-                <span className="ml-1 text-warning-amber">(adaptive bar active after 3 attempts)</span>
+                <span className="ml-1 text-warning-amber">{c('exam.adaptiveNote')}</span>
               )}
             </p>
           </div>
 
           {/* Current Streak Badge */}
           <div className="p-4 bg-surface-container-low border border-hairline/60 rounded-xl max-w-md mx-auto flex items-center justify-between gap-3 text-xs font-mono">
-            <span className="text-on-surface-variant">Current Learner Streak:</span>
+            <span className="text-on-surface-variant">{c('exam.streakLabel')}</span>
             <span className="px-3 py-1 bg-streak-orange text-white font-bold rounded-full tracking-wider whitespace-nowrap">
-              🔥 {scoreResult.newStreak ?? streak?.count ?? 0} Day Streak
+              🔥 {scoreResult.newStreak ?? streak?.count ?? 0} {c('exam.streakSuffix')}
             </span>
           </div>
 
@@ -504,21 +505,21 @@ const DailyExamRunner = () => {
             {scoreResult.passed ? (
               <div className="text-success-green">
                 {isFreeTrialMode ? (
-                  currentModuleDay >= 3 ? (
-                    <span>🎉 Congratulations! You have completed your 3-Day Free Trial! Deposit 1,000 ETB to unlock Day 1 of {authUser?.level || 'Beginner I'} on the Staked Escrow Tier.</span>
+                  currentModuleDay >= 7 ? (
+                    <span>{c('exam.passTrialComplete', { level: authUser?.level || currentLevel })}</span>
                   ) : (
-                    <span>✓ Free Trial Day {currentModuleDay} of 3 Passed! Day {currentModuleDay + 1} of 3 unlocks.</span>
+                    <span>✓ {c('exam.passTrialPartial', { day: currentModuleDay, nextDay: currentModuleDay + 1 })}</span>
                   )
                 ) : currentModuleDay === 30 ? (
-                  <span>✓ Level {currentLevel} Mastered (30/30 Days Complete)! {nextLevel ? `Advance to Day 1 of ${nextLevel} to continue your journey.` : 'All 6 curriculum levels completed!'}</span>
+                  <span>✓ {c('exam.passLevelComplete', { level: currentLevel, nextLevel: nextLevel || 'Next Level' })}</span>
                 ) : (
-                  <span>✓ Passing criteria met (&ge; {scoreResult.passThreshold || basePassThreshold}/20). Module Day {currentModuleDay} complete! Streak updated and exam is officially closed for this module. Day {currentModuleDay + 1} unlocks at midnight.</span>
+                  <span>✓ {c('exam.passSuccess', { day: currentModuleDay, nextDay: currentModuleDay + 1 })}</span>
                 )}
               </div>
             ) : (
               <div className="text-destructive-red space-y-1">
-                <p>⚠ Score below passing threshold ({scoreResult.passThreshold || basePassThreshold}/20 required).</p>
-                <p>Task 4 remains INCOMPLETE and retake is required. {!isFreeTrialMode && `ETB ${scoreResult.slashedPenalty || 25} penalty deducted from escrow stake.`}</p>
+                <p>⚠ {c('exam.failThreshold', { threshold: scoreResult.passThreshold || basePassThreshold })}</p>
+                <p>{c('exam.failIncomplete')}</p>
               </div>
             )}
           </div>
@@ -532,7 +533,7 @@ const DailyExamRunner = () => {
                     Mistakes Review
                   </span>
                   <h3 className="font-cormorant text-xl font-medium text-on-surface">
-                    Review your incorrect answers
+                    {c('exam.mistakesReview')}
                   </h3>
                 </div>
                 <span className="text-xs font-mono text-on-surface-variant">
@@ -549,17 +550,17 @@ const DailyExamRunner = () => {
                     <p className="text-sm font-medium text-on-surface">{m.question}</p>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
                       <div className="p-2.5 bg-destructive-red/10 border border-destructive-red/25 rounded-lg font-mono">
-                        <span className="font-bold text-destructive-red block text-[10px] uppercase tracking-wider mb-0.5">Your answer</span>
+                        <span className="font-bold text-destructive-red block text-[10px] uppercase tracking-wider mb-0.5">{c('exam.yourAnswerLabel')}</span>
                         <span className="text-destructive-red">{m.yourAnswer || '(Not answered)'}</span>
                       </div>
                       <div className="p-2.5 bg-success-green/10 border border-success-green/25 rounded-lg font-mono">
-                        <span className="font-bold text-success-green block text-[10px] uppercase tracking-wider mb-0.5">Correct answer</span>
+                        <span className="font-bold text-success-green block text-[10px] uppercase tracking-wider mb-0.5">{c('exam.correctAnswerLabel')}</span>
                         <span className="text-success-green">{m.correctAnswer}</span>
                       </div>
                     </div>
                     {m.explanation && (
                       <div className="pt-1">
-                        <span className="font-bold text-primary block text-[10px] uppercase tracking-wider">Explanation</span>
+                        <span className="font-bold text-primary block text-[10px] uppercase tracking-wider">{c('exam.explanationLabel')}</span>
                         <p className="text-xs text-on-surface-variant leading-relaxed mt-0.5">{m.explanation}</p>
                       </div>
                     )}
@@ -572,18 +573,18 @@ const DailyExamRunner = () => {
           <div className="flex flex-wrap justify-center gap-4 pt-4">
             {scoreResult.passed ? (
               isFreeTrialMode ? (
-                currentModuleDay >= 3 ? (
+                currentModuleDay >= 7 ? (
                   <button
                     onClick={() => navigate('/wallet')}
                     className="px-6 py-3 bg-primary text-on-primary font-bold rounded-full text-xs uppercase tracking-wider flex items-center gap-2 shadow-sm focus-ring btn-interactive cursor-pointer hover:bg-primary-container"
                   >
-                    <span>Deposit ETB 1,000 to Start Day 1 of {authUser?.level || 'Beginner I'}</span>
+                    <span>{c('exam.trialDepositButton', { level: authUser?.level || currentLevel })}</span>
                     <ArrowRight size={16} />
                   </button>
                 ) : (
                   <div className="px-5 py-3 bg-success-green/10 border border-success-green/30 text-success-green font-mono text-xs font-semibold rounded-full flex items-center gap-2 shadow-xs">
                     <Lock size={15} />
-                    <span>Free Trial Day {currentModuleDay + 1} Unlocks at Midnight</span>
+                    <span>{c('exam.unlockNextDay', { nextDay: currentModuleDay + 1 })}</span>
                   </div>
                 )
               ) : currentModuleDay === 30 ? (
@@ -594,13 +595,13 @@ const DailyExamRunner = () => {
                   }}
                   className="px-6 py-3 bg-primary text-on-primary font-bold rounded-full text-xs uppercase tracking-wider flex items-center gap-2 shadow-sm focus-ring btn-interactive cursor-pointer hover:bg-primary-container"
                 >
-                  <span>Advance to {nextLevel || 'Next Level'} (Day 1)</span>
+                  <span>{c('exam.advanceLevel', { nextLevel: nextLevel || 'Next Level' })}</span>
                   <ArrowRight size={16} />
                 </button>
               ) : (
                 <div className="px-5 py-3 bg-success-green/10 border border-success-green/30 text-success-green font-mono text-xs font-semibold rounded-full flex items-center gap-2 shadow-xs">
                   <Lock size={15} />
-                  <span>Day {currentModuleDay + 1} Unlocks at Midnight</span>
+                  <span>{c('exam.unlockNextDay', { nextDay: currentModuleDay + 1 })}</span>
                 </div>
               )
             ) : (
@@ -609,7 +610,7 @@ const DailyExamRunner = () => {
                 className="px-6 py-3 bg-destructive-red text-on-primary font-extrabold rounded-full text-xs uppercase tracking-wider hover:bg-destructive-red/80 flex items-center gap-2 shadow-sm focus-ring btn-interactive cursor-pointer"
               >
                 <RefreshCw size={16} />
-                <span>Retake Exam Required (-{scoreResult.slashedPenalty || 25} ETB Penalty)</span>
+                <span>{c('exam.retake')} (-{scoreResult.slashedPenalty || 25} ETB)</span>
               </button>
             )}
 
@@ -618,14 +619,14 @@ const DailyExamRunner = () => {
               className="px-6 py-3 bg-surface-container border border-hairline text-on-surface font-semibold rounded-full text-xs hover:bg-surface-container-high flex items-center gap-2 shadow-xs focus-ring btn-interactive cursor-pointer"
             >
               <BookOpen size={14} />
-              <span>Review Exam Results</span>
+              <span>{c('exam.reviewResults')}</span>
             </button>
 
             <button
               onClick={() => navigate('/dashboard')}
               className="px-6 py-3 bg-primary text-on-primary font-semibold rounded-full text-xs uppercase tracking-wider hover:bg-primary-container flex items-center gap-2 shadow-xs focus-ring btn-interactive cursor-pointer"
             >
-              <span>Return to Dashboard</span>
+              <span>{c('exam.returnDashboard')}</span>
               <ArrowRight size={16} />
             </button>
           </div>

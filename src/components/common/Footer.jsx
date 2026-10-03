@@ -1,10 +1,12 @@
 import React from 'react';
+import { useSiteContent } from '../../context/SiteContentContext';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import LanguageSwitcher from './LanguageSwitcher';
 
 const Footer = () => {
   const { t } = useTranslation();
+  const { c } = useSiteContent();
 
   return (
     <footer className="w-full bg-surface-container border-t border-hairline/60 py-14 mt-20 transition-colors duration-300">
@@ -27,16 +29,16 @@ const Footer = () => {
           {/* Links */}
           <div className="flex items-center gap-8 font-sans text-xs tracking-wider">
             <Link to="/wallet" className="hover:text-primary transition-colors">
-              {t('footer.terms', 'Escrow Terms')}
+              {t('footer.terms', c('nav.footerTerms'))}
             </Link>
             <Link to="/wallet" className="hover:text-primary transition-colors">
-              {t('footer.ledger', 'Audited Ledger')}
+              {t('footer.ledger', c('nav.footerLedger'))}
             </Link>
             <Link to="/feedback" className="hover:text-primary transition-colors">
-              {t('footer.inquiries', 'Institutional Inquiries')}
+              {t('footer.inquiries', c('nav.footerInquiries'))}
             </Link>
             <Link to="/profile" className="hover:text-primary transition-colors">
-              {t('footer.disputes', 'Dispute Resolution')}
+              {t('footer.disputes', c('nav.footerDisputes'))}
             </Link>
           </div>
 
@@ -45,9 +47,9 @@ const Footer = () => {
         </div>
 
         <div className="pt-6 border-t border-hairline/50 flex flex-col sm:flex-row items-center justify-between gap-3 font-mono text-[10px] text-text-muted">
-          <p>© 2026 Ethio-Lingo Platforms PLC. {t('footer.rights', 'All rights reserved.')}</p>
+          <p>© 2026 {t('footer.company', c('nav.footerCompany'))}. {t('footer.rights', c('nav.footerRights'))}</p>
           <span className="tracking-[0.2em] uppercase">
-            {t('footer.madeWith', 'Built for Ethiopian English Learners')}
+            {t('footer.madeWith', c('nav.footerMadeWith'))}
           </span>
         </div>
       </div>

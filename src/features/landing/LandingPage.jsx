@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, useInView } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
+import { useSiteContent } from '../../context/SiteContentContext';
 import {
   ShieldCheck,
   Lock,
@@ -149,6 +150,11 @@ const STATS = [
 
 const LandingPage = () => {
   const { t } = useTranslation();
+  // Layered copy: `c()` supplies the admin-editable English baseline from the Site
+  // Content CMS, and `t()` still overrides it whenever a translation exists for
+  // the active language. That keeps Amharic working while letting an admin
+  // retitle the landing page without a code deploy.
+  const { c } = useSiteContent();
   const { isAuthenticated, role } = useRole();
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
   const [videoId, setVideoId] = useState(EXPLAINER_YOUTUBE_VIDEO_ID);
@@ -209,7 +215,7 @@ const LandingPage = () => {
               className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-surface-container/70 border border-hairline/70 text-on-surface-variant font-mono text-[10px] tracking-[0.24em] uppercase mb-8"
             >
               <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-              <span>{t('hero.badge', 'Financial Accountability & Habit Contract Engine')}</span>
+              <span>{t('hero.badge', c('landing.heroBadge'))}</span>
             </motion.div>
 
             {/* Calligraphic High-Contrast Masthead */}
@@ -217,8 +223,8 @@ const LandingPage = () => {
               variants={heroItem}
               className="font-cormorant text-5xl sm:text-6xl md:text-7xl lg:text-[80px] font-normal leading-[1.05] tracking-tight text-on-surface mb-8 max-w-4xl"
             >
-              {t('hero.title', 'Master English Through ')}
-              <span className="calligraphic-italic text-primary">{t('hero.titleAccent', 'Real Financial')}</span>
+              {t('hero.title', c('landing.heroTitle'))}
+              <span className="calligraphic-italic text-primary">{t('hero.titleAccent', c('landing.heroTitleAccent'))}</span>
               {t('hero.titleCommitment', ' Commitment.')}
             </motion.h1>
 
@@ -227,7 +233,7 @@ const LandingPage = () => {
               variants={heroItem}
               className="font-sans text-base md:text-lg text-on-surface-variant max-w-2xl font-light leading-relaxed mb-10"
             >
-              {t('hero.description', 'Daily academic rigor backed by high-stakes escrow. Advance from Beginner I to Advanced II across six 30-day cohorts. Complete three compulsory tasks daily or forfeit your staked deposit to the cohort yield pool.')}
+              {t('hero.description', c('landing.heroDescription'))}
             </motion.p>
 
             {/* Distinct Buttons */}
@@ -236,7 +242,7 @@ const LandingPage = () => {
                 to={targetAuthRoute}
                 className="w-full sm:w-auto px-8 py-3.5 rounded-full bg-primary text-on-primary font-sans text-xs tracking-wider uppercase font-semibold hover:bg-primary-container shadow-sm hover:shadow-md transition-all duration-300 flex items-center justify-center gap-2.5 group focus-ring btn-interactive"
               >
-                <span>{isAuthenticated ? t('common.goToDashboard', 'Go to Dashboard') : t('hero.ctaPrimary', 'Start Placement Assessment')}</span>
+                <span>{isAuthenticated ? t('common.goToDashboard', 'Go to Dashboard') : t('hero.ctaPrimary', c('landing.heroCtaPrimary'))}</span>
                 <ArrowRight size={16} className="transition-transform duration-300 group-hover:translate-x-1" />
               </Link>
               <button
@@ -244,7 +250,7 @@ const LandingPage = () => {
                 className="w-full sm:w-auto px-7 py-3.5 rounded-full bg-surface-container-high/60 text-on-surface font-sans text-xs tracking-wider uppercase font-medium hover:bg-surface-container transition-all duration-200 flex items-center justify-center gap-2 border border-hairline/60 focus-ring cursor-pointer"
               >
                 <Play size={16} className="text-primary" />
-                <span>{t('hero.ctaSecondary', 'Protocol Explainer')}</span>
+                <span>{t('hero.ctaSecondary', c('landing.heroCtaSecondary'))}</span>
               </button>
             </motion.div>
 
@@ -285,15 +291,15 @@ const LandingPage = () => {
           <div className="text-center max-w-3xl mx-auto space-y-3">
             <motion.span variants={cardVariants} className="inline-flex items-center gap-2 px-3.5 py-1 bg-surface-container/70 border border-hairline/70 text-primary font-mono text-[10px] tracking-[0.22em] rounded-full uppercase">
               <Sparkles size={13} className="text-tertiary" />
-              <span>{t('videoShowcase.badge', 'PROTOCOL EXPLAINER')}</span>
+              <span>{t('videoShowcase.badge', c('landing.videoBadge'))}</span>
             </motion.span>
             <motion.h2 variants={cardVariants} className="font-cormorant text-3xl md:text-5xl text-on-surface font-normal tracking-tight">
-              {t('videoShowcase.title', 'See how the ')}
-              <span className="calligraphic-italic text-primary">{t('videoShowcase.titleAccent', 'Academic Escrow')}</span>
-              {t('videoShowcase.titleEnd', ' Protocol works')}
+              {t('videoShowcase.title', c('landing.videoTitle'))}
+              <span className="calligraphic-italic text-primary">{t('videoShowcase.titleAccent', c('landing.videoTitleAccent'))}</span>
+              {t('videoShowcase.titleEnd', c('landing.videoTitleEnd'))}
             </motion.h2>
             <motion.p variants={cardVariants} className="text-on-surface-variant text-sm sm:text-base leading-relaxed font-light">
-              {t('videoShowcase.description', 'Watch how our daily 3-task curriculum and financial escrow vault keep you accountable, build unbreakable habits, and help you master English.')}
+              {t('videoShowcase.description', c('landing.videoDescription'))}
             </motion.p>
           </div>
 
@@ -336,7 +342,7 @@ const LandingPage = () => {
                   className="absolute top-3 right-3 z-20 inline-flex items-center gap-1.5 rounded-full bg-black/70 px-3 py-1.5 font-mono text-[10px] uppercase tracking-wider text-stone-300 hover:text-stone-100 hover:bg-black/85 transition-colors"
                 >
                   <ExternalLink size={11} />
-                  <span>Open on YouTube</span>
+                  <span>{c('landing.videoOpenCta')}</span>
                 </a>
               </>
             ) : videoError ? (
@@ -355,7 +361,7 @@ const LandingPage = () => {
                   <AlertTriangle size={26} className="text-warning-amber" />
                   <div className="space-y-1.5">
                     <p className="font-cormorant text-xl text-stone-100">
-                      This video can&apos;t be played here
+                      {c('landing.videoFallback')}
                     </p>
                     <p className="text-xs text-stone-400 font-light max-w-sm leading-relaxed">
                       {videoError}
@@ -369,7 +375,7 @@ const LandingPage = () => {
                       className="inline-flex items-center gap-2 rounded-full bg-primary hover:bg-primary-container text-on-primary font-semibold text-xs tracking-wider uppercase px-5 py-2.5 transition-all btn-interactive focus-ring"
                     >
                       <ExternalLink size={14} />
-                      <span>Watch on YouTube</span>
+                      <span>{c('landing.videoCta')}</span>
                     </a>
                     <button
                       type="button"
@@ -407,7 +413,7 @@ const LandingPage = () => {
                   </span>
                   <span className="inline-flex items-center gap-1.5 bg-primary/85 text-on-primary px-3 py-1 rounded-full text-[11px] font-mono tracking-wide">
                     <Lock size={12} />
-                    <span>{t('videoShowcase.duration', 'PROTOCOL WALKTHROUGH')}</span>
+                    <span>{t('videoShowcase.duration', c('landing.videoDuration'))}</span>
                   </span>
                 </div>
 
@@ -420,14 +426,14 @@ const LandingPage = () => {
                     </div>
                   </div>
                   <span className="font-cormorant text-2xl md:text-3xl text-stone-100">
-                    {t('videoShowcase.caption', 'Complete Walkthrough: Staking, Daily Practice & Withdrawal')}
+                    {t('videoShowcase.caption', c('landing.videoCaption'))}
                   </span>
                 </div>
 
                 {/* Bottom mono note */}
                 <div className="relative z-10 flex items-center justify-between font-mono text-[11px] text-stone-400">
-                  <span>{t('videoShowcase.clickToWatch', 'CLICK TO WATCH')}</span>
-                  <span>YOUTUBE · 1080P · SEEKING ENABLED</span>
+                  <span>{t('videoShowcase.clickToWatch', c('landing.videoClickToWatch'))}</span>
+                  <span>{c('landing.videoMetaLine')}</span>
                 </div>
               </div>
             )}
@@ -496,8 +502,8 @@ const LandingPage = () => {
                 {t('levels.sectionBadge', 'Progression Architecture')}
               </motion.span>
               <motion.h2 variants={cardVariants} className="font-cormorant text-3xl md:text-5xl text-[#faf9f5] font-normal mt-1">
-                {t('levels.title', 'Six 30-Day ')}
-                <span className="calligraphic-italic text-primary-fixed-dim">{t('levels.titleAccent', 'Cohort Tiers')}</span>
+                {t('levels.title', c('landing.levelsTitle'))}
+                <span className="calligraphic-italic text-primary-fixed-dim">{t('levels.titleAccent', c('landing.levelsTitleAccent'))}</span>
               </motion.h2>
             </div>
             <motion.span variants={cardVariants} className="font-mono text-xs text-stone-400">
@@ -572,7 +578,7 @@ const LandingPage = () => {
               </div>
               <h3 className="font-cormorant text-2xl text-on-surface font-medium">{t('staking.depositTitle', '1,000 ETB Initial Deposit')}</h3>
               <p className="text-xs text-on-surface-variant leading-relaxed font-light">
-                {t('staking.depositDesc', 'Deposit 1,000 ETB via Telebirr or Ethiopian Bank Transfer. With a 0% platform fee, your full 1,000 ETB is locked in your escrow vault.')}
+                {t('staking.depositDesc', c('landing.stakingDepositDesc'))}
               </p>
               <span className="font-mono text-[9px] text-primary font-bold uppercase tracking-widest block pt-3 border-t border-hairline/40">
                 0% PLATFORM FEE

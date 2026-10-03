@@ -4,6 +4,7 @@ import { getUserTodayStr } from '../utils/dateHelper.js';
 import * as curriculumRepository from '../repositories/curriculumRepository.js';
 import * as progressRepository from '../repositories/progressRepository.js';
 import * as walletRepository from '../repositories/walletRepository.js';
+import { syncLearnerModuleDay } from './stakingService.js';
 
 export const getDailyWorkspaceData = async (userId, level, dayNumber) => {
   const dbUser = await safeDbQuery(
@@ -18,39 +19,29 @@ export const getDailyWorkspaceData = async (userId, level, dayNumber) => {
   const activeLevel = isAdmin
     ? (level || 'Beginner I')
     : (isFreeTrial ? 'Free Trial' : (level || dbUser?.level || 'Beginner I'));
-  const parsedDay = isFreeTrial
-    ? Math.min(7, Math.max(1, parseInt(dayNumber || 1, 10)))
-    : Math.min(30, Math.max(1, parseInt(dayNumber || 1, 10)));
+  const maxDay = isFreeTrial ? 7 : 30;
 
-  const moduleData = await curriculumRepository.findModuleByLevelAndDay(activeLevel, parsedDay);
-  let progress = await progressRepository.findDailyProgress(userId, activeLevel, parsedDay, todayStr);
-
-  // Automatic day advance on new calendar date:
-  let currentDay = dbUser?.currentDay || 1;
-  if (wallet?.lastCompletedDate && wallet.lastCompletedDate < todayStr && userId) {
-    const prevProgress = await progressRepository.findDailyProgress(userId, activeLevel, currentDay, wallet.lastCompletedDate);
-    if (prevProgress && prevProgress.examPassed) {
-      const maxDay = isFreeTrial ? 7 : 30;
-      if (currentDay < maxDay) {
-        currentDay += 1;
-        await safeDbQuery(
-          () => prisma.user.update({ where: { id: userId }, data: { currentDay } }),
-          () => {}
-        );
-      }
-    }
-  }
+  // Day progression is decided server-side before anything is read, so the
+  // module that comes back always belongs to the day the learner is actually
+  // entitled to. Doing this after the fetch handed back the previous day's
+  // videos with the next day's progress row.
+  const currentDay = isAdmin
+    ? Math.min(maxDay, Math.max(1, parseInt(dayNumber || 1, 10)))
+    : await syncLearnerModuleDay(userId, level, isFreeTrial);
 
   // Strict 1 Module per Calendar Day Lock Check:
   // If user already completed a module today (lastCompletedDate === todayStr) and is requesting next day, lock it!
-  const isLockedForToday = wallet?.lastCompletedDate === todayStr && parsedDay > currentDay;
+  const isLockedForToday = wallet?.lastCompletedDate === todayStr && currentDay < maxDay;
+
+  const moduleData = await curriculumRepository.findModuleByLevelAndDay(activeLevel, currentDay);
+  let progress = await progressRepository.findDailyProgress(userId, activeLevel, currentDay, todayStr);
 
   // If no database row exists for this user/level/day, automatically create one now!
   if (!progress) {
     progress = await progressRepository.upsertDailyProgress({
       userId,
       level: activeLevel,
-      dayNumber: parsedDay,
+      dayNumber: currentDay,
       progressDate: todayStr,
       updateData: {
         task1LessonCompleted: false,
@@ -64,6 +55,9 @@ export const getDailyWorkspaceData = async (userId, level, dayNumber) => {
 
   return {
     module: moduleData,
+    // The day the returned module/progress actually belongs to. The client
+    // adopts this so its local day can never drift from the server's.
+    currentDay,
     isLockedForToday,
     progress: progress || {
       task1LessonCompleted: false,

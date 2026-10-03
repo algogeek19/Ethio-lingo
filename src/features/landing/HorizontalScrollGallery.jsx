@@ -11,79 +11,82 @@ import {
   MessageCircle,
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useSiteContent } from "../../context/SiteContentContext";
 
 gsap.registerPlugin(ScrollTrigger);
 
-const GALLERY_CARDS = [
+const buildGalleryCards = (c) => [
   {
     step: "01",
-    title: "10-Question Placement Quiz",
-    subtitle: "ONBOARDING & LEVEL SELECTION",
+    title: c("gallery.card1Title"),
+    subtitle: c("gallery.card1Subtitle"),
     description:
-      "Answer 10 diagnostic English grammar questions during account setup to evaluate your proficiency and get enrolled directly into Beginner I (0–7 score) or Intermediate I (8–10 score).",
-    badge: "DIAGNOSTIC TEST",
+      c("gallery.card1Description"),
+    badge: c("gallery.card1Badge"),
     badgeColor: "bg-primary-coral text-white",
     icon: Award,
-    stats: "Score 0-7 → Beginner I | 8-10 → Intermediate I",
+    stats: c("gallery.card1Stats"),
   },
   {
     step: "02",
-    title: "Task 1: Daily Lesson Video",
-    subtitle: "MANDATORY WORKSPACE TASK 1",
+    title: c("gallery.card2Title"),
+    subtitle: c("gallery.card2Subtitle"),
     description:
-      "Watch your daily module educational lecture. Seeking is strictly locked; video must be watched for 100% duration to complete. Includes downloadable PDF companion guide.",
-    badge: "SEEK-LOCKED • 100% DURATION",
+      c("gallery.card2Description"),
+    badge: c("gallery.card2Badge"),
     badgeColor: "bg-surface-dark text-warning-amber border border-stone-800",
     icon: Video,
-    stats: "Auto-pauses when tab is inactive",
+    stats: c("gallery.card2Stats"),
   },
   {
     step: "03",
-    title: "Task 2: Listening Practice",
-    subtitle: "MANDATORY WORKSPACE TASK 2",
+    title: c("gallery.card3Title"),
+    subtitle: c("gallery.card3Subtitle"),
     description:
-      "Improve active listening comprehension with YouTube content based on your choice: Informative Academic English or Educational Entertainment.",
-    badge: "INFORMATIVE OR ENTERTAINMENT",
+      c("gallery.card3Description"),
+    badge: c("gallery.card3Badge"),
     badgeColor: "bg-primary-coral text-white",
     icon: Play,
-    stats: "Seeking locked • 100% watch required",
+    stats: c("gallery.card3Stats"),
   },
   {
     step: "04",
-    title: "Scholar-to-Scholar Messenger",
-    subtitle: "ONE-ON-ONE CHAT WITH LEARNERS AT YOUR LEVEL",
+    title: c("gallery.card4Title"),
+    subtitle: c("gallery.card4Subtitle"),
     description:
-      "Open the messenger and pick a scholar at your level for a direct one-on-one conversation — no chatrooms, no group feeds. Every message has a report button so issues reach the admin immediately.",
-    badge: "PEER-TO-PEER DIRECT CHAT",
+      c("gallery.card4Description"),
+    badge: c("gallery.card4Badge"),
     badgeColor: "bg-primary-coral text-white",
     icon: MessageCircle,
-    stats: "Back button returns to peer picker",
+    stats: c("gallery.card4Stats"),
   },
   {
     step: "05",
-    title: "20-Question Daily Exam",
-    subtitle: "MANDATORY DAILY EXAM",
+    title: c("gallery.card5Title"),
+    subtitle: c("gallery.card5Subtitle"),
     description:
-      "Unlocks after Task 1 and Task 2 are finished. Complete 20 multiple-choice questions. Passing score is 15/20 (75%) to advance streak and protect your money. Review every wrong answer afterwards.",
-    badge: "PASS ≥ 15/20 (75%)",
+      c("gallery.card5Description"),
+    badge: c("gallery.card5Badge"),
     badgeColor: "bg-streak-orange text-white",
     icon: BookOpen,
-    stats: "Fail: -25 ETB penalty | Miss 24h: -80 ETB",
+    stats: c("gallery.card5Stats"),
   },
   {
     step: "06",
-    title: "Escrow Vault & Level Withdrawal",
-    subtitle: "30-DAY LEVEL SETTLEMENT",
+    title: c("gallery.card6Title"),
+    subtitle: c("gallery.card6Subtitle"),
     description:
-      "Initial 1,000 ETB deposit with a 0% fee locks the full 1,000 ETB net stake. After completing all 30 days of a level, submit bank / Telebirr details to request full withdrawal.",
-    badge: "1,000 ETB DEPOSIT • 0% FEE",
+      c("gallery.card6Description"),
+    badge: c("gallery.card6Badge"),
     badgeColor: "bg-surface-dark text-success-green border border-stone-800",
     icon: ShieldCheck,
-    stats: "Manual Admin Verification & Payout",
+    stats: c("gallery.card6Stats"),
   },
 ];
 
 const HorizontalScrollGallery = () => {
+  const { c } = useSiteContent();
+  const GALLERY_CARDS = buildGalleryCards(c);
   const triggerRef = useRef(null);
   const trackRef = useRef(null);
 
@@ -135,14 +138,14 @@ const HorizontalScrollGallery = () => {
         <div>
           <div className="inline-flex items-center gap-2 font-mono text-[10px] tracking-[0.22em] text-primary-fixed-dim uppercase">
             <span className="w-1.5 h-1.5 rounded-full bg-primary-fixed-dim animate-pulse" />
-            <span>INTERACTIVE PLATFORM JOURNEY</span>
+            <span>{c("gallery.sectionEyebrow")}</span>
           </div>
           <h2 className="font-cormorant text-3xl sm:text-5xl text-white font-normal mt-2">
-            The Complete <span className="calligraphic-italic text-primary-fixed-dim">Learning & Staking</span> Flow
+            {c("gallery.sectionTitle")} <span className="calligraphic-italic text-primary-fixed-dim">{c("gallery.sectionTitleAccent")}</span> {c("gallery.sectionTail")}
           </h2>
         </div>
         <span className="font-mono text-[10px] text-stone-500 uppercase tracking-[0.2em]">
-          Scroll ↓
+          {c("gallery.scrollHint")}
         </span>
       </div>
 
@@ -218,7 +221,7 @@ const HorizontalScrollGallery = () => {
                 to="/auth"
                 className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-on-primary text-primary font-sans text-xs tracking-wider uppercase font-semibold rounded-full hover:bg-primary-fixed transition-colors shadow-md w-full focus-ring btn-interactive"
               >
-                <span>Take Placement Quiz</span>
+                <span>{c("gallery.ctaButton")}</span>
                 <ArrowRight size={16} />
               </Link>
             </div>

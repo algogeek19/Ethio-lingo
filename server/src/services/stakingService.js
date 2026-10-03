@@ -129,14 +129,92 @@ export const applyMissedDayStreakBreakPenalty = async (userId, penaltyAmount = 8
   return updated;
 };
 
+/**
+ * Advance the learner streak by exactly one day.
+ *
+ * Idempotent per calendar day, in the learner's own timezone. Passing the daily
+ * exam already records the day in `examService.submitExamAnswers`, and the
+ * client also calls this endpoint when the midnight countdown rolls over. Both
+ * paths therefore land here for the same calendar day, so incrementing blindly
+ * counted a single day twice and inflated the streak.
+ *
+ * Re-earning a day that has already been credited (a retake after a failed
+ * attempt, or a double-clicked button) must not award a second day either, so
+ * the guard is on the recorded completion date rather than on the caller.
+ */
 export const advanceUserStreak = async (userId) => {
   const wallet = await walletRepository.findWalletByUserId(userId);
   if (!wallet) return null;
 
-  const newStreak = (wallet.streakCount || 0) + 1;
-  const updated = await walletRepository.updateWallet(userId, {
-    streakCount: newStreak,
-  });
+  const dbUser = await prisma.user.findUnique({ where: { id: userId } });
+  const todayStr = getUserTodayStr(dbUser?.timezone);
 
-  return updated;
+  // Free Trial learners never accrue a streak, so there is nothing to credit.
+  if (wallet.isFreeTrial) {
+    return await walletRepository.updateWallet(userId, {
+      streakCount: 0,
+      lastAuditedDate: todayStr,
+    });
+  }
+
+  // Already credited for today — return the unchanged wallet rather than
+  // advancing a second time.
+  if (wallet.lastCompletedDate === todayStr) {
+    return wallet;
+  }
+
+  return await walletRepository.updateWallet(userId, {
+    streakCount: (wallet.streakCount || 0) + 1,
+    lastCompletedDate: todayStr,
+    lastAuditedDate: todayStr,
+  });
+};
+
+/**
+ * Move a learner onto the next calendar day's module once the day they were
+ * working on has been completed and the date has rolled over.
+ *
+ * This is the single source of truth for day progression: the midnight
+ * countdown in the client and the workspace read path both defer to it, so the
+ * day can never be advanced twice for one date, nor skipped past more than the
+ * single day that was actually earned.
+ *
+ * Returns the learner's current day after the check.
+ */
+export const syncLearnerModuleDay = async (userId, level, isFreeTrial) => {
+  const dbUser = await prisma.user.findUnique({ where: { id: userId } });
+  if (!dbUser) return 1;
+
+  const wallet = await walletRepository.findWalletByUserId(userId);
+  if (!wallet) return dbUser.currentDay || 1;
+
+  const activeLevel = isFreeTrial ? 'Free Trial' : (level || dbUser.level || 'Beginner I');
+  const maxDay = isFreeTrial ? 7 : 30;
+  const todayStr = getUserTodayStr(dbUser.timezone);
+
+  let currentDay = dbUser.currentDay || 1;
+
+  // Nothing to advance until a day has actually been completed and finished.
+  if (!wallet.lastCompletedDate || wallet.lastCompletedDate >= todayStr) {
+    return currentDay;
+  }
+
+  const completedProgress = await prisma.userDailyProgress.findFirst({
+    where: {
+      userId,
+      level: activeLevel,
+      dayNumber: currentDay,
+      progressDate: wallet.lastCompletedDate,
+      examPassed: true,
+    },
+  });
+  if (!completedProgress) return currentDay;
+
+  // At most one day per date rollover: several missed days do not fast-forward
+  // the learner past modules they never sat.
+  if (currentDay >= maxDay) return currentDay;
+
+  currentDay += 1;
+  await userRepository.updateUser(userId, { currentDay });
+  return currentDay;
 };

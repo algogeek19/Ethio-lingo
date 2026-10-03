@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Clock, CheckCircle2, AlertTriangle, Lock } from 'lucide-react';
 import { useStaking, CURRICULUM_LEVELS } from '../../context/StakingContext';
+import { useSiteContent } from '../../context/SiteContentContext';
 
 const CountdownWidget = () => {
   const { dailyTasks, currentModuleDay, currentLevel, advanceToNextDay } = useStaking();
+  const { c } = useSiteContent();
   const safeDailyTasks = dailyTasks || { lesson: false, video: false, exam: false };
   const allTasksDone =
     safeDailyTasks.lesson &&
@@ -17,6 +19,13 @@ const CountdownWidget = () => {
 
   const [timeLeft, setTimeLeft] = useState({ hours: 0, minutes: 0, seconds: 0 });
 
+  // The midnight rollover must advance the day exactly once. The advance used
+  // to run inside the 1-second tick, so every tick past midnight pushed the
+  // learner another day forward — a night tab left open skipped several modules
+  // at once. Latching on the calendar date also stops a re-render (or React
+  // StrictMode's double-invoke) from firing it twice for the same night.
+  const advancedForDateRef = useRef(null);
+
   useEffect(() => {
     const calculateTimeRemaining = () => {
       const now = new Date();
@@ -25,10 +34,6 @@ const CountdownWidget = () => {
 
       const diffMs = midnight.getTime() - now.getTime();
       if (diffMs <= 0) {
-        // Countdown reached 0 (midnight)
-        if (allTasksDone) {
-          advanceToNextDay();
-        }
         return { hours: 0, minutes: 0, seconds: 0 };
       }
 
@@ -39,13 +44,39 @@ const CountdownWidget = () => {
       return { hours, minutes, seconds };
     };
 
+    const tryAdvanceIfComplete = () => {
+      if (!allTasksDone) return;
+      const todayKey = new Date().toDateString();
+      if (advancedForDateRef.current === todayKey) return;
+      advancedForDateRef.current = todayKey;
+      advanceToNextDay();
+    };
+
     setTimeLeft(calculateTimeRemaining());
+
+    // Check the rollover straight away too: a tab opened after midnight has
+    // already gone past zero and would otherwise wait a full second, and more
+    // importantly would never catch a date change while it sits in the
+    // background (browsers throttle timers in hidden tabs).
+    tryAdvanceIfComplete();
+
+    const onVisibility = () => {
+      if (document.hidden) return;
+      setTimeLeft(calculateTimeRemaining());
+      tryAdvanceIfComplete();
+    };
 
     const interval = setInterval(() => {
       setTimeLeft(calculateTimeRemaining());
+      tryAdvanceIfComplete();
     }, 1000);
 
-    return () => clearInterval(interval);
+    document.addEventListener('visibilitychange', onVisibility);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', onVisibility);
+    };
   }, [allTasksDone, advanceToNextDay]);
 
   const formatDigit = (num) => (num < 10 ? `0${num}` : `${num}`);
@@ -55,9 +86,9 @@ const CountdownWidget = () => {
       {/* Panel Header */}
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <span className="font-mono text-[10px] tracking-widest text-primary uppercase font-semibold">
-          Commitment Window Countdown
+          {c('nav.countdownLabel')}
         </span>
-        <span className="font-mono text-[10px] text-text-muted">Africa / Addis Ababa (UTC+3)</span>
+        <span className="font-mono text-[10px] text-text-muted">{c('nav.countdownTz')}</span>
       </div>
 
       {/* Status Header */}
@@ -72,16 +103,16 @@ const CountdownWidget = () => {
           {allTasksDone ? <CheckCircle2 size={12} /> : <AlertTriangle size={12} />}
           <span>
             {allTasksDone
-              ? (currentModuleDay === 30 ? `LEVEL ${currentLevel} COMPLETED` : `DAY ${currentModuleDay} COMPLETED`)
-              : `DAY ${currentModuleDay} TASKS INCOMPLETE`}
+              ? (currentModuleDay === 30 ? c('nav.countdownLevelComplete', { level: currentLevel }) : c('nav.countdownDayComplete', { day: currentModuleDay }))
+              : c('nav.countdownIncomplete', { day: currentModuleDay })}
           </span>
         </span>
         <h3 className="font-cormorant text-lg sm:text-xl text-on-surface font-normal tracking-tight">
           {allTasksDone
             ? (currentModuleDay === 30
-                ? `Level ${currentLevel} Mastered! 30/30 Days Complete.`
-                : `Day ${currentModuleDay} Mastered! Stake Safe & Streak Secured.`)
-            : 'Streak & Escrow Expiration Countdown:'}
+                ? c('nav.countdownLevelDone', { level: currentLevel })
+                : c('nav.countdownDayDone', { day: currentModuleDay }))
+            : c('nav.countdownHeader')}
         </h3>
       </div>
 
@@ -126,8 +157,8 @@ const CountdownWidget = () => {
             <Lock size={13} />
             <span>
               {currentModuleDay === 30
-                ? (nextLevel ? `Transitioning to ${nextLevel} (Day 1) at Midnight` : 'Curriculum Fully Mastered')
-                : `Day ${currentModuleDay + 1} Unlocks at Midnight Countdown`}
+                ? c('nav.countdownTransition', { nextLevel: nextLevel || 'Next Level' })
+                : c('nav.countdownNextDay', { nextDay: currentModuleDay + 1 })}
             </span>
           </div>
         )}
@@ -137,9 +168,9 @@ const CountdownWidget = () => {
       <p className="border-t border-hairline/40 pt-3 font-sans text-xs text-on-surface-variant font-light leading-relaxed">
         {allTasksDone
           ? (currentModuleDay === 30
-              ? (nextLevel ? `Transitioning to Day 1 of ${nextLevel} when countdown reaches zero.` : 'All 6 Curriculum Levels Completed!')
-              : `All 3 daily tasks completed! Day ${currentModuleDay + 1} unlocks when the midnight countdown reaches zero.`)
-          : 'Complete all 3 daily workspace tasks before midnight to protect your stake.'}
+              ? c('nav.countdownTransitionNote', { nextLevel: nextLevel || 'Next Level' })
+              : c('nav.countdownFooterDone', { nextDay: currentModuleDay + 1 }))
+          : c('nav.countdownFooterLocked')}
       </p>
     </div>
   );

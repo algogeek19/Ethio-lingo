@@ -9,6 +9,7 @@ import {
 import { RoleProvider } from "./context/RoleContext";
 import { StakingProvider } from "./context/StakingContext";
 import { ThemeProvider } from "./context/ThemeContext";
+import { SiteContentProvider } from "./context/SiteContentContext";
 import Navbar from "./components/common/Navbar";
 import MobileNav from "./components/common/MobileNav";
 import Footer from "./components/common/Footer";
@@ -22,7 +23,7 @@ import { LearningWorkspacesPage as LearningWorkspaces } from "./features/workspa
 import { WalletPage } from "./features/wallet";
 import { ChatPage } from "./features/chat";
 import { FeedbackPage } from "./features/feedback";
-import { AdminDashboardPage as AdminDashboard, AdminLearnersPage, CurriculumManagementPage as CurriculumManagement, AdminCommunityPage, AdminFeedbackPage } from "./features/admin";
+import { AdminDashboardPage as AdminDashboard, AdminLearnersPage, CurriculumManagementPage as CurriculumManagement, AdminCommunityPage, AdminFeedbackPage, SiteContentPage } from "./features/admin";
 import { ProfilePage } from "./features/profile";
 
 import { useRole } from "./context/RoleContext";
@@ -149,6 +150,14 @@ const AppShell = () => {
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/admin/site-content"
+            element={
+              <ProtectedRoute allowedRoles={["admin"]}>
+                <SiteContentPage />
+              </ProtectedRoute>
+            }
+          />
 
           {/* Shared Authenticated Routes */}
           <Route
@@ -172,13 +181,18 @@ const AppShell = () => {
 function App() {
   return (
     <ThemeProvider>
-      <RoleProvider>
-        <StakingProvider>
-          <Router>
-            <AppShell />
-          </Router>
-        </StakingProvider>
-      </RoleProvider>
+      {/* Site content is public copy needed on every route (including the
+          pre-auth landing page), so it wraps the router rather than living
+          inside a protected shell. */}
+      <SiteContentProvider>
+        <RoleProvider>
+          <StakingProvider>
+            <Router>
+              <AppShell />
+            </Router>
+          </StakingProvider>
+        </RoleProvider>
+      </SiteContentProvider>
     </ThemeProvider>
   );
 }

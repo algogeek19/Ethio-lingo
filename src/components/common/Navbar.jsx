@@ -30,6 +30,7 @@ const initials = (name = "") =>
 
 const Navbar = () => {
   const { t, i18n } = useTranslation();
+  const { c } = useSiteContent();
   const { authUser, role, isAuthenticated, logout } = useRole();
   const { streak } = useStaking();
   const { isDark, toggleTheme } = useTheme();
@@ -41,12 +42,16 @@ const Navbar = () => {
   const langIsAm = (i18n.language || "en").startsWith("am");
   const setLang = (code) => i18n.changeLanguage(code);
 
+  // Layered: the admin-editable string from the Site Content CMS is the English
+  // baseline, and `t()` still wins when a translation exists for the active
+  // language. That keeps Amharic localisation working while letting an admin
+  // retitle the nav without a deploy.
   const learnerLinks = [
-    { path: "/dashboard", label: t("nav.dashboard", "Dashboard") },
-    { path: "/workspaces", label: t("nav.workspaces", "Workspaces") },
-    { path: "/exam", label: t("nav.dailyExam", "Daily Exam") },
-    { path: "/chat", label: t("nav.chat", "Community") },
-    { path: "/wallet", label: t("nav.wallet", "Escrow Vault") },
+    { path: "/dashboard", label: t("nav.dashboard", c("nav.navDashboard")) },
+    { path: "/workspaces", label: t("nav.workspaces", c("nav.navWorkspaces")) },
+    { path: "/exam", label: t("nav.dailyExam", c("nav.navExam")) },
+    { path: "/chat", label: t("nav.chat", c("nav.navCommunity")) },
+    { path: "/wallet", label: t("nav.wallet", c("nav.navVault")) },
   ];
 
   const adminLinks = [
@@ -54,6 +59,7 @@ const Navbar = () => {
     { path: "/admin/learners", label: "Learners" },
     { path: "/admin/community", label: "Moderation" },
     { path: "/admin/curriculum", label: "Curriculum" },
+    { path: "/admin/site-content", label: "Site Content" },
     { path: "/admin/feedback", label: "Feedback" },
   ];
 

@@ -148,6 +148,99 @@ export const updateLandingVideoSetting = async (req, res, next) => {
   }
 };
 
+/**
+ * Site Content CMS — the single store for every piece of copy a learner sees.
+ *
+ * Held as one JSON document under the `site_content` SystemSetting key rather
+ * than a column per string, so adding a new editable string is a frontend-only
+ * change (add it to the catalog) and needs no migration. Reads are public
+ * because the marketing and learning surfaces need them before sign-in; writes
+ * are admin-only via the router's requireRole('admin').
+ */
+const SITE_CONTENT_KEY = 'site_content';
+
+export const getSiteContent = async (req, res, next) => {
+  try {
+    // An empty object is a valid answer meaning "use the built-in defaults",
+    // so a missing row and a corrupted row must both degrade to {} rather than
+    // 500 — the learner pages fall back to their own defaults either way.
+    if (!prisma.systemSetting) {
+      return successResponse(res, 'Site content retrieved', { content: {} });
+    }
+    const setting = await prisma.systemSetting
+      .findUnique({ where: { key: SITE_CONTENT_KEY } })
+      .catch(() => null);
+
+    let content = {};
+    if (setting?.value) {
+      try {
+        const parsed = JSON.parse(setting.value);
+        if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+          content = parsed;
+        }
+      } catch {
+        // Unparseable payload: fall through with defaults rather than breaking
+        // every learner page.
+      }
+    }
+    return successResponse(res, 'Site content retrieved', { content });
+  } catch (err) {
+    return successResponse(res, 'Site content retrieved', { content: {} });
+  }
+};
+
+export const updateSiteContent = async (req, res, next) => {
+  try {
+    const { content } = req.body || {};
+
+    if (!content || typeof content !== 'object' || Array.isArray(content)) {
+      return res.status(400).json({
+        success: false,
+        message: 'A content object of string values is required',
+      });
+    }
+
+    // Only keep well-formed leaf values. Silently dropping anything else stops
+    // a malformed admin payload from being written wholesale and blanking the
+    // live site, since every consumer treats a missing key as "use default".
+    const cleaned = {};
+    const rejected = [];
+    for (const [group, fields] of Object.entries(content)) {
+      if (!fields || typeof fields !== 'object' || Array.isArray(fields)) {
+        rejected.push(group);
+        continue;
+      }
+      const groupOut = {};
+      for (const [key, value] of Object.entries(fields)) {
+        if (typeof value === 'string') {
+          groupOut[key] = value;
+        } else {
+          rejected.push(`${group}.${key}`);
+        }
+      }
+      cleaned[group] = groupOut;
+    }
+
+    if (!prisma.systemSetting) {
+      return res.status(500).json({ success: false, message: 'SystemSetting model not initialized' });
+    }
+
+    const serialized = JSON.stringify(cleaned);
+    await prisma.systemSetting.upsert({
+      where: { key: SITE_CONTENT_KEY },
+      update: { value: serialized },
+      create: { key: SITE_CONTENT_KEY, value: serialized },
+    });
+
+    return successResponse(res, 'Site content updated successfully', {
+      content: cleaned,
+      rejectedKeys: rejected,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
 export const getExamAnalytics = async (req, res, next) => {
   try {
     const analytics = await adminService.getExamAnalytics();

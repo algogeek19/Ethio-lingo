@@ -491,6 +491,16 @@ export const api = {
       body: JSON.stringify({ videoUrl }),
     }),
 
+  // Site Content CMS — every learner-facing string, editable from the admin
+  // portal. Public read (needed pre-auth); the write is admin-gated server-side.
+  getSiteContent: () => request('/settings/site-content'),
+
+  updateSiteContent: (content) =>
+    request('/admin/settings/site-content', {
+      method: 'PUT',
+      body: JSON.stringify({ content }),
+    }),
+
   // Placement Quiz API
   getPlacementQuestions: () => request('/auth/placement-quiz/questions'),
 

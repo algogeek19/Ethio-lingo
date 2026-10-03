@@ -22,19 +22,37 @@ export const findQuestionsByLevelAndDay = async (level, dayNumber) => {
   );
 };
 
+/**
+ * Deterministic stand-in questions for a level/day that has no bank yet.
+ *
+ * These are served to the learner *and* used to grade their submission, so the
+ * ids and answer keys must be identical on both paths — grading used to look the
+ * submitted ids up in the real bank only, found nothing, and scored every
+ * placeholder attempt 0, making an unseeded day impossible to ever pass.
+ *
+ * Derived from level + day rather than random so a retake within the same day
+ * is graded against the same key.
+ */
+export const buildPlaceholderQuestions = (level, dayNumber, count = 20) => {
+  const isTrial = level === 'Free Trial';
+  const slug = `${String(level).toLowerCase().replace(/\s+/g, '-')}-${dayNumber}`;
+
+  return Array.from({ length: count }, (_, i) => ({
+    id: `q-${slug}-${i + 1}`,
+    question: isTrial
+      ? `Free Trial Day ${dayNumber} Question ${i + 1}: Select the correct sentence structure.`
+      : `${level} Day ${dayNumber} Exam Q${i + 1}: Choose the grammatically correct option.`,
+    options: ['Option A (Correct)', 'Option B', 'Option C', 'Option D'],
+    answerIndex: 0,
+    explanation: `${level} Day ${dayNumber}: the correct choice is the first option. No question bank has been published for this module yet.`,
+  }));
+};
+
 export const getRandomExamQuestions = async (level, dayNumber, count = 20) => {
   const allQuestions = await findQuestionsByLevelAndDay(level, dayNumber);
 
   if (!allQuestions || allQuestions.length === 0) {
-    const isTrial = level === 'Free Trial';
-    return Array.from({ length: count }, (_, i) => ({
-      id: `q-${level.toLowerCase()}-${dayNumber}-${i + 1}`,
-      question: isTrial
-        ? `Free Trial Day ${dayNumber} Question ${i + 1}: Select the correct sentence structure.`
-        : `${level} Day ${dayNumber} Exam Q${i + 1}: Choose the grammatically correct option.`,
-      options: ['Option A (Correct)', 'Option B', 'Option C', 'Option D'],
-      answerIndex: 0,
-    }));
+    return buildPlaceholderQuestions(level, dayNumber, count);
   }
 
   const shuffled = [...allQuestions].sort(() => 0.5 - Math.random());

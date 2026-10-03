@@ -17,6 +17,7 @@ import {
 import { useStaking } from "../../context/StakingContext";
 import { formatETB } from "../../utils/formatters";
 import { api } from "../../services/api";
+import { useSiteContent } from "../../context/SiteContentContext";
 import CountdownWidget from "../../components/common/CountdownWidget";
 
 const containerVariants = {
@@ -53,6 +54,7 @@ const LearnerDashboard = () => {
     freeTrialDaysLeft,
     advanceToNextDay,
   } = useStaking();
+  const { c } = useSiteContent();
 
   const safeDailyTasks = dailyTasks || { lesson: false, video: false, exam: false };
   const safeWallet = wallet || { stakedAmount: 0, yieldBalance: 0, totalPenalties: 0, totalPlatformFees: 0 };
@@ -92,10 +94,10 @@ const LearnerDashboard = () => {
             </div>
             <div>
               <h3 className="font-cormorant font-medium text-lg text-warning-amber">
-                Curriculum Paused — Escrow Stake Balance (0 ETB)
+                {c('dashboard.pausedBadge')}
               </h3>
               <p className="text-xs text-on-surface-variant mt-0.5 font-light">
-                Your escrow stake balance is 0 ETB. Please submit your deposit verification to reactivate your curriculum tasks.
+                {c('dashboard.pausedBody')}
               </p>
             </div>
           </div>
@@ -105,7 +107,7 @@ const LearnerDashboard = () => {
               className="px-5 py-2.5 bg-primary hover:bg-primary-container text-on-primary text-xs font-semibold rounded-full transition-all flex items-center gap-1.5 shadow-xs focus-ring btn-interactive cursor-pointer"
             >
               <PlusCircle size={15} />
-              <span>Submit Stake Deposit</span>
+              <span>{c('dashboard.submitDeposit')}</span>
             </Link>
           </div>
         </motion.div>
@@ -122,19 +124,19 @@ const LearnerDashboard = () => {
               freeTrialDaysLeft === 0 ? 'bg-warning-amber text-black' : 'bg-primary/10 text-primary'
             }`}>
               <Sparkles size={12} />
-              <span>{freeTrialDaysLeft === 0 ? 'FREE TRIAL COMPLETE' : '3-DAY FREE TRIAL ACTIVE'}</span>
+              <span>{freeTrialDaysLeft === 0 ? c('dashboard.trialCompleteBadge') : c('dashboard.trialActiveBadge')}</span>
             </span>
             <span className="font-light">
               {freeTrialDaysLeft === 0
-                ? `You have completed your 3-day free trial! Deposit 1,000 ETB to unlock Day 1 of ${safeLevel}.`
-                : `You are exploring the dedicated 3-day free trial curriculum (${freeTrialDaysLeft} Days Left). Target Staked Track: ${safeLevel}.`}
+                ? c('dashboard.trialCompleteBody', { level: safeLevel })
+                : c('dashboard.trialActiveBody', { daysLeft: freeTrialDaysLeft, level: safeLevel })}
             </span>
           </div>
           <Link
             to="/wallet"
             className="px-4 py-2 bg-primary hover:bg-primary-container text-on-primary font-semibold font-mono text-[11px] rounded-full shadow-xs transition-all flex items-center gap-1.5 focus-ring btn-interactive cursor-pointer"
           >
-            <span>Deposit ETB 1,000 to Start Day 1 of {safeLevel}</span>
+            <span>{c('dashboard.trialDepositButton', { level: safeLevel })}</span>
             <ArrowRight size={14} />
           </Link>
         </motion.div>
@@ -148,25 +150,25 @@ const LearnerDashboard = () => {
         <div>
           <div className="inline-flex items-center gap-2 mb-2 flex-wrap">
             <span className="font-mono text-[10px] tracking-widest text-primary uppercase font-semibold">
-              Scholar Workspace
+              {c('dashboard.workspaceTitle')}
             </span>
             <span className="font-mono text-[10px] text-text-muted">· {safeLevel} Cohort</span>
           </div>
           <h1 className="font-cormorant text-4xl md:text-5xl text-on-surface font-normal tracking-tight">
-            Welcome back, {safeUser.name}
+            {c('dashboard.welcome', { name: safeUser.name })}
           </h1>
           <p className="font-sans text-sm text-on-surface-variant mt-1 font-light">
             {isFreeTrialMode ? (
               <span>
-                Free Trial Phase ({freeTrialDaysLeft || 3} Days Left):{' '}
-                <strong className="font-mono text-xs text-primary font-semibold">Trial Day {currentModuleDay} of 3</strong>
+                {c('dashboard.trialPhase', { daysLeft: freeTrialDaysLeft || 7 })}:{' '}
+                <strong className="font-mono text-xs text-primary font-semibold">
+                  Trial Day {currentModuleDay} of 7
+                </strong>
                 {' '}(Main Track: {safeLevel})
               </span>
             ) : (
               <span>
-                30-Day Curriculum Progress:{' '}
-                <strong className="font-mono text-xs text-primary font-semibold">Day {currentModuleDay} of 30</strong>
-                {' '}({safeLevel}) · Mandatory daily verification closes at 23:59 EAT.
+                {c('dashboard.progressLine', { day: currentModuleDay, level: safeLevel })}
               </span>
             )}
           </p>
@@ -175,11 +177,11 @@ const LearnerDashboard = () => {
         {/* Stat Mini-Cards */}
         <div className="flex items-center gap-4">
           <div className="bg-surface-container-lowest p-5 rounded-2xl border border-hairline/60 shadow-sm flex flex-col items-end min-w-[150px]">
-            <span className="font-mono text-[10px] text-text-muted uppercase tracking-widest">Escrow Vault Secured</span>
+            <span className="font-mono text-[10px] text-text-muted uppercase tracking-widest">{c('dashboard.vaultSecured')}</span>
             <span className="font-cormorant text-3xl text-primary font-medium mt-0.5 tabular-nums">
               {isFreeTrialMode ? 'ETB 0' : formatETB(safeWallet.stakedAmount)}
             </span>
-            <span className="font-mono text-[10px] text-text-muted">Risk: -ETB 25 / Exam</span>
+            <span className="font-mono text-[10px] text-text-muted">{c('dashboard.riskExam')}</span>
           </div>
 
           <div className="bg-surface-container-lowest p-5 rounded-2xl border border-hairline/60 shadow-sm flex flex-col items-center justify-center min-w-[120px]">
@@ -189,7 +191,7 @@ const LearnerDashboard = () => {
                 {isFreeTrialMode ? '—' : safeStreak.count}
               </span>
             </div>
-            <span className="font-mono text-[10px] text-text-muted uppercase tracking-widest mt-0.5">Days Streak</span>
+            <span className="font-mono text-[10px] text-text-muted uppercase tracking-widest mt-0.5">{c('dashboard.daysStreak')}</span>
           </div>
         </div>
       </motion.div>
@@ -224,10 +226,10 @@ const LearnerDashboard = () => {
             </div>
           </div>
           <span className="font-sans text-xs font-semibold text-on-surface mt-3">
-            {completedTasksCount === 3 ? 'All 3 Tasks Sealed ✓' : `${3 - completedTasksCount} Task(s) Remaining`}
+            {completedTasksCount === 3 ? c('dashboard.allTasksSealed') : c('dashboard.tasksRemaining', { count: 3 - completedTasksCount })}
           </span>
           <span className="font-sans text-[11px] text-text-muted font-light">
-            Sealing task 3/3 secures today's stake and streak.
+            {c('dashboard.tasksRemainingBody')}
           </span>
         </div>
 
@@ -249,20 +251,20 @@ const LearnerDashboard = () => {
             <div>
               <span className="px-2.5 py-0.5 bg-success-green/15 text-success-green border border-success-green/30 text-[10px] font-mono font-bold rounded-full uppercase tracking-wider inline-flex items-center gap-1">
                 <CheckCircle size={11} />
-                DAY {currentModuleDay} MASTERED
+                {c('dashboard.dayMastered', { day: currentModuleDay })}
               </span>
               <h3 className="font-cormorant text-xl text-stone-100 font-normal mt-1">
-                All 3 Tasks Completed! Day {currentModuleDay} Secured
+                {c('dashboard.allTasksCompleted', { day: currentModuleDay })}
               </h3>
               <p className="text-xs text-stone-400 font-mono mt-0.5">
-                Your daily stake is safe and streak is protected. Day {currentModuleDay + 1} unlocks when the midnight countdown reaches zero.
+                {c('dashboard.daySecuredBody', { day: currentModuleDay, nextDay: currentModuleDay + 1 })}
               </p>
             </div>
           </div>
 
           <div className="px-4 py-2 bg-surface-low border border-success-green/30 text-success-green font-mono text-xs font-semibold rounded-full flex items-center gap-2 shadow-xs shrink-0">
             <Lock size={14} />
-            <span>Day {currentModuleDay + 1} Unlocks at Midnight</span>
+            <span>{c('dashboard.nextDayUnlocks', { nextDay: currentModuleDay + 1 })}</span>
           </div>
         </motion.div>
       )}
@@ -273,17 +275,17 @@ const LearnerDashboard = () => {
           <div>
             <div className="inline-flex items-center gap-2 mb-1.5 flex-wrap">
               <span className="font-mono text-[10px] tracking-widest text-primary uppercase font-semibold">
-                Daily Mandate
+                {c('dashboard.dailyMandate')}
               </span>
               <span className="font-mono text-[9px] bg-surface-container px-2 py-0.5 rounded-full text-on-surface-variant uppercase tracking-wider">
-                ({completedTasksCount} / 3 Completed)
+                ({c('dashboard.tasksCompletedCount', { count: completedTasksCount })})
               </span>
             </div>
             <h2 className="font-cormorant text-2xl sm:text-3xl text-on-surface font-normal">
-              Day {currentModuleDay}: Today's 3 Mandatory Tasks
+              {c('dashboard.todaysTasks', { day: currentModuleDay })}
             </h2>
             <p className="font-sans text-xs text-on-surface-variant mt-0.5 font-light">
-              Continuous daily streak increments <strong className="font-medium text-on-surface">only when all 3 tasks are completed</strong>.
+              {c('dashboard.streakRule', {})}
             </p>
           </div>
 
@@ -303,10 +305,10 @@ const LearnerDashboard = () => {
             </div>
             <div className="space-y-1">
               <h3 className="font-cormorant text-2xl font-normal text-warning-amber">
-                Daily Learning Tasks Locked (0 ETB Stake)
+                {c('dashboard.tasksLockedTitle')}
               </h3>
               <p className="text-xs text-on-surface-variant max-w-lg mx-auto leading-relaxed font-light">
-                Your curriculum tasks are locked because your active escrow stake balance is 0 ETB. Submit a stake deposit of 1,000 ETB to reactivate daily lecture videos and exams.
+                {c('dashboard.tasksLockedBody')}
               </p>
             </div>
             <Link
@@ -314,7 +316,7 @@ const LearnerDashboard = () => {
               className="inline-flex items-center gap-2 px-6 py-2.5 bg-primary hover:bg-primary-container text-on-primary text-xs font-semibold rounded-full transition-all shadow-sm focus-ring btn-interactive mt-2 cursor-pointer"
             >
               <PlusCircle size={16} />
-              <span>Top Up 1,000 ETB Stake in Escrow Vault →</span>
+              <span>{c('dashboard.topUpButton')}</span>
             </Link>
           </div>
         ) : (
@@ -327,7 +329,7 @@ const LearnerDashboard = () => {
               <div>
                 <div className="flex items-center justify-between mb-3">
                   <span className="font-mono text-[9px] bg-surface-container px-2 py-0.5 rounded text-on-surface-variant uppercase tracking-wider">
-                    Task 1 · Lesson Video
+                    {c('dashboard.task1Label')}
                   </span>
                   {safeDailyTasks.lesson ? (
                     <span className="inline-flex items-center gap-1 font-mono text-[10px] text-primary font-bold">
@@ -342,7 +344,7 @@ const LearnerDashboard = () => {
                   )}
                 </div>
                 <h4 className="font-cormorant text-2xl text-on-surface mb-2 font-medium">
-                  Watch Lesson Video
+                  {c('dashboard.watchLessonVideo')}
                 </h4>
                 <p className="font-sans text-xs text-on-surface-variant leading-relaxed font-light">
                   Watch 100% of lecture video (seeking locked).
@@ -350,13 +352,13 @@ const LearnerDashboard = () => {
               </div>
               <div className="mt-6 pt-4 border-t border-hairline/50 flex items-center justify-between gap-2 flex-wrap">
                 <span className="font-mono text-[10px] text-text-muted">
-                  {safeDailyTasks.lesson ? 'Verified Watched' : 'Video Workspace'}
+                  {safeDailyTasks.lesson ? c('dashboard.verifiedWatched') : c('dashboard.videoWorkspace')}
                 </span>
                 <Link
                   to="/workspaces"
                   className="px-4 py-2 rounded-full bg-primary text-on-primary font-sans text-xs font-medium hover:bg-primary-container transition-all btn-interactive focus-ring cursor-pointer"
                 >
-                  {safeDailyTasks.lesson ? "Review Lesson →" : "Open Lesson →"}
+                  {safeDailyTasks.lesson ? "{c('dashboard.reviewLesson')}" : "{c('dashboard.openLesson')}"}
                 </Link>
               </div>
             </motion.div>
@@ -392,13 +394,13 @@ const LearnerDashboard = () => {
               </div>
               <div className="mt-6 pt-4 border-t border-hairline/50 flex items-center justify-between gap-2 flex-wrap">
                 <span className="font-mono text-[10px] text-text-muted">
-                  {safeDailyTasks.video ? 'Comprehension Verified' : 'Listening Lab'}
+                  {safeDailyTasks.video ? c('dashboard.comprehensionVerified') : c('dashboard.task2Title')}
                 </span>
                 <Link
                   to="/workspaces"
                   className="px-4 py-2 rounded-full bg-primary text-on-primary font-sans text-xs font-medium hover:bg-primary-container transition-all btn-interactive focus-ring cursor-pointer"
                 >
-                  {safeDailyTasks.video ? "Replay Audio →" : "Watch Video →"}
+                  {safeDailyTasks.video ? "{c('dashboard.replayAudio')}" : "{c('dashboard.watchVideo')}"}
                 </Link>
               </div>
             </motion.div>
@@ -426,20 +428,20 @@ const LearnerDashboard = () => {
                   )}
                 </div>
                 <h4 className="font-cormorant text-2xl text-on-surface mb-2 font-medium">
-                  20-Question Daily Exam
+                  {c('dashboard.task3Title')}
                 </h4>
                 <p className="font-sans text-xs text-on-surface-variant leading-relaxed font-light">
-                  Score (15/20) (75%) to pass.
+                  {c('dashboard.examScoreNote')}
                 </p>
               </div>
               <div className="mt-6 pt-4 border-t border-hairline/50 space-y-2.5">
                 <div className="flex items-center justify-between gap-2 flex-wrap">
-                  <span className="font-mono text-[10px] text-destructive-red">Risk: -ETB 25</span>
+                  <span className="font-mono text-[10px] text-destructive-red">{c('dashboard.riskLabel')}</span>
                   <Link
                     to="/exam"
                     className="px-4 py-2 rounded-full bg-primary text-on-primary font-sans text-xs font-medium hover:bg-primary-container transition-all btn-interactive focus-ring cursor-pointer"
                   >
-                    {safeDailyTasks.exam ? "Review Exam →" : "Begin Exam →"}
+                    {safeDailyTasks.exam ? "{c('dashboard.reviewExam')}" : "{c('dashboard.beginExam')}"}
                   </Link>
                 </div>
                 <Link
@@ -464,7 +466,7 @@ const LearnerDashboard = () => {
             <MessageSquare size={22} />
           </div>
           <div>
-            <h3 className="font-cormorant text-xl font-normal text-on-surface">Share Your Feedback</h3>
+            <h3 className="font-cormorant text-xl font-normal text-on-surface">{c('dashboard.feedbackTitle')}</h3>
             <p className="text-xs text-on-surface-variant mt-0.5 font-light">
               Help us improve Ethio-Lingo — tell us what you think about the lessons, videos, and exam experience.
             </p>
@@ -475,7 +477,7 @@ const LearnerDashboard = () => {
           className="px-5 py-2.5 bg-primary hover:bg-primary-container text-on-primary text-xs font-medium rounded-full transition-all flex items-center gap-2 shadow-xs focus-ring btn-interactive cursor-pointer"
         >
           <MessageSquare size={15} />
-          <span>Submit Feedback</span>
+          <span>{c('dashboard.submitFeedback')}</span>
         </Link>
       </motion.div>
 
@@ -544,7 +546,7 @@ const LearnerDashboard = () => {
           ) : (
             <div className="p-3 bg-success-green/10 border border-success-green/30 rounded-xl text-xs text-success-green flex items-center gap-2 font-mono">
               <CheckCircle size={16} className="shrink-0" />
-              <span>All 3 daily tasks complete! Streak advanced today.</span>
+              <span>{c('dashboard.streakSuccessToast')}</span>
             </div>
           )}
         </div>

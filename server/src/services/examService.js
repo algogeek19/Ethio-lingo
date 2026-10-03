@@ -138,6 +138,18 @@ export const submitExamAnswers = async (userId, level, dayNumber, answers) => {
     allQuestions = await examRepository.findQuestionsByLevelAndDay(level, parsedDay);
   }
 
+  // Still nothing stored for this level/day: the learner was served the
+  // generated stand-in set, so grade against the very same set instead of
+  // leaving the question map empty. An empty map scored every answer wrong and
+  // made an unseeded module day permanently unpassable.
+  if (!allQuestions || allQuestions.length === 0) {
+    allQuestions = examRepository.buildPlaceholderQuestions(
+      level,
+      parsedDay,
+      questionIds.length > 0 ? questionIds.length : 20
+    );
+  }
+
   const questionMap = new Map();
   (allQuestions || []).forEach((q) => {
     questionMap.set(q.id, q);
@@ -193,10 +205,11 @@ export const submitExamAnswers = async (userId, level, dayNumber, answers) => {
       } else {
         newStreak = 0;
         updateData.streakCount = 0;
-        if (parsedDay >= 3) {
+        // Free Trial is 7 days (matching the 7 Free Trial modules)
+        if (parsedDay >= 7) {
           updateData.freeTrialDaysLeft = 0;
         } else {
-          updateData.freeTrialDaysLeft = Math.max(0, 3 - parsedDay);
+          updateData.freeTrialDaysLeft = Math.max(0, 7 - parsedDay);
         }
       }
 

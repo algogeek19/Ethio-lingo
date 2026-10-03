@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, BookOpen, Layers, Wallet, ShieldCheck, User, Code, MessageCircle } from 'lucide-react';
+import { LayoutDashboard, BookOpen, Layers, Wallet, ShieldCheck, User, Code, MessageCircle, FileText } from 'lucide-react';
 import { useRole } from '../../context/RoleContext';
 
 const MobileNav = () => {
@@ -23,6 +23,7 @@ const MobileNav = () => {
     { path: '/admin/community', label: 'Moderate', icon: MessageCircle },
     { path: '/admin/feedback', label: 'Feedback', icon: BookOpen },
     { path: '/admin/curriculum', label: 'Curriculum', icon: Code },
+    { path: '/admin/site-content', label: 'Content', icon: FileText },
   ];
 
   const items = role === 'admin' ? adminItems : learnerItems;
