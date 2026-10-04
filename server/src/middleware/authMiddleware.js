@@ -4,6 +4,7 @@ import { ENV } from '../config/env.js';
 import { prisma } from '../config/database.js';
 import { errorResponse } from '../utils/apiResponse.js';
 import { auditUserStreakAndPenalties } from '../services/streakAuditService.js';
+import { FREE_TRIAL_DAYS } from '../constants/curriculum.js';
 
 let remoteJWKS = null;
 const getJWKS = () => {
@@ -96,7 +97,7 @@ export const authenticateToken = async (req, res, next) => {
                 totalPlatformFees: 0.0,
                 streakCount: 0,
                 isFreeTrial: true,
-                freeTrialDaysLeft: 3,
+                freeTrialDaysLeft: FREE_TRIAL_DAYS,
               },
             },
           },

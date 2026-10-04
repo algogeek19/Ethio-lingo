@@ -4,6 +4,7 @@ import { getUserTodayStr, calendarDaysBetween } from '../utils/dateHelper.js';
 import * as walletRepository from '../repositories/walletRepository.js';
 import * as ledgerRepository from '../repositories/ledgerRepository.js';
 import * as userRepository from '../repositories/userRepository.js';
+import { freeTrialDaysRemaining, isFreeTrialComplete } from '../constants/curriculum.js';
 
 /**
  * Production-Ready Date-Driven Catch-Up Audit Engine.
@@ -25,9 +26,9 @@ export const auditUserStreakAndPenalties = async (userId) => {
       // Track 1: Free Trial Track (0 penalties, 0 streak, 3 trial days max)
       if (wallet.isFreeTrial) {
         const currentModuleDay = dbUser.currentDay || 1;
-        const daysRemaining = Math.max(0, 3 - (currentModuleDay - 1));
+        const daysRemaining = freeTrialDaysRemaining(currentModuleDay);
 
-        if (daysRemaining <= 0 || currentModuleDay > 3) {
+        if (daysRemaining <= 0 || isFreeTrialComplete(currentModuleDay)) {
           return await walletRepository.updateWallet(userId, {
             freeTrialDaysLeft: 0,
             streakCount: 0,

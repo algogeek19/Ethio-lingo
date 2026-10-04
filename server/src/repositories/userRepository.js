@@ -1,5 +1,6 @@
 import { prisma } from '../config/database.js';
 import { safeDbQuery } from '../utils/dbHelper.js';
+import { FREE_TRIAL_DAYS } from '../constants/curriculum.js';
 
 const MOCK_USERS_DB = {};
 
@@ -23,7 +24,7 @@ export const findUserByEmail = async (email) => {
             totalPlatformFees: 0.0,
             isFreeTrial: isTrial,
             freeTrialStartDate: new Date(),
-            freeTrialDaysLeft: 3,
+            freeTrialDaysLeft: FREE_TRIAL_DAYS,
           },
         }),
       () => null
@@ -53,7 +54,7 @@ export const findUserById = async (id) => {
             totalPlatformFees: 0.0,
             isFreeTrial: isTrial,
             freeTrialStartDate: new Date(),
-            freeTrialDaysLeft: 3,
+            freeTrialDaysLeft: FREE_TRIAL_DAYS,
           },
         }),
       () => null
@@ -79,7 +80,7 @@ export const createUser = async (userData) => {
     streakCount: 0,
     isFreeTrial: isTrial,
     freeTrialStartDate: new Date(),
-    freeTrialDaysLeft: 3,
+    freeTrialDaysLeft: FREE_TRIAL_DAYS,
   };
 
   const newUser = {
@@ -109,7 +110,7 @@ export const createUser = async (userData) => {
         totalPlatformFees: 0.0,
         isFreeTrial: isTrial,
         freeTrialStartDate: new Date(),
-        freeTrialDaysLeft: 3,
+        freeTrialDaysLeft: FREE_TRIAL_DAYS,
       },
     };
   }

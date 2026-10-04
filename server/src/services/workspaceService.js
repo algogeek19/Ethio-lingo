@@ -5,6 +5,7 @@ import * as curriculumRepository from '../repositories/curriculumRepository.js';
 import * as progressRepository from '../repositories/progressRepository.js';
 import * as walletRepository from '../repositories/walletRepository.js';
 import { syncLearnerModuleDay } from './stakingService.js';
+import { FREE_TRIAL_LEVEL, maxDayForTrack } from '../constants/curriculum.js';
 
 /**
  * Resolve the single canonical (level, day, date) triple that identifies a
@@ -33,12 +34,18 @@ export const resolveDailyTarget = async (userId, requestedLevel, requestedDay) =
   const todayStr = getUserTodayStr(dbUser?.timezone);
   const wallet = await walletRepository.findWalletByUserId(userId);
   const isAdmin = dbUser?.role === 'admin';
-  const isFreeTrial = !isAdmin && wallet ? !!wallet.isFreeTrial : requestedLevel === 'Free Trial';
+  const isFreeTrial = !isAdmin && wallet ? !!wallet.isFreeTrial : requestedLevel === FREE_TRIAL_LEVEL;
 
+  // For learners the SAVED level wins over anything in the request. Preferring
+  // the requested level let a client pick its own track, which mattered most for
+  // grading: getExamPassThreshold gives a higher level a LOWER bar (15/20
+  // Beginner vs 13/20 Intermediate), so naming a different level in the exam
+  // submit body could change the pass mark. Admins are exempt because they
+  // legitimately browse arbitrary modules.
   const activeLevel = isAdmin
     ? (requestedLevel || 'Beginner I')
-    : (isFreeTrial ? 'Free Trial' : (requestedLevel || dbUser?.level || 'Beginner I'));
-  const maxDay = isFreeTrial ? 7 : 30;
+    : (isFreeTrial ? FREE_TRIAL_LEVEL : (dbUser?.level || requestedLevel || 'Beginner I'));
+  const maxDay = maxDayForTrack(isFreeTrial);
 
   // Day progression is decided server-side before anything is read or written,
   // so both paths agree on which day is current.

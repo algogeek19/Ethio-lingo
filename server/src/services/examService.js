@@ -6,6 +6,8 @@ import * as stakingService from './stakingService.js';
 import { AppError } from '../utils/AppError.js';
 import { prisma } from '../config/database.js';
 import { getUserTodayStr } from '../utils/dateHelper.js';
+import { resolveDailyTarget } from './workspaceService.js';
+import { isFreeTrialComplete, freeTrialDaysRemaining } from '../constants/curriculum.js';
 
 const LEVEL_TRACKS = [
   'Beginner I',
@@ -28,15 +30,15 @@ export const getExamPassThreshold = (level, priorAttempts = 0) => {
 };
 
 export const getDailyExamQuestions = async (userId, level, dayNumber) => {
-  const dbUser = userId ? await prisma.user.findUnique({ where: { id: userId } }) : null;
-  const todayStr = getUserTodayStr(dbUser?.timezone);
-  const wallet = userId ? await walletRepository.findWalletByUserId(userId) : null;
-  const isFreeTrial = wallet ? !!wallet.isFreeTrial : false;
-  const activeLevel = isFreeTrial ? 'Free Trial' : (level || 'Beginner I');
+  // Resolve the level/day server-side, exactly as the workspace read and write
+  // paths do. Trusting the client's level/day here meant the task1/task2 gate
+  // below was checked against a day the learner was not actually on, so exam
+  // questions could be pulled for an arbitrary module.
+  const { todayStr, activeLevel, currentDay } = await resolveDailyTarget(userId, level, dayNumber);
 
   // 1. Strict Exam Lock Guard: Verify both video tasks are complete for today
   if (userId) {
-    const progress = await progressRepository.findDailyProgress(userId, activeLevel, parseInt(dayNumber, 10), todayStr);
+    const progress = await progressRepository.findDailyProgress(userId, activeLevel, currentDay, todayStr);
     const isTask1Done = progress && progress.task1LessonCompleted;
     const isTask2Done = progress && progress.task2ListeningCompleted;
 
@@ -49,7 +51,7 @@ export const getDailyExamQuestions = async (userId, level, dayNumber) => {
   }
 
   // 2. Randomly select 20 questions from the question bank for this level & module
-  const questions = await examRepository.getRandomExamQuestions(activeLevel, parseInt(dayNumber, 10), 20);
+  const questions = await examRepository.getRandomExamQuestions(activeLevel, currentDay, 20);
 
   // Answer keys are NEVER sent to the client. Grading + mistake review happen server-side.
   return (questions || []).map((q) => ({
@@ -122,9 +124,19 @@ const buildFullAttemptRecord = (questions, answers, questionMap) => {
 };
 
 export const submitExamAnswers = async (userId, level, dayNumber, answers) => {
-  const dbUser = await prisma.user.findUnique({ where: { id: userId } });
-  const todayStr = getUserTodayStr(dbUser?.timezone);
-  const parsedDay = parseInt(dayNumber, 10);
+  // Server-authoritative level/day, shared with the workspace read/write paths.
+  //
+  // This previously used the raw client-supplied `level` and `day` throughout,
+  // which was wrong in three separate ways:
+  //   - the completion was written to a progress row keyed on the client's level,
+  //     while the workspace read resolved the level server-side, so a passing
+  //     exam could be orphaned and read back as "exam not complete";
+  //   - getExamPassThreshold(level) chose the pass mark from the client, and a
+  //     higher level has a LOWER bar (15/20 Beginner vs 13/20 Intermediate), so a
+  //     request naming a different level could change the grade;
+  //   - day 30 level progression keyed off the client's level too.
+  const { todayStr, activeLevel, currentDay } = await resolveDailyTarget(userId, level, dayNumber);
+  const parsedDay = currentDay;
 
   // Extract question IDs for direct DB query
   const questionIds = Array.isArray(answers) ? answers.map((a) => a.questionId).filter(Boolean) : [];
@@ -135,7 +147,7 @@ export const submitExamAnswers = async (userId, level, dayNumber, answers) => {
     });
   }
   if (!allQuestions || allQuestions.length === 0) {
-    allQuestions = await examRepository.findQuestionsByLevelAndDay(level, parsedDay);
+    allQuestions = await examRepository.findQuestionsByLevelAndDay(activeLevel, parsedDay);
   }
 
   // Still nothing stored for this level/day: the learner was served the
@@ -144,7 +156,7 @@ export const submitExamAnswers = async (userId, level, dayNumber, answers) => {
   // made an unseeded module day permanently unpassable.
   if (!allQuestions || allQuestions.length === 0) {
     allQuestions = examRepository.buildPlaceholderQuestions(
-      level,
+      activeLevel,
       parsedDay,
       questionIds.length > 0 ? questionIds.length : 20
     );
@@ -180,9 +192,12 @@ export const submitExamAnswers = async (userId, level, dayNumber, answers) => {
   const totalQuestions = Array.isArray(answers) && answers.length > 0 ? answers.length : 20;
 
   // Locate prior attempts for today to drive the adaptive threshold
-  const priorProgress = await progressRepository.findDailyProgress(userId, level, parsedDay, todayStr);
+  const priorProgress = await progressRepository.findDailyProgress(userId, activeLevel, parsedDay, todayStr);
   const priorAttempts = (priorProgress && priorProgress.examAttempts) || 0;
-  const passThreshold = getExamPassThreshold(level, priorAttempts);
+  // Threshold from the server-resolved level. It used to come from the request
+  // body, and a higher level has a LOWER bar, so naming a different level in the
+  // request could change the grade.
+  const passThreshold = getExamPassThreshold(activeLevel, priorAttempts);
   const passed = score >= passThreshold;
 
   const wallet = await walletRepository.findWalletByUserId(userId);
@@ -205,11 +220,10 @@ export const submitExamAnswers = async (userId, level, dayNumber, answers) => {
       } else {
         newStreak = 0;
         updateData.streakCount = 0;
-        // Free Trial is 7 days (matching the 7 Free Trial modules)
-        if (parsedDay >= 7) {
+        if (isFreeTrialComplete(parsedDay)) {
           updateData.freeTrialDaysLeft = 0;
         } else {
-          updateData.freeTrialDaysLeft = Math.max(0, 7 - parsedDay);
+          updateData.freeTrialDaysLeft = freeTrialDaysRemaining(parsedDay);
         }
       }
 
@@ -218,7 +232,7 @@ export const submitExamAnswers = async (userId, level, dayNumber, answers) => {
 
     // Level progression check if on final module day 30
     if (!isFreeTrial && parsedDay === 30) {
-      const currentIdx = LEVEL_TRACKS.indexOf(level);
+      const currentIdx = LEVEL_TRACKS.indexOf(activeLevel);
       if (currentIdx !== -1 && currentIdx < LEVEL_TRACKS.length - 1) {
         const nextLevel = LEVEL_TRACKS[currentIdx + 1];
         if (wallet && wallet.stakedAmount >= 100.0) {
@@ -244,7 +258,9 @@ export const submitExamAnswers = async (userId, level, dayNumber, answers) => {
   const newAttempts = priorAttempts + 1;
   await progressRepository.upsertDailyProgress({
     userId,
-    level,
+    // activeLevel, not the request's level — this is the row the workspace read
+    // path looks at when deciding whether the exam badge is complete.
+    level: activeLevel,
     dayNumber: parsedDay,
     progressDate: todayStr,
     updateData: {

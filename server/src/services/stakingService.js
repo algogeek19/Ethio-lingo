@@ -4,6 +4,7 @@ import * as walletRepository from '../repositories/walletRepository.js';
 import * as ledgerRepository from '../repositories/ledgerRepository.js';
 import * as userRepository from '../repositories/userRepository.js';
 import { AppError } from '../utils/AppError.js';
+import { FREE_TRIAL_LEVEL, maxDayForTrack } from '../constants/curriculum.js';
 
 export const getWalletOverview = async (userId) => {
   const wallet = await walletRepository.findWalletByUserId(userId);
@@ -209,8 +210,8 @@ export const syncLearnerModuleDay = async (userId, level, isFreeTrial) => {
   const wallet = await walletRepository.findWalletByUserId(userId);
   if (!wallet) return dbUser.currentDay || 1;
 
-  const activeLevel = isFreeTrial ? 'Free Trial' : (level || dbUser.level || 'Beginner I');
-  const maxDay = isFreeTrial ? 7 : 30;
+  const activeLevel = isFreeTrial ? FREE_TRIAL_LEVEL : (level || dbUser.level || 'Beginner I');
+  const maxDay = maxDayForTrack(isFreeTrial);
   const todayStr = getUserTodayStr(dbUser.timezone);
 
   let currentDay = dbUser.currentDay || 1;

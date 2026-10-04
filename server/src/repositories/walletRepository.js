@@ -1,5 +1,6 @@
 import { prisma } from '../config/database.js';
 import { safeDbQuery } from '../utils/dbHelper.js';
+import { FREE_TRIAL_DAYS } from '../constants/curriculum.js';
 
 /**
  * In-memory wallets, used ONLY when there is no database at all (local dev
@@ -31,7 +32,7 @@ export const createWalletForUser = async (userId, initialDeposit = 0.0, isFreeTr
     streakCount: 0,
     isFreeTrial,
     freeTrialStartDate: new Date(),
-    freeTrialDaysLeft: 3,
+    freeTrialDaysLeft: FREE_TRIAL_DAYS,
   };
 
   MOCK_WALLETS[userId] = newWallet;
@@ -45,7 +46,7 @@ export const createWalletForUser = async (userId, initialDeposit = 0.0, isFreeTr
           totalPlatformFees: platformFee,
           isFreeTrial,
           freeTrialStartDate: new Date(),
-          freeTrialDaysLeft: 3,
+          freeTrialDaysLeft: FREE_TRIAL_DAYS,
         },
       }),
     () => newWallet
@@ -79,7 +80,7 @@ export const findWalletByUserId = async (userId) => {
     streakCount: 0,
     isFreeTrial: isTrial,
     freeTrialStartDate: new Date(),
-    freeTrialDaysLeft: 3,
+    freeTrialDaysLeft: FREE_TRIAL_DAYS,
   };
   MOCK_WALLETS[userId] = autoWallet;
   return autoWallet;
