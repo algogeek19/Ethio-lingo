@@ -12,7 +12,8 @@
     "build": "vite build",
     "lint": "oxlint",
     "lint:content": "node scripts/check-quoted-expressions.mjs src server/src",
-    "check": "npm run lint && npm run lint:content",
+    "test": "node --test server/tests/*.test.js",
+    "check": "npm run lint && npm run lint:content && npm run test",
     "prepare": "git config core.hooksPath .githooks",
     "preview": "vite preview"
   },

@@ -6,28 +6,64 @@ import * as progressRepository from '../repositories/progressRepository.js';
 import * as walletRepository from '../repositories/walletRepository.js';
 import { syncLearnerModuleDay } from './stakingService.js';
 
-export const getDailyWorkspaceData = async (userId, level, dayNumber) => {
+/**
+ * Resolve the single canonical (level, day, date) triple that identifies a
+ * learner's daily progress row.
+ *
+ * Both the read path (getDailyWorkspaceData) and the write path
+ * (updateTaskCompletion) MUST go through here. They used to resolve the day
+ * differently — the read followed the server's own currentDay while the write
+ * trusted whatever day the client sent — so a completion could be written to a
+ * row that nothing ever read back. That is exactly the reported symptom: finish
+ * a task, leave, come back, and it reads as incomplete, with the completion
+ * orphaned in a row for the wrong day.
+ *
+ * Centralising the resolution makes that class of bug structurally impossible
+ * rather than something to remember in two places.
+ *
+ * `dayNumber` is only honoured for admins, who browse arbitrary modules and are
+ * exempt from the day lock. For learners the server's currentDay always wins.
+ */
+export const resolveDailyTarget = async (userId, requestedLevel, requestedDay) => {
   const dbUser = await safeDbQuery(
     () => prisma.user.findUnique({ where: { id: userId } }),
-    () => ({ id: userId, timezone: 'Africa/Addis_Ababa', currentDay: parseInt(dayNumber || 1, 10), level: level || 'Beginner I' })
+    () => ({ id: userId, timezone: 'Africa/Addis_Ababa', currentDay: parseInt(requestedDay || 1, 10), level: requestedLevel || 'Beginner I' })
   );
-  const todayStr = getUserTodayStr(dbUser?.timezone);
 
+  const todayStr = getUserTodayStr(dbUser?.timezone);
   const wallet = await walletRepository.findWalletByUserId(userId);
   const isAdmin = dbUser?.role === 'admin';
-  const isFreeTrial = !isAdmin && wallet ? !!wallet.isFreeTrial : (level === 'Free Trial');
+  const isFreeTrial = !isAdmin && wallet ? !!wallet.isFreeTrial : requestedLevel === 'Free Trial';
+
   const activeLevel = isAdmin
-    ? (level || 'Beginner I')
-    : (isFreeTrial ? 'Free Trial' : (level || dbUser?.level || 'Beginner I'));
+    ? (requestedLevel || 'Beginner I')
+    : (isFreeTrial ? 'Free Trial' : (requestedLevel || dbUser?.level || 'Beginner I'));
   const maxDay = isFreeTrial ? 7 : 30;
 
-  // Day progression is decided server-side before anything is read, so the
-  // module that comes back always belongs to the day the learner is actually
-  // entitled to. Doing this after the fetch handed back the previous day's
-  // videos with the next day's progress row.
+  // Day progression is decided server-side before anything is read or written,
+  // so both paths agree on which day is current.
   const currentDay = isAdmin
-    ? Math.min(maxDay, Math.max(1, parseInt(dayNumber || 1, 10)))
-    : await syncLearnerModuleDay(userId, level, isFreeTrial);
+    ? Math.min(maxDay, Math.max(1, parseInt(requestedDay || 1, 10)))
+    : await syncLearnerModuleDay(userId, requestedLevel, isFreeTrial);
+
+  return {
+    dbUser,
+    wallet,
+    todayStr,
+    isAdmin,
+    isFreeTrial,
+    activeLevel,
+    maxDay,
+    currentDay,
+  };
+};
+
+export const getDailyWorkspaceData = async (userId, level, dayNumber) => {
+  const { wallet, todayStr, isFreeTrial, activeLevel, maxDay, currentDay } = await resolveDailyTarget(
+    userId,
+    level,
+    dayNumber
+  );
 
   // Strict 1 Module per Calendar Day Lock Check:
   // If user already completed a module today (lastCompletedDate === todayStr) and is requesting next day, lock it!
@@ -70,19 +106,12 @@ export const getDailyWorkspaceData = async (userId, level, dayNumber) => {
 };
 
 export const updateTaskCompletion = async (userId, level, dayNumber, taskType, extraData = {}) => {
-  const wallet = await walletRepository.findWalletByUserId(userId);
-  // Must match the date used when *reading* progress in
-  // getDailyWorkspaceData, or a task completed late in the evening is written
-  // under one date and read back under another, so it silently reverts to
-  // "not done" on the next fetch. That read path uses the user's timezone.
-  const dbUser = await safeDbQuery(
-    () => prisma.user.findUnique({ where: { id: userId } }),
-    () => null
-  );
-  const todayStr = getUserTodayStr(dbUser?.timezone);
-  const isFreeTrial = wallet ? !!wallet.isFreeTrial : false;
-  const activeLevel = isFreeTrial ? 'Free Trial' : (level || 'Beginner I');
-  const parsedDay = parseInt(dayNumber, 10);
+  // Same resolver as the read path, so a completion is always written to the
+  // exact row getDailyWorkspaceData will later read. Previously this trusted
+  // the client-supplied day while the read followed the server's currentDay,
+  // which orphaned completions on a day nobody read — the task then looked
+  // incomplete again on the next visit, with no way to recover it.
+  const { todayStr, isFreeTrial, activeLevel, currentDay } = await resolveDailyTarget(userId, level, dayNumber);
 
   const updateFields = {};
   if (taskType === 'task1' || taskType === 'lesson') {
@@ -97,8 +126,8 @@ export const updateTaskCompletion = async (userId, level, dayNumber, taskType, e
     if (extraData.score !== undefined) updateFields.examScore = extraData.score;
     if (extraData.passed !== undefined) updateFields.examPassed = extraData.passed;
 
-    // Immediately set freeTrialDaysLeft to 0 when Day 3 exam of Free Trial is completed!
-    if (isFreeTrial && parsedDay >= 3 && isExamPassed) {
+    // Free Trial is a 7-day track (matching the 7 seeded modules).
+    if (isFreeTrial && currentDay >= 7 && isExamPassed) {
       await walletRepository.updateWallet(userId, {
         freeTrialDaysLeft: 0,
       });
@@ -108,7 +137,7 @@ export const updateTaskCompletion = async (userId, level, dayNumber, taskType, e
   return await progressRepository.upsertDailyProgress({
     userId,
     level: activeLevel,
-    dayNumber: parsedDay,
+    dayNumber: currentDay,
     progressDate: todayStr,
     updateData: updateFields,
   });

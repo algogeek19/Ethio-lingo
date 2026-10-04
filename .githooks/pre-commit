@@ -11,6 +11,10 @@
 #   - An undefined identifier is a runtime ReferenceError, not a build failure.
 #     Caught by no-undef.
 #
+# The server tests cover daily-progress persistence and module-day rollover.
+# Those decide escrow penalties and streaks, and both bugs that reached main
+# were invisible to lint and to the build.
+#
 # Installed via `core.hooksPath` (see the `prepare` script in package.json), so
 # it activates on `npm install` for every clone rather than living in
 # .git/hooks where it would only exist on whoever's machine wrote it.
@@ -37,6 +41,13 @@ npm run --silent lint:content || {
   echo "" >&2
   echo "pre-commit: BLOCKED — a JSX expression was wrapped in quotes and would" >&2
   echo "            render as literal text. See scripts/check-quoted-expressions.mjs." >&2
+  exit 1
+}
+
+npm run --silent test || {
+  echo "" >&2
+  echo "pre-commit: BLOCKED — server tests failed. Daily-progress persistence and" >&2
+  echo "            day rollover are money-affecting; do not commit past a failure." >&2
   exit 1
 }
 
