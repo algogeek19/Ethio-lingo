@@ -13,6 +13,7 @@
     "lint": "oxlint",
     "lint:content": "node scripts/check-quoted-expressions.mjs src server/src",
     "check": "npm run lint && npm run lint:content",
+    "prepare": "git config core.hooksPath .githooks",
     "preview": "vite preview"
   },
   "dependencies": {
