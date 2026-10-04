@@ -358,7 +358,7 @@ const LearnerDashboard = () => {
                   to="/workspaces"
                   className="px-4 py-2 rounded-full bg-primary text-on-primary font-sans text-xs font-medium hover:bg-primary-container transition-all btn-interactive focus-ring cursor-pointer"
                 >
-                  {safeDailyTasks.lesson ? "{c('dashboard.reviewLesson')}" : "{c('dashboard.openLesson')}"}
+                  {safeDailyTasks.lesson ? c('dashboard.reviewLesson') : c('dashboard.openLesson')}
                 </Link>
               </div>
             </motion.div>
@@ -400,7 +400,7 @@ const LearnerDashboard = () => {
                   to="/workspaces"
                   className="px-4 py-2 rounded-full bg-primary text-on-primary font-sans text-xs font-medium hover:bg-primary-container transition-all btn-interactive focus-ring cursor-pointer"
                 >
-                  {safeDailyTasks.video ? "{c('dashboard.replayAudio')}" : "{c('dashboard.watchVideo')}"}
+                  {safeDailyTasks.video ? c('dashboard.replayAudio') : c('dashboard.watchVideo')}
                 </Link>
               </div>
             </motion.div>
@@ -441,7 +441,7 @@ const LearnerDashboard = () => {
                     to="/exam"
                     className="px-4 py-2 rounded-full bg-primary text-on-primary font-sans text-xs font-medium hover:bg-primary-container transition-all btn-interactive focus-ring cursor-pointer"
                   >
-                    {safeDailyTasks.exam ? "{c('dashboard.reviewExam')}" : "{c('dashboard.beginExam')}"}
+                    {safeDailyTasks.exam ? c('dashboard.reviewExam') : c('dashboard.beginExam')}
                   </Link>
                 </div>
                 <Link

@@ -1,5 +1,6 @@
 import * as authService from '../services/authService.js';
 import * as userRepository from '../repositories/userRepository.js';
+import * as walletRepository from '../repositories/walletRepository.js';
 import { successResponse } from '../utils/apiResponse.js';
 
 export const login = async (req, res, next) => {
@@ -179,7 +180,9 @@ export const updateProfile = async (req, res, next) => {
     if (isFreeTrial !== undefined && userId) {
       await walletRepository.updateWallet(userId, {
         isFreeTrial: !!isFreeTrial,
-        freeTrialDaysLeft: isFreeTrial ? 3 : 0,
+        // The Free Trial track is 7 days (matching the 7 seeded modules).
+        // This said 3, which re-armed a stale trial length on every toggle.
+        freeTrialDaysLeft: isFreeTrial ? 7 : 0,
       });
     }
 
