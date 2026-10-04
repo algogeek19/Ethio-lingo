@@ -147,8 +147,12 @@ export const updateUser = async (id, updateData) => {
 };
 
 export const findAllUsers = async () => {
-  return await safeDbQuery(
-    () => prisma.user.findMany({ include: { wallet: true }, orderBy: { createdAt: 'desc' } }),
-    () => Object.values(MOCK_USERS_DB)
-  );
+  // No fallback. This previously degraded to an empty list on a database
+  // error, which on an escrow/finance panel renders as "you have no learners" —
+  // a statement an admin could reasonably act on while the database is down.
+  // Surfacing the error is the safe failure.
+  return await prisma.user.findMany({
+    include: { wallet: true },
+    orderBy: { createdAt: 'desc' },
+  });
 };

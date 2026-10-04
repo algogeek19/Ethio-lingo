@@ -16,6 +16,14 @@ export const ENV = {
   GEEZSMS_BASE_URL: process.env.GEEZSMS_BASE_URL || 'https://api.geezsms.com/api/v1',
   GEEZSMS_TOKEN: process.env.GEEZSMS_TOKEN || '',
   GEEZSMS_SENDER_ID: process.env.GEEZSMS_SENDER_ID || '',
+  // Mailtrap (transactional email — verification codes). Intentionally empty:
+  // the token is supplied at deploy time, never committed. While it is unset,
+  // email verification codes cannot be delivered, so a password signup cannot
+  // be verified. See server/src/services/emailService.js.
+  MAILTRAP_TOKEN: process.env.MAILTRAP_TOKEN || '',
+  MAILTRAP_FROM_EMAIL: process.env.MAILTRAP_FROM_EMAIL || '',
+  MAILTRAP_FROM_NAME: process.env.MAILTRAP_FROM_NAME || 'Ethio-Lingo',
+  MAILTRAP_HOST: process.env.MAILTRAP_HOST || 'https://send.api.mailtrap.io',
   // Allowed browser origins for the credentialed API.
   //
   // This list is ADDITIVE, not a replacement: the project's own frontends and

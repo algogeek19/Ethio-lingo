@@ -96,7 +96,15 @@ export const getLearnerDirectory = async () => {
     .map((u) => ({
       id: u.id,
       name: u.name,
-      email: u.email,
+      // Contact details are captured at signup but phone was never returned
+      // here, so the admin table could show email while the channel SMS
+      // announcements actually target was invisible and unusable from the
+      // portal. Both verified flags come along because an unverified contact
+      // must not be treated as a deliverable one.
+      email: u.email || null,
+      phone: u.phone || null,
+      emailVerified: !!u.emailVerified,
+      phoneVerified: !!u.phoneVerified,
       role: u.role,
       level: u.level,
       currentDay: u.currentDay || 1,

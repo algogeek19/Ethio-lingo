@@ -63,10 +63,13 @@ const AdminLearnersPage = () => {
   };
 
   const filteredLearners = learnersList.filter((l) => {
-    const matchesSearch =
-      l.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      l.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      l.id.toLowerCase().includes(searchTerm.toLowerCase());
+    // Contact fields are nullable: a phone-only or email-only account has one of
+    // them absent, so these must be coerced before .toLowerCase().
+    const haystack = [l.name, l.email, l.phone, l.id]
+      .filter(Boolean)
+      .map((v) => String(v).toLowerCase());
+    const needle = searchTerm.toLowerCase();
+    const matchesSearch = haystack.some((v) => v.includes(needle));
     const matchesLevel = selectedLevelFilter === 'ALL' || l.level === selectedLevelFilter;
     return matchesSearch && matchesLevel;
   });
@@ -133,10 +136,10 @@ const AdminLearnersPage = () => {
               <Search size={16} className="text-on-surface-variant" />
               <input
                 type="text"
-                placeholder="Search by name, email, or student ID..."
+                placeholder="Search by name, email, phone, or student ID..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                aria-label="Search learners by name or email address"
+                aria-label="Search learners by name, email, phone, or student ID"
                 className="w-full bg-transparent text-sm text-on-surface focus:outline-none"
               />
             </div>
@@ -167,6 +170,7 @@ const AdminLearnersPage = () => {
                 <tr className="font-mono text-[10px] uppercase tracking-widest text-text-muted">
                   <th className="py-3.5 px-4 font-normal">Learner Name & ID</th>
                   <th className="py-3.5 px-4 font-normal">Email</th>
+                  <th className="py-3.5 px-4 font-normal">Phone</th>
                   <th className="py-3.5 px-4 font-normal">Track & Day</th>
                   <th className="py-3.5 px-4 font-normal">Staked Vault</th>
                   <th className="py-3.5 px-4 font-normal">Streak</th>
@@ -184,7 +188,35 @@ const AdminLearnersPage = () => {
                           <span className="font-sans font-semibold text-on-surface block">{l.name}</span>
                           <span className="text-text-muted font-mono text-[10px] truncate max-w-[140px] block">{l.id}</span>
                         </td>
-                        <td className="py-3.5 px-4 text-on-surface-variant font-sans">{l.email}</td>
+                        <td className="py-3.5 px-4 text-on-surface-variant font-sans">
+                          {l.email || <span className="text-text-muted">—</span>}
+                        </td>
+                        <td className="py-3.5 px-4 text-on-surface-variant font-mono">
+                          {l.phone ? (
+                            <span className="flex items-center gap-1.5">
+                              <span>{l.phone}</span>
+                              {l.phoneVerified ? (
+                                <span
+                                  title="Phone verified"
+                                  aria-label="Phone verified"
+                                  className="text-success-green text-[10px]"
+                                >
+                                  ✓
+                                </span>
+                              ) : (
+                                <span
+                                  title="Phone not verified — SMS will not reach this learner"
+                                  aria-label="Phone not verified"
+                                  className="text-warning-amber text-[10px]"
+                                >
+                                  ?
+                                </span>
+                              )}
+                            </span>
+                          ) : (
+                            <span className="text-text-muted">—</span>
+                          )}
+                        </td>
                         <td className="py-3.5 px-4">
                           <div className="flex items-center gap-1.5">
                             <span className="font-mono text-[9px] px-2 py-0.5 rounded uppercase tracking-wider bg-primary/10 text-primary">
