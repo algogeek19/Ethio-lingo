@@ -53,7 +53,21 @@ const WalletPage = () => {
       return;
     }
 
-    const withdrawAmount = wallet?.stakedAmount && wallet.stakedAmount > 0 ? wallet.stakedAmount : 900.0;
+    // Use the real balance, or 0 when there is genuinely nothing staked.
+    //
+    // This previously read `stakedAmount > 0 ? stakedAmount : 900`, so a learner
+    // whose stake had been fully slashed to 0 was quoted 900 ETB and could
+    // submit a withdrawal request for 900 ETB they do not have. A falsy-zero
+    // must never be replaced with a marketing figure.
+    const withdrawAmount = Math.max(0, Number(wallet?.stakedAmount) || 0);
+
+    if (withdrawAmount <= 0) {
+      setWithdrawalMessage({
+        type: 'error',
+        text: 'You have no staked balance available to withdraw. Complete your daily tasks to protect your stake.',
+      });
+      return;
+    }
 
     const res = await requestWithdrawal({
       levelCompleted: user?.level || 'Beginner I',
@@ -300,7 +314,7 @@ const WalletPage = () => {
                     <span>Withdrawal Request Pending Admin Processing</span>
                   </div>
                   <p className="text-xs text-on-surface-variant leading-relaxed">
-                    You have submitted a withdrawal request for <strong>{formatETB(pendingWithdrawal.amount || wallet.stakedAmount || 900)}</strong> to <strong>{pendingWithdrawal.bankName}</strong> ({pendingWithdrawal.accountNumber}). Our admin team will verify and transfer your payout within 24 hours.
+                    You have submitted a withdrawal request for <strong>{formatETB(Number(pendingWithdrawal.amount) || Number(wallet.stakedAmount) || 0)}</strong> to <strong>{pendingWithdrawal.bankName}</strong> ({pendingWithdrawal.accountNumber}). Our admin team will verify and transfer your payout within 24 hours.
                   </p>
                   <div className="p-2.5 bg-surface-dark text-stone-300 font-mono text-[11px] rounded-lg border border-stone-800">
                     ID: {pendingWithdrawal.id} • Status: PENDING VERIFICATION
@@ -309,7 +323,7 @@ const WalletPage = () => {
               ) : (
                 <>
                   <p className="text-xs text-on-surface-variant font-sans">
-                    Submit your Ethiopian bank and Telebirr account details. Platform admins will verify your level completion and transfer <strong>{formatETB(wallet.stakedAmount || 900)}</strong>.
+                    Submit your Ethiopian bank and Telebirr account details. Platform admins will verify your level completion and transfer <strong>{formatETB(Math.max(0, Number(wallet.stakedAmount) || 0))}</strong>.
                   </p>
 
                   {withdrawalMessage && (
@@ -376,7 +390,7 @@ const WalletPage = () => {
                       className="w-full py-3 rounded-full bg-primary text-on-primary text-xs tracking-wider uppercase font-semibold hover:bg-primary-container shadow-sm transition-all flex items-center justify-center gap-2 disabled:opacity-50 focus-ring btn-interactive cursor-pointer"
                     >
                       <Send size={15} />
-                      <span>Submit Withdrawal Request ({formatETB(wallet.stakedAmount || 900)})</span>
+                      <span>Submit Withdrawal Request ({formatETB(Math.max(0, Number(wallet.stakedAmount) || 0))})</span>
                     </button>
                   </form>
                 </>
@@ -391,7 +405,7 @@ const WalletPage = () => {
                   <span>Continue Learning to Next Level</span>
                 </h3>
                 <p className="text-xs text-on-surface-variant font-sans">
-                  Keep your remaining <strong>{formatETB(wallet.stakedAmount || 900)}</strong> staked in escrow and automatically advance to the next curriculum level!
+                  Keep your remaining <strong>{formatETB(Math.max(0, Number(wallet.stakedAmount) || 0))}</strong> staked in escrow and automatically advance to the next curriculum level!
                 </p>
                 <div className="p-3 bg-success-green/15 border border-success-green/30 rounded-xl text-xs text-success-green font-mono">
                   ✓ Remaining stake will roll over to unlock Day 1 of the next curriculum track!

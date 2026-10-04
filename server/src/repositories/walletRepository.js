@@ -1,30 +1,19 @@
 import { prisma } from '../config/database.js';
 import { safeDbQuery } from '../utils/dbHelper.js';
 
-const MOCK_WALLETS = {
-  usr_learner_001: {
-    id: 'w-101',
-    userId: 'usr_learner_001',
-    stakedAmount: 900.0,
-    availableBalance: 0.0,
-    totalPenalties: 0.0,
-    totalPlatformFees: 100.0,
-    platformFeePercent: 0.0,
-    streakCount: 7,
-    isFreeTrial: false,
-  },
-  usr_admin_001: {
-    id: 'w-102',
-    userId: 'usr_admin_001',
-    stakedAmount: 2700.0,
-    availableBalance: 0.0,
-    totalPenalties: 0.0,
-    totalPlatformFees: 300.0,
-    platformFeePercent: 0.0,
-    streakCount: 30,
-    isFreeTrial: false,
-  },
-};
+/**
+ * In-memory wallets, used ONLY when there is no database at all (local dev
+ * without Postgres).
+ *
+ * This deliberately starts empty. It previously shipped hardcoded demo entries
+ * for `usr_learner_001` and `usr_admin_001` carrying 900 and 2,700 ETB stakes,
+ * and findWalletByUserId falls back to this map whenever a query fails. A
+ * transient database error therefore served a fabricated balance — the exact
+ * "the vault reset to its initial value" symptom — and did it silently, with no
+ * way to tell it apart from real data. Better to fall back to nothing than to
+ * invent someone's escrow balance.
+ */
+const MOCK_WALLETS = {};
 
 export const createWalletForUser = async (userId, initialDeposit = 0.0, isFreeTrialOverride) => {
   const platformFee = 0.0;

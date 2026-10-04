@@ -90,18 +90,29 @@ export const applyMissedDayStreakBreakPenalty = async (userId, penaltyAmount = 8
   const wallet = await walletRepository.findWalletByUserId(userId);
   if (!wallet) return null;
 
+  const dbUser = await prisma.user.findUnique({ where: { id: userId } });
+  const todayStr = getUserTodayStr(dbUser?.timezone);
+
+  // A missed day can only be charged once. Without this guard the deduction was
+  // unconditional, so a retried request, a double-click, or a client that fired
+  // it on every load slashed the stake repeatedly — which is exactly how a
+  // balance ends up inconsistent with the ledger between reloads.
+  if (wallet.lastAuditedDate === todayStr) {
+    return wallet;
+  }
+
   const currentStake = wallet.stakedAmount || 0.0;
   if (currentStake <= 0) {
     // Balance is 0, make sure streak is reset to 0
-    return await walletRepository.updateWallet(userId, { streakCount: 0 });
+    return await walletRepository.updateWallet(userId, {
+      streakCount: 0,
+      lastAuditedDate: todayStr,
+    });
   }
 
   // Deduct penaltyAmount (or whatever is left if currentStake < penaltyAmount)
   const actualDeduction = Math.min(currentStake, penaltyAmount);
   const newStake = Math.max(0, currentStake - actualDeduction);
-
-  const dbUser = await prisma.user.findUnique({ where: { id: userId } });
-  const todayStr = getUserTodayStr(dbUser?.timezone);
 
   const updated = await walletRepository.updateWallet(userId, {
     stakedAmount: newStake,

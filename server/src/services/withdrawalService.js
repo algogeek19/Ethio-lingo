@@ -16,9 +16,20 @@ export const requestWithdrawal = async (userId, { levelCompleted, amount, bankNa
 
   let wallet = user?.id ? await walletRepository.findWalletByUserId(user.id) : null;
 
+  // Withdraw the real staked balance when no amount is given. This previously
+  // fell back to 900.0 for a balance of 0 — and 0 is exactly the value a fully
+  // slashed learner has — so a withdrawal request was recorded and ledgered for
+  // 900 ETB that was never staked. Never invent a payout figure.
+  const availableStake = Math.max(0, Number(wallet?.stakedAmount) || 0);
   const parsedAmount = amount !== undefined && amount !== null && !isNaN(Number(amount)) && Number(amount) > 0
     ? Number(amount)
-    : (wallet?.stakedAmount && wallet.stakedAmount > 0 ? wallet.stakedAmount : 900.0);
+    : availableStake;
+
+  if (parsedAmount <= 0) {
+    const err = new Error('No staked balance is available to withdraw.');
+    err.status = 400;
+    throw err;
+  }
 
   const finalLevel = levelCompleted || user?.level || 'Beginner I';
   const finalBank = bankName || 'Commercial Bank of Ethiopia (CBE)';
@@ -46,7 +57,11 @@ export const requestWithdrawal = async (userId, { levelCompleted, amount, bankNa
 
   // Deduct withdrawn amount from user's staked balance and upgrade level in database
   if (resolvedUserId) {
-    const currentStaked = wallet?.stakedAmount || 900.0;
+    // Use the real balance. `wallet?.stakedAmount || 900.0` meant a fully-slashed
+    // learner (balance exactly 0, which is falsy) had 900 written back as their
+    // starting balance, so the deduction computed from a phantom stake and the
+    // stored balance disagreed with the ledger.
+    const currentStaked = Math.max(0, Number(wallet?.stakedAmount) || 0);
     const newStaked = Math.max(0, currentStaked - parsedAmount);
     await walletRepository.updateWallet(resolvedUserId, {
       stakedAmount: newStaked,

@@ -35,12 +35,22 @@ const COMPLETION_GRACE_MS = 8000;
 export const StakingProvider = ({ children }) => {
   const { authUser, updateUserProfile } = useRole();
 
-  // Staking Wallet State
+  // Staking Wallet State.
+  //
+  // The localStorage entry is a render-speed cache only; the API is the sole
+  // source of truth for a real balance. It previously fell back to a hardcoded
+  // 900.0 when the cache was absent, so a learner on a fresh browser, a cleared
+  // cache, or a failed wallet fetch was shown a 900 ETB vault that never existed
+  // — which reads as the balance resetting to its initial value on every reload.
+  // Absent a cache we start at zero and report `isWalletLoading`, so callers show
+  // a loading state rather than an invented number.
   const [stakedBalance, setStakedBalance] = useState(() => {
     const userKey = authUser?.id || authUser?.email || 'default_learner';
     const savedBal = localStorage.getItem(`birrend_staked_balance_${userKey}`);
-    return savedBal !== null ? parseFloat(savedBal) : 900.0;
+    const parsed = savedBal === null ? NaN : parseFloat(savedBal);
+    return Number.isFinite(parsed) ? parsed : 0;
   });
+  const [isWalletLoading, setIsWalletLoading] = useState(true);
   const [availableYieldBalance, setAvailableYieldBalance] = useState(0.0);
   const [totalPenaltiesSlashed, setTotalPenaltiesSlashed] = useState(0.0);
   const [totalPlatformFees, setTotalPlatformFees] = useState(0.0);
@@ -130,7 +140,11 @@ export const StakingProvider = ({ children }) => {
 
   // Fetch initial wallet & ledger from Express API on mount / auth change
   const loadWalletData = async () => {
-    if (!authUser || authUser.role === 'admin') return;
+    if (!authUser || authUser.role === 'admin') {
+      setIsWalletLoading(false);
+      return;
+    }
+    const userKey = authUser.id || authUser.email || 'default_learner';
     try {
       const response = await api.getWallet();
       if (response.success && response.data) {
@@ -141,6 +155,19 @@ export const StakingProvider = ({ children }) => {
           setTotalPlatformFees(wallet.totalPlatformFees ?? 0.0);
           setStreak({ count: wallet.streakCount ?? 0, lastCompletedDate: null });
 
+          // Refresh the render-speed cache from the authoritative value. It was
+          // only ever written by optimistic mutations, so a learner who had not
+          // deposited in this browser had no cache entry at all — which is what
+          // exposed the hardcoded fallback on reload.
+          try {
+            localStorage.setItem(
+              `birrend_staked_balance_${userKey}`,
+              String(wallet.stakedAmount ?? 0.0)
+            );
+          } catch {
+            /* private browsing / quota — the cache is optional */
+          }
+
           const isPending = authUser?.status === 'PENDING_APPROVAL' || authUser?.status === 'PENDING_DEPOSIT';
           const isNowTrial = isPending ? false : (wallet.isFreeTrial ?? false);
           setIsFreeTrialMode(isNowTrial);
@@ -148,7 +175,6 @@ export const StakingProvider = ({ children }) => {
 
           // If converting from Free Trial to Staked Mode, sync currentDay and level from authUser
           if (!isNowTrial && authUser) {
-            const userKey = authUser.id || authUser.email || 'default_learner';
             if (authUser.currentDay !== undefined) {
               setCurrentModuleDay(authUser.currentDay);
               localStorage.setItem(`birrend_module_day_${userKey}`, authUser.currentDay.toString());
@@ -161,7 +187,13 @@ export const StakingProvider = ({ children }) => {
         }
         if (transactions) setLedgerTransactions(transactions);
       }
-    } catch (err) {}
+    } catch (err) {
+      // Leave the cached value in place rather than zeroing it: a transient
+      // failure must not make a real balance look like it was wiped.
+      console.error('Error fetching wallet from API:', err);
+    } finally {
+      setIsWalletLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -451,13 +483,13 @@ export const StakingProvider = ({ children }) => {
       }
       return { success: false, message: res.message };
     } catch (err) {
-      const netDeposit = amount;
-      const newStaked = stakedBalance + netDeposit;
-      setStakedBalance(newStaked);
-      setIsFreeTrialMode(false);
-      const userKey = authUser?.id || authUser?.email || 'default_learner';
-      localStorage.setItem(`birrend_staked_balance_${userKey}`, newStaked.toString());
-      return { success: true, data: { stakedAmount: newStaked } };
+      // Do NOT credit the local balance when the deposit failed. This branch
+      // used to add the amount anyway and report success, so a failed payment
+      // inflated the displayed vault and cleared free-trial mode against money
+      // that never arrived. Re-read the server so the UI reflects reality.
+      console.error('Deposit failed:', err);
+      await loadWalletData();
+      return { success: false, message: err?.message || 'Deposit failed. Your balance has not changed.' };
     }
   };
 
@@ -467,14 +499,12 @@ export const StakingProvider = ({ children }) => {
       const res = await api.requestWithdrawal(requestData);
       if (res.success && res.data) {
         setWithdrawalRequests((prev) => [res.data, ...prev]);
-        // Deduct requested withdrawal amount from staked balance and persist to localStorage
-        const deductAmount = requestData?.amount || stakedBalance || 1000.0;
-        setStakedBalance((prev) => {
-          const newBal = Math.max(0, prev - deductAmount);
-          const userKey = authUser?.id || authUser?.email || 'default_learner';
-          localStorage.setItem(`birrend_staked_balance_${userKey}`, newBal.toString());
-          return newBal;
-        });
+
+        // The stake is NOT deducted client-side. The request is pending admin
+        // verification, and the server owns the ledger; deducting here made the
+        // displayed balance disagree with the stored one and snap back on the
+        // next reload — the balance appearing to reset. Re-read instead.
+        await loadWalletData();
 
         // Upgrade user level to next level (Day 1) for returning journey
         advanceToNextLevel();
@@ -483,7 +513,8 @@ export const StakingProvider = ({ children }) => {
       }
       return { success: false, message: res.message };
     } catch (err) {
-      advanceToNextLevel();
+      // A failed request must not advance the learner to the next level.
+      console.error('Withdrawal request failed:', err);
       return { success: false, message: err.message || 'Withdrawal request failed.' };
     }
   };
@@ -517,58 +548,48 @@ export const StakingProvider = ({ children }) => {
 
   // Exam Failure Penalty (-25 ETB)
   const applyExamFailPenalty = async () => {
-    setStakedBalance((prev) => {
-      const newBal = Math.max(0, prev - 25.0);
-      const userKey = authUser?.id || authUser?.email || 'default_learner';
-      localStorage.setItem(`birrend_staked_balance_${userKey}`, newBal.toString());
-      return newBal;
-    });
+    // Optimistic tick for responsiveness only. If the write fails we re-read the
+    // server rather than leaving a deduction on screen that never happened —
+    // that fabricated balance was also written to localStorage, so it survived
+    // reloads and looked like a real, escalating penalty.
+    setStakedBalance((prev) => Math.max(0, prev - 25.0));
     setTotalPenaltiesSlashed((prev) => prev + 25.0);
     try {
       await api.applyExamFailPenalty();
-      await loadWalletData();
     } catch (err) {
       console.error('API applyExamFailPenalty error:', err);
+    } finally {
+      await loadWalletData();
     }
   };
 
   // Missed Day Window Penalty (-80 ETB & Streak Reset)
   const applyMissedDayPenalty = async () => {
+    // The server is the only thing that may move a real balance. This used to
+    // subtract 80 ETB locally on both the "no data" and the thrown branches,
+    // so a failed request still showed (and cached) money that was never taken.
+    let applied = false;
     try {
       const res = await api.applyMissedDayPenalty();
       if (res && res.success && res.data) {
+        applied = true;
         const w = res.data;
-        const newBal = w.stakedAmount ?? 0.0;
-        setStakedBalance(newBal);
+        setStakedBalance(w.stakedAmount ?? 0.0);
         setTotalPenaltiesSlashed(w.totalPenalties ?? 0.0);
-        const userKey = authUser?.id || authUser?.email || 'default_learner';
-        localStorage.setItem(`birrend_staked_balance_${userKey}`, newBal.toString());
-      } else {
-        const penalty = 80.0;
-        setStakedBalance((prev) => {
-          const newBal = Math.max(0, prev - penalty);
-          const userKey = authUser?.id || authUser?.email || 'default_learner';
-          localStorage.setItem(`birrend_staked_balance_${userKey}`, newBal.toString());
-          return newBal;
-        });
-        setTotalPenaltiesSlashed((prev) => prev + penalty);
       }
+    } catch (err) {
+      console.error('API applyMissedDayPenalty error:', err);
+    }
+
+    if (applied) {
       setStreak({ count: 0, lastCompletedDate: null });
       setDailyTasks({ lesson: false, video: false, exam: false });
       await refreshWorkspaceProgress();
-    } catch (err) {
-      console.error('API applyMissedDayPenalty error:', err);
-      const penalty = 80.0;
-      setStakedBalance((prev) => {
-        const newBal = Math.max(0, prev - penalty);
-        const userKey = authUser?.id || authUser?.email || 'default_learner';
-        localStorage.setItem(`birrend_staked_balance_${userKey}`, newBal.toString());
-        return newBal;
-      });
-      setTotalPenaltiesSlashed((prev) => prev + penalty);
-      setStreak({ count: 0, lastCompletedDate: null });
-      setDailyTasks({ lesson: false, video: false, exam: false });
     }
+
+    // Always reconcile with the server so the displayed balance matches the
+    // ledger whether or not the request went through.
+    await loadWalletData();
   };
 
   // Advance Streak (Free Trial accounts do not accrue streaks)
@@ -624,7 +645,12 @@ export const StakingProvider = ({ children }) => {
         availableYieldBalance,
         totalPenaltiesSlashed,
         totalPlatformFees,
-        isBalanceZero: stakedBalance <= 0 && !isFreeTrialMode,
+        // Deliberately false while the wallet is still being fetched. Starting
+        // from a placeholder balance would otherwise trip this flag and flash
+        // the "your stake is 0, curriculum locked" screen at every signed-in
+        // learner on first paint.
+        isWalletLoading,
+        isBalanceZero: !isWalletLoading && stakedBalance <= 0 && !isFreeTrialMode,
         isFreeTrialMode,
         freeTrialDaysLeft,
         setFreeTrialDaysLeft,
