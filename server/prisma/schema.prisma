@@ -8,45 +8,87 @@ datasource db {
 }
 
 model User {
-  id                     String            @id @default(uuid())
-  email                  String            @unique
-  name                   String
-  password               String?
-  emailVerified          Boolean           @default(false)
-  image                  String?
-  role                   String            @default("learner") // "learner" | "admin"
-  level                  String            @default("Beginner I")
-  currentDay             Int               @default(1) // Current module day from 1 to 30
-  isActive               Boolean           @default(true)
-  status                 String            @default("ACTIVE") // "ACTIVE" | "INACTIVE" | "SUSPENDED"
-  isOnboarded            Boolean           @default(true)
-  timezone               String            @default("Africa/Addis_Ababa")
+  id                        String              @id @default(uuid())
+  // Nullable so an account can be created with a phone number only. A learner
+  // needs at least ONE verified channel; @unique stays, and NULLs do not
+  // collide in Postgres, so multiple phone-only accounts are allowed.
+  email                     String?             @unique
+  name                      String
+  password                  String?
+  emailVerified             Boolean             @default(false)
+  image                     String?
+  role                      String              @default("learner") // "learner" | "admin"
+  level                     String              @default("Beginner I")
+  currentDay                Int                 @default(1) // Current module day from 1 to 30
+  isActive                  Boolean             @default(true)
+  status                    String              @default("ACTIVE") // "ACTIVE" | "INACTIVE" | "SUSPENDED"
+  isOnboarded               Boolean             @default(true)
+  timezone                  String              @default("Africa/Addis_Ababa")
   // Onboarding & Demographic Selection
-  phone                  String?
-  phoneVerified          Boolean           @default(false)
-  age                    Int?
-  interests              String?           // JSON array string ["Business","Travel",...]
-  listeningMinutesPerDay Int?              // Custom Daily Listening Track (0-15 or 15-30 min/day options)
-  listeningCategories    String?           // JSON array string ["Informative","Entertainment",...]
-  verificationCode       String?           // 6-digit email verification code (dev fallback)
-  verificationCodeExpiresAt DateTime?      // Expiry for the verification code
-  isBanned               Boolean           @default(false)
-  createdAt              DateTime          @default(now())
-  updatedAt              DateTime          @updatedAt
-  wallet                 Wallet?
-  ledgerTransactions     LedgerTransaction[]
-  dailyProgress          UserDailyProgress[]
-  examAttempts           ExamAttempt[]
-  withdrawals            WithdrawalRequest[]
-  depositRequests        DepositRequest[]
-  chatMessages           ChatMessage[]
-  chatReportsFiled       ChatReport[]      @relation("ReportsFiled")
-  chatReportsReceived    ChatReport[]      @relation("ReportsReceived")
-  feedbackSubmitted      Feedback[]
-  directChatsOwned       DirectChat[]      @relation("DirectChatOwner")
-  directChatsReceived    DirectChat[]      @relation("DirectChatPeer")
+  phone                     String?
+  phoneVerified             Boolean             @default(false)
+  // Which channel announcements should use: "email", "sms", or null meaning
+  // "every verified channel". Dual-verified accounts default to null, i.e. both.
+  preferredChannel          String?
+  // True once at least one channel has been verified. Access requires this
+  // rather than emailVerified alone, so phone-only learners are not locked out.
+  isVerified                Boolean             @default(false)
+  age                       Int?
+  interests                 String? // JSON array string ["Business","Travel",...]
+  listeningMinutesPerDay    Int? // Custom Daily Listening Track (0-15 or 15-30 min/day options)
+  listeningCategories       String? // JSON array string ["Informative","Entertainment",...]
+  verificationCode          String? // 6-digit email verification code (dev fallback)
+  verificationCodeExpiresAt DateTime? // Expiry for the verification code
+  isBanned                  Boolean             @default(false)
+  createdAt                 DateTime            @default(now())
+  updatedAt                 DateTime            @updatedAt
+  wallet                    Wallet?
+  ledgerTransactions        LedgerTransaction[]
+  dailyProgress             UserDailyProgress[]
+  examAttempts              ExamAttempt[]
+  withdrawals               WithdrawalRequest[]
+  depositRequests           DepositRequest[]
+  chatMessages              ChatMessage[]
+  chatReportsFiled          ChatReport[]        @relation("ReportsFiled")
+  chatReportsReceived       ChatReport[]        @relation("ReportsReceived")
+  feedbackSubmitted         Feedback[]
+  directChatsOwned          DirectChat[]        @relation("DirectChatOwner")
+  directChatsReceived       DirectChat[]        @relation("DirectChatPeer")
+  verificationCodes         VerificationCode[]
 
   @@map("user")
+}
+
+/// A pending channel-confirmation code, one row per issue.
+///
+/// A table rather than columns on User because verification is per-channel and
+/// both may be in flight at once. Storing a hash rather than the code means a
+/// database leak does not hand over live verification codes, and consumedAt
+/// plus attempts give single-use and brute-force limits that a pair of columns
+/// on User cannot express.
+model VerificationCode {
+  id          String    @id @default(uuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// "email" or "sms" — which channel this code confirms.
+  channel     String
+  /// The address/number the code was sent to, kept for auditing delivery.
+  destination String
+  /// SHA-256 of `salt:code`. The code itself is never stored.
+  codeHash    String
+  /// Per-code random salt. A short numeric code needs no slow KDF, but salting
+  /// stops every identical code hashing to the same digest across rows.
+  codeSalt    String
+  expiresAt   DateTime
+  consumedAt  DateTime?
+  /// Failed verification attempts against this code; the code is burned after
+  /// MAX_ATTEMPTS so a 6-digit space cannot be walked offline.
+  attempts    Int       @default(0)
+  createdAt   DateTime  @default(now())
+
+  @@index([userId, channel])
+  @@index([expiresAt])
+  @@map("verification_code")
 }
 
 model Wallet {
@@ -73,9 +115,9 @@ model LedgerTransaction {
   id          String   @id @default(uuid())
   userId      String
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  type        String   // "CHAPA_DEPOSIT" | "STAKE_RETENTION" | "PENALTY_DEDUCTION" | "WITHDRAWAL_REQUEST"
+  type        String // "CHAPA_DEPOSIT" | "STAKE_RETENTION" | "PENALTY_DEDUCTION" | "WITHDRAWAL_REQUEST"
   amount      Float
-  status      String   // "COMPLETED" | "SUCCESS" | "PENALTY" | "PENDING"
+  status      String // "COMPLETED" | "SUCCESS" | "PENALTY" | "PENDING"
   description String?
   chapaTxRef  String?
   createdAt   DateTime @default(now())
@@ -85,8 +127,8 @@ model LedgerTransaction {
 
 model CurriculumModule {
   id                        String   @id @default(uuid())
-  level                     String   // "Beginner I" .. "Advanced II"
-  dayNumber                 Int      // 1 to 30
+  level                     String // "Beginner I" .. "Advanced II"
+  dayNumber                 Int // 1 to 30
   title                     String
   lessonVideoUrl            String
   refGuideTitle             String
@@ -103,7 +145,7 @@ model CurriculumModule {
 // PDF books assigned to a level for the daily timed reading task
 model LevelBook {
   id        String   @id @default(uuid())
-  level     String   // "Beginner I" .. "Advanced II"
+  level     String // "Beginner I" .. "Advanced II"
   title     String
   author    String
   category  String
@@ -115,12 +157,12 @@ model LevelBook {
 
 model QuestionBank {
   id          String   @id @default(uuid())
-  level       String   // "Placement" | "Beginner I" .. "Advanced II"
-  dayNumber   Int      // 0 for Placement, 1 to 30 for modules
+  level       String // "Placement" | "Beginner I" .. "Advanced II"
+  dayNumber   Int // 0 for Placement, 1 to 30 for modules
   question    String
-  options     String   // JSON array string `["A", "B", "C", "D"]`
+  options     String // JSON array string `["A", "B", "C", "D"]`
   answerIndex Int
-  keywords    String   // JSON array string `["grammar"]`
+  keywords    String // JSON array string `["grammar"]`
   explanation String   @default("") // Mistake review explanation
   createdAt   DateTime @default(now())
 
@@ -184,10 +226,10 @@ model WithdrawalRequest {
 
 model PaymentAccount {
   id            String   @id @default(uuid())
-  bankName      String   // "Commercial Bank of Ethiopia (CBE)" | "Telebirr" | "Bank of Abyssinia" | "Awash Bank" | "Dashen Bank"
-  accountName   String   // e.g. "Birrend Platform"
-  accountNumber String   // e.g. "1000123456789" or "0911223344"
-  instructions  String?  // e.g. "Use CBE Mobile App or *889# to transfer."
+  bankName      String // "Commercial Bank of Ethiopia (CBE)" | "Telebirr" | "Bank of Abyssinia" | "Awash Bank" | "Dashen Bank"
+  accountName   String // e.g. "Birrend Platform"
+  accountNumber String // e.g. "1000123456789" or "0911223344"
+  instructions  String? // e.g. "Use CBE Mobile App or *889# to transfer."
   isActive      Boolean  @default(true)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
@@ -202,11 +244,11 @@ model DepositRequest {
   userName       String
   userEmail      String
   amount         Float     @default(1000.0)
-  paymentChannel String    // e.g. "CBE" | "Telebirr" | "BOA"
-  accountNumber  String?   // Transferred account number
-  transactionRef String    // e.g. "FT24080512345" or Telebirr Txn ID
+  paymentChannel String // e.g. "CBE" | "Telebirr" | "BOA"
+  accountNumber  String? // Transferred account number
+  transactionRef String // e.g. "FT24080512345" or Telebirr Txn ID
   senderPhone    String?
-  receiptUrl     String?   // Supabase storage public URL for receipt screenshot
+  receiptUrl     String? // Supabase storage public URL for receipt screenshot
   status         String    @default("pending") // "pending" | "approved" | "declined"
   declineReason  String?
   requestedAt    DateTime  @default(now())
@@ -238,20 +280,20 @@ model DirectChat {
 }
 
 model ChatMessage {
-  id                 String      @id @default(uuid())
-  roomLevel          String // "Free Trial" | "Beginner I" | "Beginner II" | "Intermediate I" | ... | "Daily Topic" | "Direct"
-  userId             String
-  user               User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  directChatId       String?     // Non-null only for direct (messenger) chats
-  directChat         DirectChat? @relation(fields: [directChatId], references: [id], onDelete: Cascade)
-  content            String
-  replyToId          String?     // Message id this message is replying to
-  replyToContent     String?     // Snapshot of the quoted message content
-  replyToAuthorName  String?     // Snapshot of the quoted message author
-  edited             Boolean     @default(false)
-  editedAt           DateTime?
-  reactions          String      @default("[]") // JSON: [{"emoji":"👍","userIds":["uuid",..]}]
-  createdAt          DateTime    @default(now())
+  id                String      @id @default(uuid())
+  roomLevel         String // "Free Trial" | "Beginner I" | "Beginner II" | "Intermediate I" | ... | "Daily Topic" | "Direct"
+  userId            String
+  user              User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  directChatId      String? // Non-null only for direct (messenger) chats
+  directChat        DirectChat? @relation(fields: [directChatId], references: [id], onDelete: Cascade)
+  content           String
+  replyToId         String? // Message id this message is replying to
+  replyToContent    String? // Snapshot of the quoted message content
+  replyToAuthorName String? // Snapshot of the quoted message author
+  edited            Boolean     @default(false)
+  editedAt          DateTime?
+  reactions         String      @default("[]") // JSON: [{"emoji":"👍","userIds":["uuid",..]}]
+  createdAt         DateTime    @default(now())
 
   @@index([roomLevel, createdAt])
   @@index([directChatId, createdAt])
@@ -276,27 +318,27 @@ model ChatReport {
 }
 
 model Announcement {
-  id        String   @id @default(uuid())
-  title     String
-  content   String
-  audienceLevel String @default("ALL") // "ALL" or specific level
-  isActive  Boolean  @default(true)
-  createdBy String
-  createdByName String @default("")
-  createdAt DateTime @default(now())
+  id            String   @id @default(uuid())
+  title         String
+  content       String
+  audienceLevel String   @default("ALL") // "ALL" or specific level
+  isActive      Boolean  @default(true)
+  createdBy     String
+  createdByName String   @default("")
+  createdAt     DateTime @default(now())
 
   @@map("announcement")
 }
 
 model Feedback {
-  id          String   @id @default(uuid())
-  userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  category    String // "BUG" | "FEATURE" | "CONTENT" | "OTHER"
-  message     String
-  rating      Int?
-  status      String   @default("open") // "open" | "read" | "closed"
-  createdAt   DateTime @default(now())
+  id            String   @id @default(uuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category      String // "BUG" | "FEATURE" | "CONTENT" | "OTHER"
+  message       String
+  rating        Int?
+  status        String   @default("open") // "open" | "read" | "closed"
+  createdAt     DateTime @default(now())
   createdByName String
 
   @@map("feedback")
