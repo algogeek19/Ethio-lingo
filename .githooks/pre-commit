@@ -2,22 +2,26 @@
 #
 # Pre-commit guard.
 #
-# Runs the checks that cannot be expressed as oxlint or vite rules. Both of the
-# regressions this catches passed `npm run lint` and `npm run build` cleanly:
+# Runs the checks that oxlint and vite cannot express. Each of the following
+# reached main while `npm run lint` and `npm run build` were both green,
+# because every one is valid JavaScript that merely behaves wrongly:
 #
-#   - A quoted JSX expression container, e.g. "{c('dashboard.openLesson')}",
-#     is valid JS that renders as literal text, so neither linter nor bundler
-#     objects. Caught by lint:content.
-#   - An undefined identifier is a runtime ReferenceError, not a build failure.
+#   - A quoted JSX expression container, e.g. "{c('dashboard.openLesson')}".
+#     A string that renders as literal text on the page.
+#   - A component calling advanceToNextDay(). Advancing the module day is the
+#     server's decision (syncLearnerModuleDay), gated on the 24h window closing
+#     AND that day having been completed. The countdown widget advanced on every
+#     1s tick after midnight, then on mount whenever the localStorage mirror
+#     said all tasks were done — which skipped the day on a plain reload.
+#   - An undefined identifier. A runtime ReferenceError, not a build failure.
 #     Caught by no-undef.
 #
 # The server tests cover daily-progress persistence and module-day rollover.
-# Those decide escrow penalties and streaks, and both bugs that reached main
-# were invisible to lint and to the build.
+# Those decide escrow penalties and streaks.
 #
-# Installed via `core.hooksPath` (see the `prepare` script in package.json), so
-# it activates on `npm install` for every clone rather than living in
-# .git/hooks where it would only exist on whoever's machine wrote it.
+# Installed via `core.hooksPath` (the `prepare` script in package.json), so it
+# activates on `npm install` for every clone rather than living in .git/hooks
+# where it would only exist on whoever's machine wrote it.
 
 set -e
 
@@ -26,10 +30,10 @@ if [ ! -d node_modules ]; then
   exit 1
 fi
 
-echo "pre-commit: running lint + content checks..."
+echo "pre-commit: running lint, UI regression and server test checks..."
 
-# `npm run check` is `lint && lint:content`. Keep the explicit form so a failure
-# names the step that broke instead of just "command failed".
+# Kept as explicit steps rather than one `npm run check` so a failure names the
+# step that broke instead of just "command failed".
 npm run --silent lint || {
   echo "" >&2
   echo "pre-commit: BLOCKED — lint failed. Fix the errors above, or bypass" >&2
@@ -39,8 +43,10 @@ npm run --silent lint || {
 
 npm run --silent lint:content || {
   echo "" >&2
-  echo "pre-commit: BLOCKED — a JSX expression was wrapped in quotes and would" >&2
-  echo "            render as literal text. See scripts/check-quoted-expressions.mjs." >&2
+  echo "pre-commit: BLOCKED — UI regression check failed. Either a JSX expression" >&2
+  echo "            was wrapped in quotes (renders as literal text), or a component" >&2
+  echo "            advances the module day, which only the server may do." >&2
+  echo "            See scripts/check-ui-regressions.mjs." >&2
   exit 1
 }
 

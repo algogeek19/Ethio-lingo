@@ -1,10 +1,12 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Clock, CheckCircle2, AlertTriangle, Lock } from 'lucide-react';
 import { useStaking, CURRICULUM_LEVELS } from '../../context/StakingContext';
 import { useSiteContent } from '../../context/SiteContentContext';
 
 const CountdownWidget = () => {
-  const { dailyTasks, currentModuleDay, currentLevel, advanceToNextDay } = useStaking();
+  // advanceToNextDay is deliberately NOT used here. See the note on the effect
+  // below: this widget is display only and the server owns day progression.
+  const { dailyTasks, currentModuleDay, currentLevel } = useStaking();
   const { c } = useSiteContent();
   const safeDailyTasks = dailyTasks || { lesson: false, video: false, exam: false };
   const allTasksDone =
@@ -19,12 +21,22 @@ const CountdownWidget = () => {
 
   const [timeLeft, setTimeLeft] = useState({ hours: 0, minutes: 0, seconds: 0 });
 
-  // The midnight rollover must advance the day exactly once. The advance used
-  // to run inside the 1-second tick, so every tick past midnight pushed the
-  // learner another day forward — a night tab left open skipped several modules
-  // at once. Latching on the calendar date also stops a re-render (or React
-  // StrictMode's double-invoke) from firing it twice for the same night.
-  const advancedForDateRef = useRef(null);
+  // This widget is DISPLAY ONLY. It must never advance the learner's module day.
+  //
+  // Day progression is decided server-side by syncLearnerModuleDay, which
+  // advances only once the calendar date has rolled over AND that day was
+  // actually completed; if the window closed with tasks outstanding the learner
+  // stays put and the missed-day penalty applies instead. The client then
+  // adopts the server's currentDay in refreshWorkspaceProgress.
+  //
+  // This used to call advanceToNextDay() itself. Two bugs came out of that: it
+  // ran on every 1-second tick (so a tab left open overnight skipped several
+  // days), and after that was fixed the remaining guard was only
+  // "allTasksDone" with the elapsed-time check dropped — so it advanced the day
+  // the instant this component mounted. Because dailyTasks is seeded from the
+  // localStorage mirror, a returning learner whose tasks were complete saw the
+  // next module immediately, and again on every reload.
+  const hasWindowElapsed = timeLeft.hours === 0 && timeLeft.minutes === 0 && timeLeft.seconds === 0;
 
   useEffect(() => {
     const calculateTimeRemaining = () => {
@@ -44,32 +56,19 @@ const CountdownWidget = () => {
       return { hours, minutes, seconds };
     };
 
-    const tryAdvanceIfComplete = () => {
-      if (!allTasksDone) return;
-      const todayKey = new Date().toDateString();
-      if (advancedForDateRef.current === todayKey) return;
-      advancedForDateRef.current = todayKey;
-      advanceToNextDay();
-    };
-
     setTimeLeft(calculateTimeRemaining());
-
-    // Check the rollover straight away too: a tab opened after midnight has
-    // already gone past zero and would otherwise wait a full second, and more
-    // importantly would never catch a date change while it sits in the
-    // background (browsers throttle timers in hidden tabs).
-    tryAdvanceIfComplete();
-
-    const onVisibility = () => {
-      if (document.hidden) return;
-      setTimeLeft(calculateTimeRemaining());
-      tryAdvanceIfComplete();
-    };
 
     const interval = setInterval(() => {
       setTimeLeft(calculateTimeRemaining());
-      tryAdvanceIfComplete();
     }, 1000);
+
+    // A tab backgrounded across midnight has its timers throttled, so refresh
+    // the clock as soon as it becomes visible again rather than showing a
+    // stale countdown.
+    const onVisibility = () => {
+      if (document.hidden) return;
+      setTimeLeft(calculateTimeRemaining());
+    };
 
     document.addEventListener('visibilitychange', onVisibility);
 
@@ -77,7 +76,7 @@ const CountdownWidget = () => {
       clearInterval(interval);
       document.removeEventListener('visibilitychange', onVisibility);
     };
-  }, [allTasksDone, advanceToNextDay]);
+  }, []);
 
   const formatDigit = (num) => (num < 10 ? `0${num}` : `${num}`);
 
@@ -156,9 +155,11 @@ const CountdownWidget = () => {
           <div className="ml-auto inline-flex items-center gap-2 px-3.5 py-2 bg-primary/10 border border-primary/25 text-primary font-mono text-xs rounded-full shadow-xs">
             <Lock size={13} />
             <span>
-              {currentModuleDay === 30
-                ? c('nav.countdownTransition', { nextLevel: nextLevel || 'Next Level' })
-                : c('nav.countdownNextDay', { nextDay: currentModuleDay + 1 })}
+              {hasWindowElapsed
+                ? c('nav.countdownReady', { nextDay: currentModuleDay + 1 })
+                : currentModuleDay === 30
+                  ? c('nav.countdownTransition', { nextLevel: nextLevel || 'Next Level' })
+                  : c('nav.countdownNextDay', { nextDay: currentModuleDay + 1 })}
             </span>
           </div>
         )}

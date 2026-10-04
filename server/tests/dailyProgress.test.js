@@ -84,15 +84,30 @@ prisma.wallet = {
   },
   findFirst: async () => null,
 };
+const matchesProgress = (row, where) => {
+  for (const [key, cond] of Object.entries(where)) {
+    const want = cond;
+    if (want !== null && typeof want === 'object' && !(want instanceof Date)) {
+      // Range filter, e.g. { progressDate: { lt: todayStr } }
+      if ('lt' in want && !(row[key] < want.lt)) return false;
+      if ('gt' in want && !(row[key] > want.gt)) return false;
+      if ('lte' in want && !(row[key] <= want.lte)) return false;
+      if ('gte' in want && !(row[key] >= want.gte)) return false;
+      continue;
+    }
+    if (row[key] !== want) return false;
+  }
+  return true;
+};
+
+const findProgress = ({ where, orderBy }) => {
+  const hits = db.progress.filter((r) => matchesProgress(r, where));
+  if (orderBy?.progressDate === 'desc') hits.sort((a, b) => (a.progressDate < b.progressDate ? 1 : -1));
+  return hits[0] || null;
+};
+
 prisma.userDailyProgress = {
-  findFirst: async ({ where }) =>
-    db.progress.find(
-      (r) =>
-        r.userId === where.userId &&
-        r.level === where.level &&
-        r.dayNumber === where.dayNumber &&
-        r.progressDate === where.progressDate
-    ) || null,
+  findFirst: async (args) => findProgress(args),
   create: async ({ data }) => {
     const row = { id: `p${db.progress.length + 1}`, ...data };
     db.progress.push(row);
@@ -208,14 +223,7 @@ test('a failed write throws instead of silently reporting success', async () => 
   );
 
   prisma.userDailyProgress.create = original;
-  prisma.userDailyProgress.findFirst = async ({ where }) =>
-    db.progress.find(
-      (r) =>
-        r.userId === where.userId &&
-        r.level === where.level &&
-        r.dayNumber === where.dayNumber &&
-        r.progressDate === where.progressDate
-    ) || null;
+  prisma.userDailyProgress.findFirst = async (args) => findProgress(args);
 });
 
 test('a write with no level falls back to the user\'s saved level, not Beginner I', async () => {
@@ -233,6 +241,59 @@ test('a write with no level falls back to the user\'s saved level, not Beginner 
     true,
     'level must resolve identically on read and write'
   );
+});
+
+test('completing every task today does NOT advance the day before the window closes', async () => {
+  reset();
+  seedUser({ currentDay: 1 });
+  seedWallet('u1');
+
+  // Complete all three for today, including a passing exam.
+  await workspaceService.updateTaskCompletion('u1', 'Beginner I', 1, 'lesson');
+  await workspaceService.updateTaskCompletion('u1', 'Beginner I', 1, 'video');
+  await workspaceService.updateTaskCompletion('u1', 'Beginner I', 1, 'exam', { passed: true, score: 18 });
+
+  // Reading repeatedly — as a page reload does — must keep returning day 1.
+  for (let i = 0; i < 3; i += 1) {
+    const { currentDay } = await workspaceService.getDailyWorkspaceData('u1', 'Beginner I', 1);
+    assert.equal(currentDay, 1, `reload #${i + 1} must not advance the day`);
+  }
+  assert.equal(db.users.get('u1').currentDay, 1, 'user row must still be day 1');
+});
+
+test('the day stays put when the window closes with tasks outstanding', async () => {
+  reset();
+  seedUser({ currentDay: 2 });
+  // lastCompletedDate is stale, but no exam was ever passed for day 2, so the
+  // window closing must not advance anything (the penalty path handles it).
+  seedWallet('u1', { lastCompletedDate: '2000-01-01' });
+  await workspaceService.updateTaskCompletion('u1', 'Beginner I', 2, 'lesson');
+  await workspaceService.updateTaskCompletion('u1', 'Beginner I', 2, 'video');
+
+  const { currentDay } = await workspaceService.getDailyWorkspaceData('u1', 'Beginner I', 2);
+  assert.equal(currentDay, 2, 'incomplete day must not advance');
+});
+
+test('the day advances once the completed date is in the past', async () => {
+  reset();
+  seedUser({ currentDay: 2 });
+  seedWallet('u1', { lastCompletedDate: '2000-01-01' });
+  db.progress.push({
+    id: 'pold',
+    userId: 'u1',
+    level: 'Beginner I',
+    dayNumber: 2,
+    progressDate: '2000-01-01',
+    task1LessonCompleted: true,
+    task2ListeningCompleted: true,
+    examCompleted: true,
+    examPassed: true,
+    examScore: 18,
+    examAttempts: 1,
+  });
+
+  const { currentDay } = await workspaceService.getDailyWorkspaceData('u1', 'Beginner I', 2);
+  assert.equal(currentDay, 3, 'a completed day in the past earns exactly one day');
 });
 
 test('the day advances by one on the next calendar day after a pass', async () => {

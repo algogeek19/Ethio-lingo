@@ -70,10 +70,11 @@ const LearnerDashboard = () => {
 
   const progressPercent = (completedTasksCount / 3) * 100;
 
-  const handleStartNextDay = () => {
-    advanceToNextDay();
-    navigate('/workspaces');
-  };
+  // Deliberately no "start next day" control here. Advancing the module day is
+  // the server's decision (syncLearnerModuleDay): it happens only once the
+  // 24h window closes AND the day was completed. A client-side button would let
+  // a learner skip a day at will, bypassing the escrow commitment this app is
+  // built on.
 
   return (
     <motion.div

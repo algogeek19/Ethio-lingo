@@ -480,6 +480,10 @@ export const CONTENT_CATALOG = {
       label: 'Countdown next-day badge',
       default: 'Day {nextDay} Unlocks at Midnight Countdown',
     },
+    countdownReady: {
+      label: 'Countdown next-day badge (window elapsed)',
+      default: 'Day {nextDay} is now available',
+    },
     countdownFooterLocked: {
       label: 'Countdown footer (incomplete)',
       type: 'textarea',

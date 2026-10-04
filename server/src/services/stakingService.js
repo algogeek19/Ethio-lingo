@@ -171,13 +171,23 @@ export const advanceUserStreak = async (userId) => {
 };
 
 /**
- * Move a learner onto the next calendar day's module once the day they were
- * working on has been completed and the date has rolled over.
+ * Decide which module day a learner is entitled to be working on.
  *
- * This is the single source of truth for day progression: the midnight
- * countdown in the client and the workspace read path both defer to it, so the
- * day can never be advanced twice for one date, nor skipped past more than the
- * single day that was actually earned.
+ * This is the ONLY thing that advances a day. The client never does: the
+ * workspace read calls this and the client adopts the returned currentDay. That
+ * matters, because a client-side advance can be triggered by anything that
+ * touches component state — it previously fired on every 1s tick after midnight,
+ * and then (once that was fixed) on mount whenever the localStorage mirror said
+ * all tasks were done, which advanced the day on a plain page reload.
+ *
+ * The rule:
+ *   - Completed today, window still open  -> stay. Work earns the next day, it
+ *     does not grant it.
+ *   - Completed on an earlier date         -> advance exactly one day.
+ *   - Window closed with tasks outstanding -> stay, and the missed-day penalty
+ *     applies (see streakAuditService).
+ *
+ * Idempotent within a date, and never skips more than the single day earned.
  *
  * Returns the learner's current day after the check.
  */
@@ -194,19 +204,25 @@ export const syncLearnerModuleDay = async (userId, level, isFreeTrial) => {
 
   let currentDay = dbUser.currentDay || 1;
 
-  // Nothing to advance until a day has actually been completed and finished.
-  if (!wallet.lastCompletedDate || wallet.lastCompletedDate >= todayStr) {
-    return currentDay;
-  }
-
+  // The rule, in one place: the learner moves on only when the day they were on
+  // was completed on an EARLIER calendar date than today. Completing today's
+  // work earns the next day but does not grant it immediately, so with the
+  // window still open this finds nothing and returns the same day. If the
+  // window closes with tasks outstanding, the same lookup also finds nothing —
+  // the learner stays put and the missed-day penalty applies instead.
+  //
+  // Requiring the row to be dated exactly `wallet.lastCompletedDate` was
+  // brittle: that field is also written by the deposit flow, so a legitimate
+  // completion could fail to match and strand the learner on a finished day.
   const completedProgress = await prisma.userDailyProgress.findFirst({
     where: {
       userId,
       level: activeLevel,
       dayNumber: currentDay,
-      progressDate: wallet.lastCompletedDate,
       examPassed: true,
+      progressDate: { lt: todayStr },
     },
+    orderBy: { progressDate: 'desc' },
   });
   if (!completedProgress) return currentDay;
 
