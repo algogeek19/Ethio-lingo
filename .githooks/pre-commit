@@ -1,0 +1,43 @@
+#!/bin/sh
+#
+# Pre-commit guard.
+#
+# Runs the checks that cannot be expressed as oxlint or vite rules. Both of the
+# regressions this catches passed `npm run lint` and `npm run build` cleanly:
+#
+#   - A quoted JSX expression container, e.g. "{c('dashboard.openLesson')}",
+#     is valid JS that renders as literal text, so neither linter nor bundler
+#     objects. Caught by lint:content.
+#   - An undefined identifier is a runtime ReferenceError, not a build failure.
+#     Caught by no-undef.
+#
+# Installed via `core.hooksPath` (see the `prepare` script in package.json), so
+# it activates on `npm install` for every clone rather than living in
+# .git/hooks where it would only exist on whoever's machine wrote it.
+
+set -e
+
+if [ ! -d node_modules ]; then
+  echo "pre-commit: node_modules is missing — run 'npm install' first." >&2
+  exit 1
+fi
+
+echo "pre-commit: running lint + content checks..."
+
+# `npm run check` is `lint && lint:content`. Keep the explicit form so a failure
+# names the step that broke instead of just "command failed".
+npm run --silent lint || {
+  echo "" >&2
+  echo "pre-commit: BLOCKED — lint failed. Fix the errors above, or bypass" >&2
+  echo "            deliberately with 'git commit --no-verify'." >&2
+  exit 1
+}
+
+npm run --silent lint:content || {
+  echo "" >&2
+  echo "pre-commit: BLOCKED — a JSX expression was wrapped in quotes and would" >&2
+  echo "            render as literal text. See scripts/check-quoted-expressions.mjs." >&2
+  exit 1
+}
+
+echo "pre-commit: checks passed."
